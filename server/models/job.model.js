@@ -1,0 +1,208 @@
+const mongoose = require("mongoose");
+
+const jobSchema = new mongoose.Schema({
+  employer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Employer",
+    required: true,
+  },
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  requirements: {
+    type: [String],
+    default: [],
+  },
+  skills: {
+    type: [String],
+    default: [],
+  },
+  experience: {
+    type: String,
+    enum: ["0-1", "1-3", "3-5", "5-8", "8-12", "12+"],
+  },
+  location: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  jobType: {
+    type: String,
+    enum: ["full_time", "part_time", "contract", "freelance", "internship"],
+    required: true,
+  },
+  workMode: {
+    type: String,
+    enum: ["office", "remote", "hybrid"],
+    required: true,
+  },
+  salaryMin: {
+    type: Number,
+  },
+  salaryMax: {
+    type: Number,
+  },
+  currency: {
+    type: String,
+    enum: ["USD", "EUR", "GBP", "INR", "CAD", "AUD"],
+    default: "USD",
+  },
+  benefits: {
+    type: [String],
+    default: [],
+  },
+  department: {
+    type: String,
+    trim: true,
+  },
+  urgency: {
+    type: String,
+    enum: ["normal", "urgent", "very_urgent"],
+    default: "normal",
+  },
+  // Legacy fields for backward compatibility
+  requirePreviousExperienceWithStateFarm: {
+    type: Boolean,
+    default: false,
+  },
+  requirePreviousInsuranceExperience: {
+    type: Boolean,
+    default: false,
+  },
+  requireLicensedCandidateWithStateFarmTraining: {
+    type: Boolean,
+    default: false,
+  },
+  acceptLicensedCandidateWithBankingExperience: {
+    type: Boolean,
+    default: false,
+  },
+  acceptLicensedCandidateWithoutInsuranceExperience: {
+    type: Boolean,
+    default: false,
+  },
+  jobRole: {
+    type: String,
+    enum: ["full_time", "part_time"],
+  },
+  workingDays: {
+    type: Number,
+  },
+  legacyJobType: {
+    type: String,
+    enum: ["work_from_office", "work_from_home"],
+  },
+  workingDaysPerWeek: {
+    type: String,
+    trim: true,
+  },
+  payStructure: {
+    type: String,
+    enum: ["monthly", "hourly"],
+  },
+  payPerHour: {
+    type: Number,
+  },
+  payDay: {
+    type: String,
+    trim: true,
+  },
+  bonusCommission: {
+    type: String,
+    trim: true,
+  },
+  legacyBenefits: {
+    type: String,
+    trim: true,
+  },
+  languagePreference: {
+    type: [String],
+    enum: [
+      "English",
+      "Hindi",
+      "Spanish",
+      "Portuguese",
+      "Mandarin",
+      "Russian",
+      "Tagalo",
+    ],
+    default: ["English"],
+  },
+  parkingFree: {
+    type: Boolean,
+    default: false,
+  },
+  serviceSalesFocus: {
+    type: String,
+    enum: ["service_focused", "sales_focused", "both"],
+  },
+  licenseRequirement: {
+    type: String,
+    enum: ["P&C", "L&H", "All License", "Unlicensed Accepted", "Other"],
+  },
+  otherLicenseRequirement: {
+    type: String,
+    trim: true,
+  },
+  startDate: {
+    type: Date,
+  },
+  additionalInfo: {
+    type: String,
+    trim: true,
+  },
+  numberOfPositions: {
+    type: Number,
+    default: 1,
+  },
+  positionsFilled: {
+    type: Number,
+    default: 0,
+  },
+  recruitmentDuration: {
+    type: String,
+    enum: [
+      "7-10 Days IE",
+      "15-20 Days TUE",
+      "30 Days NE",
+      "60 Days EE",
+      "6 Months Ongoing Recruitment",
+    ],
+  },
+  assessmentLink: {
+    type: String,
+    trim: true,
+  },
+  status: {
+    type: String,
+    enum: ["active", "closed", "hold"],
+    default: "active",
+  },
+  expires: {
+    type: Date,
+  },
+  isApproved: {
+    type: Boolean,
+    default: false,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+module.exports = mongoose.model("Job", jobSchema);
