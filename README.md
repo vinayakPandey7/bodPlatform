@@ -270,6 +270,28 @@ This project is licensed under the MIT License.
 
 ## Development Status
 
+WORKING LOGIN CREDENTIALS
+Admin Account => also called super admin
+
+Email: admin@bodportal.com
+Password: admin123
+
+Employer Accounts (Tested & Working)
+
+Email: brian.nelson.emp0@outlook.com | Password: employer123
+Email: james.sanchez.emp1@outlook.com | Password: employer123
+Email: elizabeth.thompson.emp2@outlook.com | Password: employer123
+Email: kimberly.carter.emp3@hotmail.com | Password: employer123
+Email: mary.gonzalez.emp4@email.com | Password: employer123
+
+Recruitment Partner Accounts (Tested & Working)
+
+Email: jennifer.sanchez.rec0@email.com | Password: recruiter123
+Email: sandra.white.rec1@hotmail.com | Password: recruiter123
+Email: andrew.lee.rec2@hotmail.com | Password: recruiter123
+Email: donald.williams.rec3@hotmail.com | Password: recruiter123
+Email: richard.flores.rec4@outlook.com | Password: recruiter123
+
 ✅ = Completed  
 🔄 = In Progress  
 ❌ = Not Started
