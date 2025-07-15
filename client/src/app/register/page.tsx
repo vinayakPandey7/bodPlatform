@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Logo from "@/components/Logo";
@@ -16,7 +16,19 @@ import {
   InputAdornment,
   IconButton,
 } from "@mui/material";
-import { Eye, EyeOff, Mail, Lock, User, Building, Phone, MapPin, Globe, Calendar, ChevronRight } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Building,
+  Phone,
+  MapPin,
+  Globe,
+  Calendar,
+  ChevronRight,
+} from "lucide-react";
 
 // Generic Input Component
 interface InputProps {
@@ -65,14 +77,10 @@ const Input: React.FC<InputProps> = ({
         variant="outlined"
         InputProps={{
           startAdornment: icon && (
-            <InputAdornment position="start">
-              {icon}
-            </InputAdornment>
+            <InputAdornment position="start">{icon}</InputAdornment>
           ),
           endAdornment: endIcon && (
-            <InputAdornment position="end">
-              {endIcon}
-            </InputAdornment>
+            <InputAdornment position="end">{endIcon}</InputAdornment>
           ),
         }}
         sx={{
@@ -136,7 +144,10 @@ const SelectInput: React.FC<SelectProps> = ({
   return (
     <div className="w-full">
       <FormControl fullWidth error={touched && Boolean(error)}>
-        <InputLabel required={required} sx={{ fontWeight: 500, color: "#64748b" }}>
+        <InputLabel
+          required={required}
+          sx={{ fontWeight: 500, color: "#64748b" }}
+        >
           {label}
         </InputLabel>
         <Select
@@ -166,9 +177,7 @@ const SelectInput: React.FC<SelectProps> = ({
         >
           {children}
         </Select>
-        {touched && error && (
-          <FormHelperText>{error}</FormHelperText>
-        )}
+        {touched && error && <FormHelperText>{error}</FormHelperText>}
       </FormControl>
     </div>
   );
@@ -183,7 +192,7 @@ const baseValidationSchema = Yup.object({
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref('password')], "Passwords must match")
+    .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Please confirm your password"),
   role: Yup.string().required("Please select an account type"),
 });
@@ -208,8 +217,12 @@ const employerValidationSchema = baseValidationSchema.shape({
 
 const recruitmentPartnerValidationSchema = baseValidationSchema.shape({
   partnerCompanyName: Yup.string().required("Company name is required"),
-  partnerContactPersonName: Yup.string().required("Contact person name is required"),
-  partnerContactPersonTitle: Yup.string().required("Contact person title is required"),
+  partnerContactPersonName: Yup.string().required(
+    "Contact person name is required"
+  ),
+  partnerContactPersonTitle: Yup.string().required(
+    "Contact person title is required"
+  ),
   partnerPhone: Yup.string()
     .matches(/^\d{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
@@ -250,6 +263,15 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationDetected, setLocationDetected] = useState(false);
+  const [currentRole, setCurrentRole] = useState(
+    roleParam === "employer"
+      ? "employer"
+      : roleParam === "recruitment-partner"
+      ? "recruitment_partner"
+      : roleParam === "candidate"
+      ? "candidate"
+      : "candidate"
+  );
   const [coordinates, setCoordinates] = useState<{
     lat: number | null;
     lng: number | null;
@@ -259,7 +281,14 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: roleParam === "employer" ? "employer" : roleParam === "recruitment-partner" ? "recruitment_partner" : roleParam === "candidate" ? "candidate" : "candidate",
+    role:
+      roleParam === "employer"
+        ? "employer"
+        : roleParam === "recruitment-partner"
+        ? "recruitment_partner"
+        : roleParam === "candidate"
+        ? "candidate"
+        : "candidate",
     // Employer specific fields
     companyName: "",
     ownerName: "",
@@ -366,7 +395,11 @@ export default function RegisterPage() {
   };
 
   // Handle ZIP code change for auto-population
-  const handleZipCodeChange = async (zipCode: string, setFieldValue: (field: string, value: any) => void, prefix: string = "") => {
+  const handleZipCodeChange = async (
+    zipCode: string,
+    setFieldValue: (field: string, value: any) => void,
+    prefix: string = ""
+  ) => {
     if (zipCode.length === 5 && /^\d{5}$/.test(zipCode)) {
       try {
         const response = await fetch("/api/location/lookup-zipcode", {
@@ -389,7 +422,9 @@ export default function RegisterPage() {
         }
       } catch (err) {
         console.error("Error looking up ZIP code:", err);
-        setError("Error looking up ZIP code. Please verify the ZIP code is correct.");
+        setError(
+          "Error looking up ZIP code. Please verify the ZIP code is correct."
+        );
       }
     }
   };
@@ -400,26 +435,35 @@ export default function RegisterPage() {
     setSuccess("");
 
     try {
-      const endpoint = values.role === "employer" ? "/api/auth/register/employer" : "/api/auth/register";
-      
+      const endpoint =
+        values.role === "employer"
+          ? "/api/auth/register/employer"
+          : "/api/auth/register";
+
+      const requestBody = {
+        ...values,
+        coordinates:
+          coordinates.lat && coordinates.lng ? coordinates : undefined,
+      };
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...values,
-          coordinates: coordinates.lat && coordinates.lng ? coordinates : undefined,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess(data.message || "Registration successful! Redirecting to login...");
+        setSuccess(
+          data.message || "Registration successful! Redirecting to login..."
+        );
+        // Increase timeout to make success message more visible
         setTimeout(() => {
           router.push("/login");
-        }, 3000);
+        }, 5000);
       } else {
         setError(data.message || "Registration failed");
       }
@@ -503,8 +547,8 @@ export default function RegisterPage() {
           </p>
           <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
             <span>Already have an account?</span>
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               className="text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center gap-1 transition-colors"
             >
               Sign in here
@@ -517,11 +561,19 @@ export default function RegisterPage() {
         <div className="max-w-4xl mx-auto">
           <Formik
             initialValues={initialValues}
-            validationSchema={getValidationSchema(initialValues.role)}
+            validationSchema={getValidationSchema(currentRole)}
             onSubmit={handleSubmit}
             enableReinitialize
           >
-            {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isSubmitting }) => (
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              setFieldValue,
+              isSubmitting,
+            }) => (
               <Form className="space-y-8">
                 {error && (
                   <div className="max-w-2xl mx-auto">
@@ -541,14 +593,22 @@ export default function RegisterPage() {
 
                 {/* Single Combined Form */}
                 <div className="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
-                  <div className={`bg-gradient-to-r ${getRoleColor(values.role)} p-6`}>
+                  <div
+                    className={`bg-gradient-to-r ${getRoleColor(
+                      values.role
+                    )} p-6`}
+                  >
                     <div className="flex items-center gap-4 text-white">
                       <div className="p-3 bg-white/20 rounded-xl">
                         {getRoleIcon(values.role)}
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold">{getRoleDisplayName(values.role)} Registration</h2>
-                        <p className="text-white/90">{getRoleDescription(values.role)}</p>
+                        <h2 className="text-2xl font-bold">
+                          {getRoleDisplayName(values.role)} Registration
+                        </h2>
+                        <p className="text-white/90">
+                          {getRoleDescription(values.role)}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -573,7 +633,9 @@ export default function RegisterPage() {
                               error={errors.email}
                               touched={touched.email}
                               required
-                              icon={<Mail size={20} className="text-slate-400" />}
+                              icon={
+                                <Mail size={20} className="text-slate-400" />
+                              }
                             />
                           </div>
 
@@ -593,7 +655,11 @@ export default function RegisterPage() {
                                 onClick={() => setShowPassword(!showPassword)}
                                 edge="end"
                               >
-                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                {showPassword ? (
+                                  <EyeOff size={20} />
+                                ) : (
+                                  <Eye size={20} />
+                                )}
                               </IconButton>
                             }
                           />
@@ -611,10 +677,16 @@ export default function RegisterPage() {
                             icon={<Lock size={20} className="text-slate-400" />}
                             endIcon={
                               <IconButton
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                onClick={() =>
+                                  setShowConfirmPassword(!showConfirmPassword)
+                                }
                                 edge="end"
                               >
-                                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                {showConfirmPassword ? (
+                                  <EyeOff size={20} />
+                                ) : (
+                                  <Eye size={20} />
+                                )}
                               </IconButton>
                             }
                           />
@@ -627,7 +699,12 @@ export default function RegisterPage() {
                               onChange={(e) => {
                                 handleChange(e);
                                 const newRole = e.target.value;
-                                if ((newRole === "employer" || newRole === "candidate") && !locationDetected) {
+                                setCurrentRole(newRole);
+                                if (
+                                  (newRole === "employer" ||
+                                    newRole === "candidate") &&
+                                  !locationDetected
+                                ) {
                                   setShowLocationModal(true);
                                 }
                               }}
@@ -638,7 +715,9 @@ export default function RegisterPage() {
                             >
                               <MenuItem value="candidate">Job Seeker</MenuItem>
                               <MenuItem value="employer">Employer</MenuItem>
-                              <MenuItem value="recruitment_partner">Recruitment Partner</MenuItem>
+                              <MenuItem value="recruitment_partner">
+                                Recruitment Partner
+                              </MenuItem>
                             </SelectInput>
                           </div>
                         </div>
@@ -661,7 +740,12 @@ export default function RegisterPage() {
                               error={errors.companyName}
                               touched={touched.companyName}
                               required
-                              icon={<Building size={20} className="text-slate-400" />}
+                              icon={
+                                <Building
+                                  size={20}
+                                  className="text-slate-400"
+                                />
+                              }
                             />
 
                             <Input
@@ -673,7 +757,9 @@ export default function RegisterPage() {
                               error={errors.ownerName}
                               touched={touched.ownerName}
                               required
-                              icon={<User size={20} className="text-slate-400" />}
+                              icon={
+                                <User size={20} className="text-slate-400" />
+                              }
                             />
 
                             <Input
@@ -696,7 +782,9 @@ export default function RegisterPage() {
                               error={errors.phoneNumber}
                               touched={touched.phoneNumber}
                               required
-                              icon={<Phone size={20} className="text-slate-400" />}
+                              icon={
+                                <Phone size={20} className="text-slate-400" />
+                              }
                             />
 
                             <Input
@@ -707,7 +795,9 @@ export default function RegisterPage() {
                               onBlur={handleBlur}
                               error={errors.website}
                               touched={touched.website}
-                              icon={<Globe size={20} className="text-slate-400" />}
+                              icon={
+                                <Globe size={20} className="text-slate-400" />
+                              }
                             />
 
                             <SelectInput
@@ -724,7 +814,9 @@ export default function RegisterPage() {
                               <MenuItem value="healthcare">Healthcare</MenuItem>
                               <MenuItem value="finance">Finance</MenuItem>
                               <MenuItem value="education">Education</MenuItem>
-                              <MenuItem value="manufacturing">Manufacturing</MenuItem>
+                              <MenuItem value="manufacturing">
+                                Manufacturing
+                              </MenuItem>
                               <MenuItem value="retail">Retail</MenuItem>
                               <MenuItem value="other">Other</MenuItem>
                             </SelectInput>
@@ -741,10 +833,18 @@ export default function RegisterPage() {
                                 required
                               >
                                 <MenuItem value="1-10">1-10 employees</MenuItem>
-                                <MenuItem value="11-50">11-50 employees</MenuItem>
-                                <MenuItem value="51-200">51-200 employees</MenuItem>
-                                <MenuItem value="201-1000">201-1000 employees</MenuItem>
-                                <MenuItem value="1000+">1000+ employees</MenuItem>
+                                <MenuItem value="11-50">
+                                  11-50 employees
+                                </MenuItem>
+                                <MenuItem value="51-200">
+                                  51-200 employees
+                                </MenuItem>
+                                <MenuItem value="201-1000">
+                                  201-1000 employees
+                                </MenuItem>
+                                <MenuItem value="1000+">
+                                  1000+ employees
+                                </MenuItem>
                               </SelectInput>
                             </div>
                           </div>
@@ -767,7 +867,12 @@ export default function RegisterPage() {
                               error={errors.partnerCompanyName}
                               touched={touched.partnerCompanyName}
                               required
-                              icon={<Building size={20} className="text-slate-400" />}
+                              icon={
+                                <Building
+                                  size={20}
+                                  className="text-slate-400"
+                                />
+                              }
                             />
 
                             <Input
@@ -779,7 +884,9 @@ export default function RegisterPage() {
                               error={errors.partnerContactPersonName}
                               touched={touched.partnerContactPersonName}
                               required
-                              icon={<User size={20} className="text-slate-400" />}
+                              icon={
+                                <User size={20} className="text-slate-400" />
+                              }
                             />
 
                             <Input
@@ -802,7 +909,9 @@ export default function RegisterPage() {
                               error={errors.partnerPhone}
                               touched={touched.partnerPhone}
                               required
-                              icon={<Phone size={20} className="text-slate-400" />}
+                              icon={
+                                <Phone size={20} className="text-slate-400" />
+                              }
                             />
 
                             <Input
@@ -813,7 +922,9 @@ export default function RegisterPage() {
                               onBlur={handleBlur}
                               error={errors.partnerWebsite}
                               touched={touched.partnerWebsite}
-                              icon={<Globe size={20} className="text-slate-400" />}
+                              icon={
+                                <Globe size={20} className="text-slate-400" />
+                              }
                             />
 
                             <Input
@@ -825,7 +936,12 @@ export default function RegisterPage() {
                               error={errors.yearsOfExperience}
                               touched={touched.yearsOfExperience}
                               required
-                              icon={<Calendar size={20} className="text-slate-400" />}
+                              icon={
+                                <Calendar
+                                  size={20}
+                                  className="text-slate-400"
+                                />
+                              }
                             />
 
                             <div className="lg:col-span-2">
@@ -860,7 +976,9 @@ export default function RegisterPage() {
                               error={errors.candidateFirstName}
                               touched={touched.candidateFirstName}
                               required
-                              icon={<User size={20} className="text-slate-400" />}
+                              icon={
+                                <User size={20} className="text-slate-400" />
+                              }
                             />
 
                             <Input
@@ -872,7 +990,9 @@ export default function RegisterPage() {
                               error={errors.candidateLastName}
                               touched={touched.candidateLastName}
                               required
-                              icon={<User size={20} className="text-slate-400" />}
+                              icon={
+                                <User size={20} className="text-slate-400" />
+                              }
                             />
 
                             <div className="lg:col-span-2">
@@ -885,7 +1005,9 @@ export default function RegisterPage() {
                                 error={errors.candidatePhone}
                                 touched={touched.candidatePhone}
                                 required
-                                icon={<Phone size={20} className="text-slate-400" />}
+                                icon={
+                                  <Phone size={20} className="text-slate-400" />
+                                }
                               />
                             </div>
                           </div>
@@ -893,7 +1015,9 @@ export default function RegisterPage() {
                       )}
 
                       {/* Address Section */}
-                      {(values.role === "employer" || values.role === "recruitment_partner" || values.role === "candidate") && (
+                      {(values.role === "employer" ||
+                        values.role === "recruitment_partner" ||
+                        values.role === "candidate") && (
                         <div className="border-t border-slate-200 pt-6">
                           <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
                             <MapPin size={20} className="text-slate-400" />
@@ -903,52 +1027,159 @@ export default function RegisterPage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <Input
                                 label="ZIP Code"
-                                name={values.role === "employer" ? "zipCode" : values.role === "recruitment_partner" ? "partnerZipCode" : "candidateZipCode"}
-                                value={values.role === "employer" ? values.zipCode : values.role === "recruitment_partner" ? values.partnerZipCode : values.candidateZipCode}
+                                name={
+                                  values.role === "employer"
+                                    ? "zipCode"
+                                    : values.role === "recruitment_partner"
+                                    ? "partnerZipCode"
+                                    : "candidateZipCode"
+                                }
+                                value={
+                                  values.role === "employer"
+                                    ? values.zipCode
+                                    : values.role === "recruitment_partner"
+                                    ? values.partnerZipCode
+                                    : values.candidateZipCode
+                                }
                                 onChange={(e) => {
                                   handleChange(e);
-                                  const prefix = values.role === "employer" ? "" : values.role === "recruitment_partner" ? "partner" : "candidate";
-                                  handleZipCodeChange(e.target.value, setFieldValue, prefix);
+                                  const prefix =
+                                    values.role === "employer"
+                                      ? ""
+                                      : values.role === "recruitment_partner"
+                                      ? "partner"
+                                      : "candidate";
+                                  handleZipCodeChange(
+                                    e.target.value,
+                                    setFieldValue,
+                                    prefix
+                                  );
                                 }}
                                 onBlur={handleBlur}
-                                error={values.role === "employer" ? errors.zipCode : values.role === "recruitment_partner" ? errors.partnerZipCode : errors.candidateZipCode}
-                                touched={values.role === "employer" ? touched.zipCode : values.role === "recruitment_partner" ? touched.partnerZipCode : touched.candidateZipCode}
+                                error={
+                                  values.role === "employer"
+                                    ? errors.zipCode
+                                    : values.role === "recruitment_partner"
+                                    ? errors.partnerZipCode
+                                    : errors.candidateZipCode
+                                }
+                                touched={
+                                  values.role === "employer"
+                                    ? touched.zipCode
+                                    : values.role === "recruitment_partner"
+                                    ? touched.partnerZipCode
+                                    : touched.candidateZipCode
+                                }
                                 required
                               />
 
                               <Input
                                 label="City"
-                                name={values.role === "employer" ? "city" : values.role === "recruitment_partner" ? "partnerCity" : "candidateCity"}
-                                value={values.role === "employer" ? values.city : values.role === "recruitment_partner" ? values.partnerCity : values.candidateCity}
+                                name={
+                                  values.role === "employer"
+                                    ? "city"
+                                    : values.role === "recruitment_partner"
+                                    ? "partnerCity"
+                                    : "candidateCity"
+                                }
+                                value={
+                                  values.role === "employer"
+                                    ? values.city
+                                    : values.role === "recruitment_partner"
+                                    ? values.partnerCity
+                                    : values.candidateCity
+                                }
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                error={values.role === "employer" ? errors.city : values.role === "recruitment_partner" ? errors.partnerCity : errors.candidateCity}
-                                touched={values.role === "employer" ? touched.city : values.role === "recruitment_partner" ? touched.partnerCity : touched.candidateCity}
+                                error={
+                                  values.role === "employer"
+                                    ? errors.city
+                                    : values.role === "recruitment_partner"
+                                    ? errors.partnerCity
+                                    : errors.candidateCity
+                                }
+                                touched={
+                                  values.role === "employer"
+                                    ? touched.city
+                                    : values.role === "recruitment_partner"
+                                    ? touched.partnerCity
+                                    : touched.candidateCity
+                                }
                                 required
                               />
 
                               <Input
                                 label="State"
-                                name={values.role === "employer" ? "state" : values.role === "recruitment_partner" ? "partnerState" : "candidateState"}
-                                value={values.role === "employer" ? values.state : values.role === "recruitment_partner" ? values.partnerState : values.candidateState}
+                                name={
+                                  values.role === "employer"
+                                    ? "state"
+                                    : values.role === "recruitment_partner"
+                                    ? "partnerState"
+                                    : "candidateState"
+                                }
+                                value={
+                                  values.role === "employer"
+                                    ? values.state
+                                    : values.role === "recruitment_partner"
+                                    ? values.partnerState
+                                    : values.candidateState
+                                }
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                error={values.role === "employer" ? errors.state : values.role === "recruitment_partner" ? errors.partnerState : errors.candidateState}
-                                touched={values.role === "employer" ? touched.state : values.role === "recruitment_partner" ? touched.partnerState : touched.candidateState}
+                                error={
+                                  values.role === "employer"
+                                    ? errors.state
+                                    : values.role === "recruitment_partner"
+                                    ? errors.partnerState
+                                    : errors.candidateState
+                                }
+                                touched={
+                                  values.role === "employer"
+                                    ? touched.state
+                                    : values.role === "recruitment_partner"
+                                    ? touched.partnerState
+                                    : touched.candidateState
+                                }
                                 required
                               />
                             </div>
 
                             <Input
                               label="Street Address"
-                              name={values.role === "employer" ? "address" : values.role === "recruitment_partner" ? "partnerAddress" : "candidateAddress"}
-                              value={values.role === "employer" ? values.address : values.role === "recruitment_partner" ? values.partnerAddress : values.candidateAddress}
+                              name={
+                                values.role === "employer"
+                                  ? "address"
+                                  : values.role === "recruitment_partner"
+                                  ? "partnerAddress"
+                                  : "candidateAddress"
+                              }
+                              value={
+                                values.role === "employer"
+                                  ? values.address
+                                  : values.role === "recruitment_partner"
+                                  ? values.partnerAddress
+                                  : values.candidateAddress
+                              }
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              error={values.role === "employer" ? errors.address : values.role === "recruitment_partner" ? errors.partnerAddress : errors.candidateAddress}
-                              touched={values.role === "employer" ? touched.address : values.role === "recruitment_partner" ? touched.partnerAddress : touched.candidateAddress}
+                              error={
+                                values.role === "employer"
+                                  ? errors.address
+                                  : values.role === "recruitment_partner"
+                                  ? errors.partnerAddress
+                                  : errors.candidateAddress
+                              }
+                              touched={
+                                values.role === "employer"
+                                  ? touched.address
+                                  : values.role === "recruitment_partner"
+                                  ? touched.partnerAddress
+                                  : touched.candidateAddress
+                              }
                               required
-                              icon={<MapPin size={20} className="text-slate-400" />}
+                              icon={
+                                <MapPin size={20} className="text-slate-400" />
+                              }
                             />
                           </div>
                         </div>
@@ -962,7 +1193,9 @@ export default function RegisterPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting || loading}
-                    className={`px-12 py-4 bg-gradient-to-r ${getRoleColor(values.role)} text-white font-bold text-lg rounded-2xl 
+                    className={`px-12 py-4 bg-gradient-to-r ${getRoleColor(
+                      values.role
+                    )} text-white font-bold text-lg rounded-2xl 
                              hover:shadow-2xl hover:scale-105 transform transition-all duration-300 
                              disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-none`}
                   >
@@ -993,7 +1226,8 @@ export default function RegisterPage() {
                   Enable Location Services
                 </h3>
                 <p className="text-slate-600">
-                  We'd like to access your location to verify you're in the United States and help auto-populate your address.
+                  We'd like to access your location to verify you're in the
+                  United States and help auto-populate your address.
                 </p>
               </div>
               <div className="flex gap-4">
@@ -1018,4 +1252,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
