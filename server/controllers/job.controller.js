@@ -102,10 +102,16 @@ exports.createJob = async (req, res) => {
       jobData.startDate = new Date();
     }
 
+    // Set approval status - Auto-approve all jobs by default
+    jobData.isApproved = true;
+
+    // TODO: Uncomment below code for future manual approval workflow
     // Set approval status based on employer's job posting setting
-    if (employer.jobPosting === "automatic") {
-      jobData.isApproved = true;
-    }
+    // if (employer.jobPosting === "automatic") {
+    //   jobData.isApproved = true;
+    // } else {
+    //   jobData.isApproved = false; // Require manual approval
+    // }
 
     const job = new Job(jobData);
     await job.save();
