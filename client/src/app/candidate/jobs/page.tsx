@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useJobsForCandidates } from "@/lib/hooks/job.hooks";
+import { useJobsForCandidates, useApplyToJob } from "@/lib/hooks/job.hooks";
+import { useSaveJob, useUnsaveJob } from "@/lib/hooks/candidate.hooks";
 import { useCurrentUser } from "@/lib/hooks/auth.hooks";
 
 interface JobSearchFilters {
@@ -54,6 +55,11 @@ export default function CandidateJobsPage() {
     page: 1,
     limit: 20,
   });
+
+  // Add hooks for job actions
+  const { mutate: saveJob, isPending: isSaving } = useSaveJob();
+  const { mutate: unsaveJob, isPending: isUnsaving } = useUnsaveJob();
+  const { mutate: applyToJob, isPending: isApplying } = useApplyToJob();
 
   const [zipCodeError, setZipCodeError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -137,6 +143,49 @@ export default function CandidateJobsPage() {
       default:
         return "bg-green-100 text-green-800";
     }
+  };
+
+  // Handler functions for job actions
+  const handleViewJobDetails = (jobId: string) => {
+    // Navigate to job details page or open modal
+    window.open(`/job/${jobId}`, '_blank');
+  };
+
+  const handleSaveJob = (jobId: string) => {
+    saveJob(jobId, {
+      onSuccess: () => {
+        console.log("Job saved successfully");
+        // You could add a toast notification here
+      },
+      onError: (error) => {
+        console.error("Failed to save job:", error);
+        // You could add an error toast notification here
+      }
+    });
+  };
+
+  const handleUnsaveJob = (jobId: string) => {
+    unsaveJob(jobId, {
+      onSuccess: () => {
+        console.log("Job unsaved successfully");
+      },
+      onError: (error) => {
+        console.error("Failed to unsave job:", error);
+      }
+    });
+  };
+
+  const handleApplyToJob = (jobId: string) => {
+    applyToJob({ jobId, data: {} }, {
+      onSuccess: () => {
+        console.log("Applied to job successfully");
+        // You could add a success toast notification here
+      },
+      onError: (error) => {
+        console.error("Failed to apply to job:", error);
+        // You could add an error toast notification here
+      }
+    });
   };
 
   return (
@@ -386,9 +435,31 @@ export default function CandidateJobsPage() {
                     <p className="text-sm text-gray-500">
                       Posted {new Date(job.createdAt).toLocaleDateString()}
                     </p>
-                    <button className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
-                      View Details
-                    </button>
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => handleSaveJob(job._id)}
+                        disabled={isSaving}
+                        className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center space-x-1"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                      </button>
+                      <button 
+                        onClick={() => handleApplyToJob(job._id)}
+                        disabled={isApplying}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                      >
+                        {isApplying ? 'Applying...' : 'Quick Apply'}
+                      </button>
+                      <button 
+                        onClick={() => handleViewJobDetails(job._id)}
+                        className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                      >
+                        View Details
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

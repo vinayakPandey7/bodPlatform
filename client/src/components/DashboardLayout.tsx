@@ -53,7 +53,35 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const getNavigationItems = () => {
-    if (user?.role === "employer") {
+    if (user?.role === "candidate") {
+      return [
+        {
+          name: "Dashboard",
+          href: "/candidate/dashboard",
+          current: pathname === "/candidate/dashboard",
+        },
+        {
+          name: "Find Jobs",
+          href: "/candidate/jobs",
+          current: pathname === "/candidate/jobs",
+        },
+        {
+          name: "My Applications",
+          href: "/candidate/applications",
+          current: pathname === "/candidate/applications",
+        },
+        {
+          name: "Saved Jobs",
+          href: "/candidate/saved-jobs",
+          current: pathname === "/candidate/saved-jobs",
+        },
+        {
+          name: "Profile",
+          href: "/candidate/profile",
+          current: pathname === "/candidate/profile",
+        },
+      ];
+    } else if (user?.role === "employer") {
       return [
         {
           name: "Dashboard",
@@ -216,6 +244,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <header className="bg-white shadow">
           <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold text-gray-900">
+              {user?.role === "candidate" && "Candidate Dashboard"}
               {user?.role === "employer" && "Employer Dashboard"}
               {user?.role === "recruitment_partner" &&
                 "Recruitment Partner Dashboard"}

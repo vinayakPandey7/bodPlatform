@@ -39,3 +39,56 @@ export const useCandidateApplications = (params?: any) => {
     placeholderData: (previousData: any) => previousData,
   });
 };
+
+export const useCandidateProfile = () => {
+  return useQuery({
+    queryKey: QUERY_KEYS.CANDIDATES.PROFILE,
+    queryFn: () => candidateFetchers.getCandidateProfile(),
+  });
+};
+
+export const useUpdateCandidateProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: candidateFetchers.updateCandidateProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.PROFILE });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.ME });
+    },
+  });
+};
+
+export const useCandidateSavedJobs = (params?: any) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS(params),
+    queryFn: () => candidateFetchers.getCandidateSavedJobs(params),
+    placeholderData: (previousData: any) => previousData,
+  });
+};
+
+export const useSaveJob = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: candidateFetchers.saveJob,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS() });
+    },
+  });
+};
+
+export const useUnsaveJob = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: candidateFetchers.unsaveJob,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS() });
+    },
+  });
+};
+
+export const useCandidateDashboard = () => {
+  return useQuery({
+    queryKey: QUERY_KEYS.CANDIDATES.DASHBOARD,
+    queryFn: () => candidateFetchers.getCandidateDashboard(),
+  });
+};

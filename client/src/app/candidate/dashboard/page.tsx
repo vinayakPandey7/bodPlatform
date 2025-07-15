@@ -1,182 +1,435 @@
 "use client";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useCurrentUser } from "@/lib/hooks/auth.hooks";
+import { 
+  useCandidateApplications, 
+  useCandidateDashboard, 
+  useCandidateSavedJobs,
+  useCandidateProfile 
+} from "@/lib/hooks/candidate.hooks";
+import { useJobsForCandidates } from "@/lib/hooks/job.hooks";
+import {
+  User,
+  Search,
+  FileText,
+  Bookmark,
+  TrendingUp,
+  MapPin,
+  Clock,
+  Eye,
+  Award,
+  Bell,
+  ChevronRight,
+  Briefcase,
+  Building,
+  DollarSign,
+  Calendar,
+  Star,
+  Heart,
+  ArrowUpRight,
+  Filter,
+  Target,
+  CheckCircle,
+  PlusCircle,
+  Edit,
+} from "lucide-react";
 
 export default function CandidateDashboard() {
   const router = useRouter();
+  const { data: currentUserData, isLoading: userLoading } = useCurrentUser();
+  const currentUser = currentUserData?.user;
+  
+  // Use real API data instead of static data
+  const { data: dashboardData, isLoading: dashboardLoading } = useCandidateDashboard();
+  const { data: applicationsData } = useCandidateApplications();
+  const { data: savedJobsData } = useCandidateSavedJobs();
+  const { data: profileData } = useCandidateProfile();
+
+  // Fetch recommended jobs based on user location
+  const { data: recommendedJobs } = useJobsForCandidates(
+    currentUser?.zipCode ? { zipCode: currentUser.zipCode, limit: 3 } : undefined
+  );
+
+  // Calculate dashboard stats from real data
+  const dashboardStats = {
+    profileViews: dashboardData?.profileViews || 0,
+    applications: applicationsData?.total || 0,
+    savedJobs: savedJobsData?.total || 0,
+    profileCompletion: dashboardData?.profileCompletion || 0,
+  };
+
+  // Use real recent activity from dashboard API
+  const recentActivity = dashboardData?.recentActivity || [];
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "application":
+        return <FileText size={16} className="text-blue-600" />;
+      case "profile_view":
+        return <Eye size={16} className="text-green-600" />;
+      case "job_save":
+        return <Heart size={16} className="text-red-600" />;
+      case "interview":
+        return <Calendar size={16} className="text-purple-600" />;
+      default:
+        return <Clock size={16} className="text-gray-600" />;
+    }
+  };
+
+  const getProfileCompletionColor = (percentage: number) => {
+    if (percentage >= 80) return "bg-green-500";
+    if (percentage >= 60) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
+  // Use real job categories data or fallback
+  const quickSearchCategories = dashboardData?.jobCategories || [
+    { name: "Software Engineer", count: "2.3k jobs", icon: "💻" },
+    { name: "Product Manager", count: "1.8k jobs", icon: "📊" },
+    { name: "Data Scientist", count: "1.5k jobs", icon: "📈" },
+    { name: "UI/UX Designer", count: "980 jobs", icon: "🎨" },
+    { name: "DevOps Engineer", count: "750 jobs", icon: "⚙️" },
+    { name: "Marketing Manager", count: "680 jobs", icon: "📢" },
+  ];
+
+  // Navigation functions
+  const handleSearchJobs = () => {
+    router.push("/candidate/jobs");
+  };
+
+  const handleViewApplications = () => {
+    router.push("/candidate/applications");
+  };
+
+  const handleViewSavedJobs = () => {
+    router.push("/candidate/saved-jobs");
+  };
+
+  const handleViewProfile = () => {
+    router.push("/candidate/profile");
+  };
+
+  const handleJobCategorySearch = (category: string) => {
+    router.push(`/candidate/jobs?search=${encodeURIComponent(category)}`);
+  };
+
+  if (userLoading || dashboardLoading) {
+    return (
+      <ProtectedRoute allowedRoles={["candidate"]}>
+        <DashboardLayout>
+          <div className="flex items-center justify-center min-h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
 
   return (
-    <ProtectedRoute allowedRoles={["candidate", "recruitment_partner"]}>
+    <ProtectedRoute allowedRoles={["candidate"]}>
       <DashboardLayout>
-        <div className="space-y-6 text-black">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Candidate Dashboard
-            </h1>
-            <p className="mt-1 text-gray-600">
-              Find and apply to jobs near your location
-            </p>
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Welcome Header */}
+          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-8 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">
+                  Welcome back, {currentUser?.firstName || "Job Seeker"}! 👋
+                </h1>
+                <p className="text-blue-100 text-lg">
+                  Find your dream job and take the next step in your career
+                </p>
+              </div>
+              <div className="hidden md:flex items-center space-x-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{dashboardStats.applications}</div>
+                  <div className="text-blue-100 text-sm">Applications</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{dashboardStats.profileViews}</div>
+                  <div className="text-blue-100 text-sm">Profile Views</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{dashboardStats.savedJobs}</div>
+                  <div className="text-blue-100 text-sm">Saved Jobs</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div
-              onClick={() => router.push("/candidate/jobs")}
-              className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <button
+              onClick={handleSearchJobs}
+              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-200 transition-all duration-200"
             >
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                  <Search className="h-6 w-6 text-blue-600" />
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    Find Jobs
-                  </h3>
-                  <p className="text-gray-600">
-                    Search for jobs near your location
-                  </p>
-                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
               </div>
-            </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Search Jobs</h3>
+              <p className="text-gray-600 text-sm">Find your perfect job match</p>
+            </button>
 
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer opacity-50">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                  </div>
+            <button
+              onClick={handleViewApplications}
+              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-green-200 transition-all duration-200"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+                  <FileText className="h-6 w-6 text-green-600" />
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    My Applications
-                  </h3>
-                  <p className="text-gray-600">Track your job applications</p>
-                  <p className="text-xs text-gray-400 mt-1">Coming soon</p>
-                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-600 transition-colors" />
               </div>
-            </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">My Applications</h3>
+              <p className="text-gray-600 text-sm">Track application status</p>
+            </button>
 
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer opacity-50">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  </div>
+            <button
+              onClick={handleViewSavedJobs}
+              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-purple-200 transition-all duration-200"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                  <Bookmark className="h-6 w-6 text-purple-600" />
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Profile</h3>
-                  <p className="text-gray-600">
-                    Update your profile and resume
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">Coming soon</p>
-                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
               </div>
-            </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Saved Jobs</h3>
+              <p className="text-gray-600 text-sm">Review bookmarked positions</p>
+            </button>
+
+            <button
+              onClick={handleViewProfile}
+              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-200 transition-all duration-200"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                  <User className="h-6 w-6 text-orange-600" />
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-orange-600 transition-colors" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">My Profile</h3>
+              <p className="text-gray-600 text-sm">Update your information</p>
+            </button>
           </div>
 
-          {/* Job Search Preview */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Quick Job Search
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Enter your zip code to start finding jobs in your area within a
-              5-mile radius.
-            </p>
-            <div className="flex space-x-4">
-              <input
-                type="text"
-                placeholder="Enter your zip code"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                maxLength={5}
-                pattern="\\d{5}"
-              />
-              <button
-                onClick={() => router.push("/candidate/jobs")}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-              >
-                Search Jobs
-              </button>
-            </div>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Profile Completion */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Profile Strength</h2>
+                  <span className="text-sm text-gray-600">{dashboardStats.profileCompletion}% Complete</span>
+                </div>
+                <div className="mb-4">
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full ${getProfileCompletionColor(dashboardStats.profileCompletion)} transition-all duration-500`}
+                      style={{ width: `${dashboardStats.profileCompletion}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-sm text-gray-600">Basic Info</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-sm text-gray-600">Work Experience</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Edit className="h-5 w-5 text-orange-500" />
+                    <span className="text-sm text-gray-600">Skills & Portfolio</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleViewProfile}
+                  className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Complete Profile
+                </button>
+              </div>
 
-          {/* How It Works */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              How Job Search Works
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <span className="text-indigo-600 font-semibold">1</span>
+              {/* Job Recommendations */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-gray-900">Recommended Jobs</h2>
+                  <button
+                    onClick={handleSearchJobs}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                  >
+                    View All <ArrowUpRight className="h-4 w-4" />
+                  </button>
                 </div>
-                <h3 className="font-medium text-gray-900 mb-2">
-                  Enter Your Location
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Provide your zip code to find jobs in your area
-                </p>
+                <div className="space-y-4">
+                  {recommendedJobs?.jobs?.slice(0, 3).map((job: any) => (
+                    <div key={job._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 mb-1">{job.title}</h3>
+                          <p className="text-gray-600 text-sm mb-2">{job.employer.companyName}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              {job.city}, {job.state}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="h-4 w-4" />
+                              {job.salaryMin && job.salaryMax 
+                                ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`
+                                : "Salary not specified"
+                              }
+                            </span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => router.push(`/candidate/jobs?jobId=${job._id}`)}
+                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                        >
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  )) || (
+                    <div className="text-center py-8 text-gray-500">
+                      <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>No job recommendations available</p>
+                      <button 
+                        onClick={handleSearchJobs}
+                        className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        Search Jobs Now
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <span className="text-indigo-600 font-semibold">2</span>
+
+              {/* Popular Job Categories */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 mb-6">Popular Job Categories</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {quickSearchCategories.map((category, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleJobCategorySearch(category.name)}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-blue-200 transition-all duration-200 group"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{category.icon}</span>
+                        <div className="text-left">
+                          <div className="font-medium text-gray-900 group-hover:text-blue-600">
+                            {category.name}
+                          </div>
+                          <div className="text-sm text-gray-500">{category.count}</div>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600" />
+                    </button>
+                  ))}
                 </div>
-                <h3 className="font-medium text-gray-900 mb-2">
-                  Browse Local Jobs
-                </h3>
-                <p className="text-sm text-gray-600">
-                  See all available jobs within 5 miles of your location
-                </p>
               </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <span className="text-indigo-600 font-semibold">3</span>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-8">
+              {/* Performance Stats */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Performance</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Profile Views</span>
+                    <span className="font-semibold text-blue-600">{dashboardStats.profileViews}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Applications Sent</span>
+                    <span className="font-semibold text-green-600">{dashboardStats.applications}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Jobs Saved</span>
+                    <span className="font-semibold text-purple-600">{dashboardStats.savedJobs}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Response Rate</span>
+                    <span className="font-semibold text-orange-600">
+                      {dashboardStats.applications > 0 
+                        ? Math.round((dashboardData?.responseRate || 0) * 100) + '%'
+                        : '0%'
+                      }
+                    </span>
+                  </div>
                 </div>
-                <h3 className="font-medium text-gray-900 mb-2">
-                  Apply Directly
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Apply to jobs that match your skills and preferences
-                </p>
+              </div>
+
+              {/* Recent Activity */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                <div className="space-y-4">
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 5).map((activity: any) => (
+                      <div key={activity.id} className="flex items-start space-x-3">
+                        <div className="mt-1">
+                          {getActivityIcon(activity.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">
+                            {activity.title}
+                          </p>
+                          {activity.company && (
+                            <p className="text-sm text-gray-600">{activity.company}</p>
+                          )}
+                          <p className="text-xs text-gray-500">{activity.time}</p>
+                        </div>
+                        {activity.status && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {activity.status}
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-gray-500">
+                      <Clock className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">No recent activity</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Career Tips */}
+              <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 border border-green-100">
+                <div className="flex items-center mb-4">
+                  <Award className="h-6 w-6 text-green-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Career Tips</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <Star className="h-4 w-4 text-yellow-500 mt-1 flex-shrink-0" />
+                    <p className="text-sm text-gray-700">
+                      Complete your profile to increase visibility by 40%
+                    </p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Target className="h-4 w-4 text-blue-500 mt-1 flex-shrink-0" />
+                    <p className="text-sm text-gray-700">
+                      Apply within 24 hours for better response rates
+                    </p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <TrendingUp className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
+                    <p className="text-sm text-gray-700">
+                      Tailor your applications to each job posting
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

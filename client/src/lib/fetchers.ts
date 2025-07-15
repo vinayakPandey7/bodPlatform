@@ -245,10 +245,46 @@ export const candidateFetchers = {
     return response.data;
   },
 
+  getCandidateProfile: async () => {
+    const response = await Client.get(API_ENDPOINTS.CANDIDATES.PROFILE);
+    return response.data;
+  },
+
+  updateCandidateProfile: async (data: any) => {
+    const response = await Client.put(API_ENDPOINTS.CANDIDATES.UPDATE_PROFILE, data);
+    return response.data;
+  },
+
   getCandidateApplications: async (params?: any) => {
     const response = await Client.get(API_ENDPOINTS.CANDIDATES.APPLICATIONS, {
       params,
     });
+    return response.data;
+  },
+
+  getCandidateSavedJobs: async (params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.CANDIDATES.SAVED_JOBS, {
+      params,
+    });
+    return response.data;
+  },
+
+  saveJob: async (jobId: string) => {
+    const response = await Client.post(API_ENDPOINTS.CANDIDATES.SAVE_JOB, {
+      jobId,
+    });
+    return response.data;
+  },
+
+  unsaveJob: async (jobId: string) => {
+    const response = await Client.post(API_ENDPOINTS.CANDIDATES.UNSAVE_JOB, {
+      jobId,
+    });
+    return response.data;
+  },
+
+  getCandidateDashboard: async () => {
+    const response = await Client.get(API_ENDPOINTS.CANDIDATES.DASHBOARD);
     return response.data;
   },
 };

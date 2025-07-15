@@ -36,7 +36,13 @@ export const API_ENDPOINTS = {
     LIST: "/candidates",
     DETAIL: (id: string) => `/candidates/${id}`,
     UPDATE: (id: string) => `/candidates/${id}`,
+    PROFILE: "/candidates/profile",
+    UPDATE_PROFILE: "/candidates/profile",
     APPLICATIONS: "/candidates/applications",
+    SAVED_JOBS: "/candidates/saved-jobs",
+    SAVE_JOB: "/candidates/save-job",
+    UNSAVE_JOB: "/candidates/unsave-job",
+    DASHBOARD: "/candidates/dashboard",
   },
 
   // Employer endpoints
@@ -108,8 +114,12 @@ export const QUERY_KEYS = {
     ALL: ["candidates"] as const,
     LIST: (params?: any) => ["candidates", "list", params] as const,
     DETAIL: (id: string) => ["candidates", "detail", id] as const,
+    PROFILE: ["candidates", "profile"] as const,
     APPLICATIONS: (params?: any) =>
       ["candidates", "applications", params] as const,
+    SAVED_JOBS: (params?: any) => 
+      ["candidates", "saved-jobs", params] as const,
+    DASHBOARD: ["candidates", "dashboard"] as const,
   },
   EMPLOYERS: {
     ALL: ["employers"] as const,
