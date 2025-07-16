@@ -52,7 +52,9 @@ export const useUpdateCandidateProfile = () => {
   return useMutation({
     mutationFn: candidateFetchers.updateCandidateProfile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.PROFILE });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CANDIDATES.PROFILE,
+      });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.ME });
     },
   });
@@ -71,7 +73,12 @@ export const useSaveJob = () => {
   return useMutation({
     mutationFn: candidateFetchers.saveJob,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS() });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CANDIDATES.DASHBOARD,
+      });
     },
   });
 };
@@ -81,7 +88,12 @@ export const useUnsaveJob = () => {
   return useMutation({
     mutationFn: candidateFetchers.unsaveJob,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS() });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CANDIDATES.DASHBOARD,
+      });
     },
   });
 };

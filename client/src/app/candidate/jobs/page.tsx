@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import JobDetailsModal from "@/components/JobDetailsModal";
 import { useJobsForCandidates, useApplyToJob } from "@/lib/hooks/job.hooks";
 import { useSaveJob, useUnsaveJob } from "@/lib/hooks/candidate.hooks";
 import { useCurrentUser } from "@/lib/hooks/auth.hooks";
@@ -46,6 +48,8 @@ interface Job {
 export default function CandidateJobsPage() {
   const { data: currentUserData } = useCurrentUser();
   const currentUser = currentUserData?.user;
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [filters, setFilters] = useState<JobSearchFilters>({
     zipCode: "",
@@ -63,6 +67,8 @@ export default function CandidateJobsPage() {
 
   const [zipCodeError, setZipCodeError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Auto-populate zip code if user is logged in and has zip code
   useEffect(() => {
@@ -73,6 +79,24 @@ export default function CandidateJobsPage() {
       }));
     }
   }, [currentUser, filters.zipCode]);
+
+  // Handle jobId from URL parameters
+  useEffect(() => {
+    const jobIdFromUrl = searchParams.get("jobId");
+    const searchFromUrl = searchParams.get("search");
+
+    if (jobIdFromUrl) {
+      setSelectedJobId(jobIdFromUrl);
+      setIsModalOpen(true);
+    }
+
+    if (searchFromUrl && !filters.search) {
+      setFilters((prev) => ({
+        ...prev,
+        search: searchFromUrl,
+      }));
+    }
+  }, [searchParams, filters.search]);
 
   const {
     data: jobsData,
@@ -147,8 +171,23 @@ export default function CandidateJobsPage() {
 
   // Handler functions for job actions
   const handleViewJobDetails = (jobId: string) => {
-    // Navigate to job details page or open modal
-    window.open(`/job/${jobId}`, '_blank');
+    setSelectedJobId(jobId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedJobId(null);
+
+    // Clear jobId from URL parameters when modal is closed
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete("jobId");
+    const newUrl =
+      currentUrl.pathname +
+      (currentUrl.searchParams.toString()
+        ? "?" + currentUrl.searchParams.toString()
+        : "");
+    router.replace(newUrl, { scroll: false });
   };
 
   const handleSaveJob = (jobId: string) => {
@@ -160,7 +199,7 @@ export default function CandidateJobsPage() {
       onError: (error) => {
         console.error("Failed to save job:", error);
         // You could add an error toast notification here
-      }
+      },
     });
   };
 
@@ -171,21 +210,24 @@ export default function CandidateJobsPage() {
       },
       onError: (error) => {
         console.error("Failed to unsave job:", error);
-      }
+      },
     });
   };
 
   const handleApplyToJob = (jobId: string) => {
-    applyToJob({ jobId, data: {} }, {
-      onSuccess: () => {
-        console.log("Applied to job successfully");
-        // You could add a success toast notification here
-      },
-      onError: (error) => {
-        console.error("Failed to apply to job:", error);
-        // You could add an error toast notification here
+    applyToJob(
+      { jobId, data: {} },
+      {
+        onSuccess: () => {
+          console.log("Applied to job successfully");
+          // You could add a success toast notification here
+        },
+        onError: (error) => {
+          console.error("Failed to apply to job:", error);
+          // You could add an error toast notification here
+        },
       }
-    });
+    );
   };
 
   return (
@@ -436,24 +478,34 @@ export default function CandidateJobsPage() {
                       Posted {new Date(job.createdAt).toLocaleDateString()}
                     </p>
                     <div className="flex space-x-2">
-                      <button 
+                      <button
                         onClick={() => handleSaveJob(job._id)}
                         disabled={isSaving}
                         className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center space-x-1"
                       >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          />
                         </svg>
-                        <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                        <span>{isSaving ? "Saving..." : "Save"}</span>
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleApplyToJob(job._id)}
                         disabled={isApplying}
                         className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
                       >
-                        {isApplying ? 'Applying...' : 'Quick Apply'}
+                        {isApplying ? "Applying..." : "Quick Apply"}
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleViewJobDetails(job._id)}
                         className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
                       >
@@ -517,6 +569,15 @@ export default function CandidateJobsPage() {
             </div>
           )}
         </div>
+
+        {/* Job Details Modal */}
+        {selectedJobId && (
+          <JobDetailsModal
+            jobId={selectedJobId}
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+          />
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );

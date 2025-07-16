@@ -94,6 +94,150 @@ const userSchema = new mongoose.Schema({
     default: false,
   },
 
+  // Saved jobs for candidates
+  savedJobs: [
+    {
+      job: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Job",
+      },
+      savedAt: {
+        type: Date,
+        default: Date.now,
+      },
+      priority: {
+        type: String,
+        enum: ["low", "medium", "high"],
+        default: "medium",
+      },
+      applied: {
+        type: Boolean,
+        default: false,
+      },
+      matchScore: {
+        type: Number,
+        min: 0,
+        max: 100,
+      },
+    },
+  ],
+
+  // Applications for candidates
+  applications: [
+    {
+      job: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Job",
+      },
+      appliedAt: {
+        type: Date,
+        default: Date.now,
+      },
+      status: {
+        type: String,
+        enum: ["pending", "reviewing", "accepted", "rejected"],
+        default: "pending",
+      },
+      coverLetter: String,
+      customFields: [
+        {
+          question: String,
+          answer: String,
+        },
+      ],
+    },
+  ],
+
+  // Comprehensive candidate profile data
+  personalInfo: {
+    firstName: String,
+    lastName: String,
+    email: String,
+    phone: String,
+    location: String,
+    zipCode: String,
+    headline: String,
+    summary: String,
+  },
+
+  experience: [
+    {
+      id: String,
+      title: String,
+      company: String,
+      location: String,
+      startDate: String,
+      endDate: String,
+      current: {
+        type: Boolean,
+        default: false,
+      },
+      description: String,
+    },
+  ],
+
+  education: [
+    {
+      id: String,
+      degree: String,
+      school: String,
+      location: String,
+      startDate: String,
+      endDate: String,
+      gpa: String,
+      description: String,
+    },
+  ],
+
+  skills: [
+    {
+      id: String,
+      name: String,
+      level: {
+        type: String,
+        enum: ["beginner", "intermediate", "advanced", "expert"],
+        default: "beginner",
+      },
+      years: {
+        type: Number,
+        default: 0,
+      },
+    },
+  ],
+
+  socialLinks: {
+    website: String,
+    linkedin: String,
+    github: String,
+    portfolio: String,
+  },
+
+  preferences: {
+    jobType: String,
+    salaryRange: {
+      min: Number,
+      max: Number,
+    },
+    remote: Boolean,
+    willingToRelocate: Boolean,
+    availableStartDate: String,
+  },
+
+  resume: {
+    fileName: String,
+    originalName: String,
+    uploadDate: Date,
+    fileSize: String,
+    url: String,
+    cloudinaryUrl: String,
+    cloudinaryPublicId: String,
+    storageType: {
+      type: String,
+      enum: ["local", "cloudinary"],
+      default: "cloudinary",
+    },
+  },
+
   lastLogin: {
     type: Date,
   },

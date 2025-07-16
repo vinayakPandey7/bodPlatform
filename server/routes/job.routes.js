@@ -1,11 +1,20 @@
 const express = require("express");
 const router = express.Router();
 const jobController = require("../controllers/job.controller");
+const candidateController = require("../controllers/candidate.controller");
 const { auth, authorizeRoles } = require("../middlewares/auth.middleware");
 
 // Public routes
 router.get("/active", jobController.getActiveJobs);
 router.get("/candidates/nearby", jobController.getJobsForCandidates); // New route for location-based job search
+
+// Candidate routes
+router.post(
+  "/:id/apply",
+  auth,
+  authorizeRoles("candidate"),
+  candidateController.applyToJob
+);
 
 // Employer routes (specific routes before dynamic ones)
 router.get(

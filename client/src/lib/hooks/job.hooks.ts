@@ -67,6 +67,15 @@ export const useApplyToJob = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.JOBS.APPLICATIONS(jobId),
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CANDIDATES.APPLICATIONS(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CANDIDATES.DASHBOARD,
+      });
     },
   });
 };

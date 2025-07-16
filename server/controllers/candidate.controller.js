@@ -2,10 +2,502 @@ const Candidate = require("../models/candidate.model");
 const RecruitmentPartner = require("../models/recruitmentPartner.model");
 const Job = require("../models/job.model");
 const Employer = require("../models/employer.model");
+const User = require("../models/user.model");
 const {
   getCoordinatesFromZipCode,
   isWithinUSBounds,
 } = require("../utils/geoUtils");
+
+// Candidate user methods
+// Get candidate dashboard data
+exports.getCandidateDashboard = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate profile not found" });
+    }
+
+    // Get candidate's applications count (simulated for now)
+    const applicationsCount = 0; // TODO: Implement when job applications are ready
+
+    // Get saved jobs count (simulated for now)
+    const savedJobsCount = 0; // TODO: Implement when saved jobs are ready
+
+    // Calculate profile completion
+    let profileCompletion = 0;
+    const fields = [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "city",
+      "state",
+      "zipCode",
+    ];
+    const completedFields = fields.filter(
+      (field) => user[field] && user[field].toString().trim() !== ""
+    );
+    profileCompletion = Math.round(
+      (completedFields.length / fields.length) * 100
+    );
+
+    // Mock recent activity
+    const recentActivity = [
+      {
+        id: 1,
+        type: "profile_view",
+        title: "Profile viewed by TechCorp Inc",
+        company: "TechCorp Inc",
+        time: "2 hours ago",
+        status: "New",
+      },
+      {
+        id: 2,
+        type: "application",
+        title: "Applied to Software Engineer position",
+        company: "StartupXYZ",
+        time: "1 day ago",
+        status: "Pending",
+      },
+    ];
+
+    // Job categories with mock data
+    const jobCategories = [
+      { name: "Software Engineer", count: "2.3k jobs", icon: "💻" },
+      { name: "Product Manager", count: "1.8k jobs", icon: "📊" },
+      { name: "Data Scientist", count: "1.5k jobs", icon: "📈" },
+      { name: "UI/UX Designer", count: "980 jobs", icon: "🎨" },
+      { name: "DevOps Engineer", count: "750 jobs", icon: "⚙️" },
+      { name: "Marketing Manager", count: "680 jobs", icon: "📢" },
+    ];
+
+    res.json({
+      profileViews: Math.floor(Math.random() * 50) + 10, // Random profile views
+      profileCompletion,
+      recentActivity,
+      jobCategories,
+      responseRate: 0.15, // 15% response rate
+    });
+  } catch (error) {
+    console.error("Get candidate dashboard error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get candidate profile
+exports.getCandidateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate profile not found" });
+    }
+
+    // Structure the profile data as expected by the frontend
+    const profile = {
+      personalInfo: user.personalInfo || {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        location: user.city && user.state ? `${user.city}, ${user.state}` : "",
+        zipCode: user.zipCode,
+        headline: "",
+        summary: "",
+      },
+      experience: user.experience || [],
+      education: user.education || [],
+      skills: user.skills || [],
+      socialLinks: user.socialLinks || {},
+      preferences: user.preferences || {},
+      resume: user.resume || null,
+    };
+
+    res.json({ profile });
+  } catch (error) {
+    console.error("Get candidate profile error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Update candidate profile
+exports.updateCandidateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate profile not found" });
+    }
+
+    console.log("Update profile request body:", req.body);
+
+    // Update different sections of the profile
+    if (req.body.personalInfo) {
+      user.personalInfo = { ...user.personalInfo, ...req.body.personalInfo };
+
+      // Also update basic user fields for backward compatibility
+      if (req.body.personalInfo.firstName)
+        user.firstName = req.body.personalInfo.firstName;
+      if (req.body.personalInfo.lastName)
+        user.lastName = req.body.personalInfo.lastName;
+      if (req.body.personalInfo.phone) user.phone = req.body.personalInfo.phone;
+      if (req.body.personalInfo.zipCode)
+        user.zipCode = req.body.personalInfo.zipCode;
+    }
+
+    if (req.body.experience) {
+      user.experience = req.body.experience;
+    }
+
+    if (req.body.education) {
+      user.education = req.body.education;
+    }
+
+    if (req.body.skills) {
+      user.skills = req.body.skills;
+    }
+
+    if (req.body.socialLinks) {
+      user.socialLinks = { ...user.socialLinks, ...req.body.socialLinks };
+    }
+
+    if (req.body.preferences) {
+      user.preferences = { ...user.preferences, ...req.body.preferences };
+    }
+
+    if (req.body.resume) {
+      user.resume = req.body.resume;
+    }
+
+    // Update basic fields if provided directly
+    const allowedFields = [
+      "firstName",
+      "lastName",
+      "phone",
+      "address",
+      "city",
+      "state",
+      "zipCode",
+      "country",
+    ];
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+
+    user.updatedAt = new Date();
+    await user.save();
+
+    console.log("Profile updated successfully for user:", user._id);
+
+    // Return the updated profile in the expected format
+    const updatedUser = await User.findById(req.user.id).select("-password");
+    const profile = {
+      personalInfo: updatedUser.personalInfo || {
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        location:
+          updatedUser.city && updatedUser.state
+            ? `${updatedUser.city}, ${updatedUser.state}`
+            : "",
+        zipCode: updatedUser.zipCode,
+        headline: "",
+        summary: "",
+      },
+      experience: updatedUser.experience || [],
+      education: updatedUser.education || [],
+      skills: updatedUser.skills || [],
+      socialLinks: updatedUser.socialLinks || {},
+      preferences: updatedUser.preferences || {},
+      resume: updatedUser.resume || null,
+    };
+
+    res.json({
+      message: "Profile updated successfully",
+      profile,
+    });
+  } catch (error) {
+    console.error("Update candidate profile error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get candidate applications
+exports.getCandidateApplications = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate profile not found" });
+    }
+
+    // Get applications from user's applications array and populate job details
+    const userWithApplications = await User.findById(req.user.id)
+      .populate({
+        path: "applications.job",
+        populate: {
+          path: "employer",
+          select: "companyName city state",
+        },
+      })
+      .select("applications");
+
+    // Filter out applications where job data might be missing and safely map
+    const applications = userWithApplications.applications
+      .filter((app) => app.job && app.job._id) // Only include applications with valid job data
+      .map((app) => ({
+        _id: app._id,
+        jobId: app.job._id,
+        jobTitle: app.job.title || "Title not available",
+        companyName: app.job.employer?.companyName || "Company not available",
+        location:
+          app.job.city && app.job.state
+            ? `${app.job.city}, ${app.job.state}`
+            : "Location not available",
+        jobType: app.job.jobType || "Not specified",
+        appliedDate: app.appliedAt,
+        status: app.status,
+        coverLetter: app.coverLetter || "",
+        priority: "medium", // Default priority
+        salary: app.job.salary || app.job.salaryRange || null,
+        // Keep the original job object for backward compatibility
+        job: {
+          _id: app.job._id,
+          title: app.job.title || "Title not available",
+          company: app.job.employer?.companyName || "Company not available",
+          location:
+            app.job.city && app.job.state
+              ? `${app.job.city}, ${app.job.state}`
+              : "Location not available",
+          jobType: app.job.jobType || "Not specified",
+        },
+      }));
+
+    const statusCounts = applications.reduce((counts, app) => {
+      counts[app.status] = (counts[app.status] || 0) + 1;
+      return counts;
+    }, {});
+
+    res.json({
+      applications,
+      total: applications.length,
+      pending: statusCounts.pending || 0,
+      reviewing: statusCounts.reviewing || 0,
+      accepted: statusCounts.accepted || 0,
+      rejected: statusCounts.rejected || 0,
+    });
+  } catch (error) {
+    console.error("Get candidate applications error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get candidate saved jobs
+exports.getCandidateSavedJobs = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate profile not found" });
+    }
+
+    // Get saved jobs from user's savedJobs array and populate job details
+    const userWithSavedJobs = await User.findById(req.user.id)
+      .populate({
+        path: "savedJobs.job",
+        populate: {
+          path: "employer",
+          select: "companyName city state",
+        },
+      })
+      .select("savedJobs");
+
+    const savedJobs = userWithSavedJobs.savedJobs
+      .filter((savedJob) => savedJob.job && savedJob.job._id) // Only include saved jobs with valid job data
+      .map((savedJob) => ({
+        _id: savedJob.job._id,
+        title: savedJob.job.title || "Title not available",
+        description: savedJob.job.description || "Description not available",
+        company: savedJob.job.employer?.companyName || "Company not available",
+        location:
+          savedJob.job.city && savedJob.job.state
+            ? `${savedJob.job.city}, ${savedJob.job.state}`
+            : "Location not available",
+        salaryMin: savedJob.job.salaryMin,
+        salaryMax: savedJob.job.salaryMax,
+        currency: savedJob.job.currency || "USD",
+        jobType: savedJob.job.jobType || "Not specified",
+        workMode: savedJob.job.workMode || "Not specified",
+        skills: savedJob.job.skills || [],
+        postedDate: savedJob.job.createdAt,
+        savedDate: savedJob.savedAt,
+        applied: savedJob.applied || false,
+        priority: savedJob.priority || "medium",
+        matchScore: savedJob.matchScore || Math.floor(Math.random() * 30) + 70,
+        urgent:
+          savedJob.job.urgency === "urgent" ||
+          savedJob.job.urgency === "very_urgent",
+      }));
+
+    res.json({
+      savedJobs,
+      total: savedJobs.length,
+    });
+  } catch (error) {
+    console.error("Get candidate saved jobs error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Save a job
+exports.saveJob = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate profile not found" });
+    }
+
+    const { jobId } = req.body;
+
+    // Verify job exists
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    // Check if job is already saved
+    const isAlreadySaved = user.savedJobs.some(
+      (savedJob) => savedJob.job.toString() === jobId
+    );
+
+    if (isAlreadySaved) {
+      return res.status(400).json({ message: "Job is already saved" });
+    }
+
+    // Add job to user's saved jobs
+    user.savedJobs.push({
+      job: jobId,
+      savedAt: new Date(),
+      priority: "medium",
+      applied: false,
+    });
+
+    await user.save();
+
+    res.json({
+      message: "Job saved successfully",
+    });
+  } catch (error) {
+    console.error("Save job error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+// Unsave a job
+exports.unsaveJob = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate profile not found" });
+    }
+
+    const { jobId } = req.body;
+
+    // Remove job from user's saved jobs
+    user.savedJobs = user.savedJobs.filter(
+      (savedJob) => savedJob.job.toString() !== jobId
+    );
+
+    await user.save();
+
+    res.json({
+      message: "Job unsaved successfully",
+    });
+  } catch (error) {
+    console.error("Unsave job error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Apply to a job
+exports.applyToJob = async (req, res) => {
+  try {
+    console.log("Apply to job request received:", {
+      userId: req.user.id,
+      jobId: req.params.id,
+    });
+
+    const user = await User.findById(req.user.id);
+    console.log(
+      "User found:",
+      user ? "YES" : "NO",
+      user ? `Role: ${user.role}` : ""
+    );
+
+    if (!user || user.role !== "candidate") {
+      console.log("Candidate profile check failed:", {
+        userExists: !!user,
+        role: user?.role,
+      });
+      return res.status(404).json({ message: "Candidate profile not found" });
+    }
+
+    const jobId = req.params.id;
+    const { coverLetter, customFields } = req.body;
+
+    // Verify job exists
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    // Check if already applied
+    const hasApplied = user.applications.some(
+      (app) => app.job.toString() === jobId
+    );
+
+    if (hasApplied) {
+      return res.status(400).json({ message: "Already applied to this job" });
+    }
+
+    // Add application to user's applications
+    user.applications.push({
+      job: jobId,
+      appliedAt: new Date(),
+      status: "pending",
+      coverLetter,
+      customFields: customFields || [],
+    });
+
+    // Update saved job status if it exists
+    const savedJobIndex = user.savedJobs.findIndex(
+      (savedJob) => savedJob.job.toString() === jobId
+    );
+    if (savedJobIndex !== -1) {
+      user.savedJobs[savedJobIndex].applied = true;
+    }
+
+    await user.save();
+    console.log("Application saved successfully for job:", jobId);
+
+    res.json({
+      message: "Application submitted successfully",
+      application: {
+        job: jobId,
+        appliedAt: new Date(),
+        status: "pending",
+      },
+    });
+  } catch (error) {
+    console.error("Apply to job error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 // Submit candidate application (for recruitment partners)
 exports.submitApplication = async (req, res) => {

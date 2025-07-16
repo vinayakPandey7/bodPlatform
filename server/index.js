@@ -15,7 +15,7 @@ const adminRoutes = require("./routes/admin.routes");
 const jobRoutes = require("./routes/job.routes");
 const candidateRoutes = require("./routes/candidate.routes");
 const notificationRoutes = require("./routes/notification.routes");
-const uploadRoutes = require("./routes/upload.routes");
+const cloudinaryRoutes = require("./routes/cloudinary.routes");
 const locationRoutes = require("./routes/location.routes");
 
 // Initialize express app
@@ -68,17 +68,12 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/candidates", candidateRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/upload", uploadRoutes);
+app.use("/api/upload", cloudinaryRoutes); // Use Cloudinary for all uploads
 app.use("/api/location", locationRoutes);
 
 // Root route
 app.get("/", (req, res) => {
   res.send("BOD Service Portal API is running");
-});
-
-// Serve the employer registration page
-app.get("/employer-registration", (req, res) => {
-  res.sendFile(__dirname + "/employer-registration.html");
 });
 
 // Start server

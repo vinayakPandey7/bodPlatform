@@ -1,53 +1,62 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useCurrentUser } from "@/lib/hooks/auth.hooks";
-import { useCandidateProfile, useUpdateCandidateProfile } from "@/lib/hooks/candidate.hooks";
-import { useUploadResume } from "@/lib/hooks/upload.hooks";
 import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  FileText,
-  Upload,
-  Edit,
-  Save,
-  X,
-  Plus,
-  Trash2,
-  Globe,
-  Github,
-  Linkedin,
-  Award,
-  Briefcase,
-  GraduationCap,
-  Star,
-  Camera,
-  CheckCircle,
+  useCandidateProfile,
+  useUpdateCandidateProfile,
+} from "@/lib/hooks/candidate.hooks";
+import { useUploadResumeToCloudinary } from "@/lib/hooks/cloudinary.hooks";
+import {
   AlertCircle,
-  Target,
-  DollarSign,
-  Clock,
-  RefreshCw,
+  Briefcase,
+  Download,
+  Edit,
+  FileText,
   Loader,
+  Mail,
+  MapPin,
+  Phone,
+  Plus,
+  RefreshCw,
+  Save,
+  Star,
+  Trash2,
+  Upload,
+  User,
+  X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function CandidateProfilePage() {
   const router = useRouter();
   const { data: currentUserData } = useCurrentUser();
-  const { data: profileData, isLoading, error, refetch } = useCandidateProfile();
-  const { mutate: updateProfile, isPending: isUpdating } = useUpdateCandidateProfile();
-  const { mutate: uploadResume, isPending: isUploading } = useUploadResume();
+  const {
+    data: profileData,
+    isLoading,
+    error,
+    refetch,
+  } = useCandidateProfile();
+  const { mutate: updateProfile, isPending: isUpdating } =
+    useUpdateCandidateProfile();
+  const {
+    mutate: uploadResumeToCloudinary,
+    isPending: isUploadingToCloudinary,
+  } = useUploadResumeToCloudinary();
+
+  // Use only Cloudinary storage
+  const isUploadingAny = isUploadingToCloudinary;
 
   // Editing states
   const [editingSection, setEditingSection] = useState<string | null>(null);
-  const [editingExperience, setEditingExperience] = useState<string | null>(null);
+  const [editingExperience, setEditingExperience] = useState<string | null>(
+    null
+  );
   const [editingEducation, setEditingEducation] = useState<string | null>(null);
   const [editingSkill, setEditingSkill] = useState<string | null>(null);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [pdfViewError, setPdfViewError] = useState(false);
 
   // Form data states
   const [personalInfoForm, setPersonalInfoForm] = useState<any>({});
@@ -74,7 +83,24 @@ export default function CandidateProfilePage() {
     skills: [],
     socialLinks: {},
     preferences: {},
-    resume: null
+    resume: null,
+  };
+
+  const handleDownloadResume = () => {
+    if (profile.resume?.cloudinaryUrl) {
+      const link = document.createElement("a");
+      link.href = profile.resume.cloudinaryUrl;
+      link.download = profile.resume.originalName || "resume";
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleViewResume = () => {
+    setPdfViewError(false);
+    setShowResumeModal(true);
   };
 
   const getSkillLevelColor = (level: string) => {
@@ -109,53 +135,62 @@ export default function CandidateProfilePage() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
     });
   };
 
   // Handle form submissions
   const handleUpdatePersonalInfo = () => {
-    updateProfile({
-      personalInfo: personalInfoForm
-    }, {
-      onSuccess: () => {
-        setEditingSection(null);
-        refetch();
+    updateProfile(
+      {
+        personalInfo: personalInfoForm,
       },
-      onError: (error) => {
-        console.error("Failed to update personal info:", error);
+      {
+        onSuccess: () => {
+          setEditingSection(null);
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to update personal info:", error);
+        },
       }
-    });
+    );
   };
 
   const handleUpdateSocialLinks = () => {
-    updateProfile({
-      socialLinks: socialLinksForm
-    }, {
-      onSuccess: () => {
-        setEditingSection(null);
-        refetch();
+    updateProfile(
+      {
+        socialLinks: socialLinksForm,
       },
-      onError: (error) => {
-        console.error("Failed to update social links:", error);
+      {
+        onSuccess: () => {
+          setEditingSection(null);
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to update social links:", error);
+        },
       }
-    });
+    );
   };
 
   const handleUpdatePreferences = () => {
-    updateProfile({
-      preferences: preferencesForm
-    }, {
-      onSuccess: () => {
-        setEditingSection(null);
-        refetch();
+    updateProfile(
+      {
+        preferences: preferencesForm,
       },
-      onError: (error) => {
-        console.error("Failed to update preferences:", error);
+      {
+        onSuccess: () => {
+          setEditingSection(null);
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to update preferences:", error);
+        },
       }
-    });
+    );
   };
 
   const handleAddExperience = () => {
@@ -167,45 +202,54 @@ export default function CandidateProfilePage() {
       startDate: "",
       endDate: "",
       current: false,
-      description: ""
+      description: "",
     };
     setExperienceForm(newExperience);
     setEditingExperience("new");
   };
 
   const handleSaveExperience = () => {
-    const updatedExperience = editingExperience === "new" 
-      ? [...(profile.experience || []), experienceForm]
-      : (profile.experience || []).map(exp => 
-          exp.id === editingExperience ? experienceForm : exp
-        );
+    const updatedExperience =
+      editingExperience === "new"
+        ? [...(profile.experience || []), experienceForm]
+        : (profile.experience || []).map((exp) =>
+            exp.id === editingExperience ? experienceForm : exp
+          );
 
-    updateProfile({
-      experience: updatedExperience
-    }, {
-      onSuccess: () => {
-        setEditingExperience(null);
-        setExperienceForm({});
-        refetch();
+    updateProfile(
+      {
+        experience: updatedExperience,
       },
-      onError: (error) => {
-        console.error("Failed to update experience:", error);
+      {
+        onSuccess: () => {
+          setEditingExperience(null);
+          setExperienceForm({});
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to update experience:", error);
+        },
       }
-    });
+    );
   };
 
   const handleDeleteExperience = (expId: string) => {
-    const updatedExperience = (profile.experience || []).filter(exp => exp.id !== expId);
-    updateProfile({
-      experience: updatedExperience
-    }, {
-      onSuccess: () => {
-        refetch();
+    const updatedExperience = (profile.experience || []).filter(
+      (exp) => exp.id !== expId
+    );
+    updateProfile(
+      {
+        experience: updatedExperience,
       },
-      onError: (error) => {
-        console.error("Failed to delete experience:", error);
+      {
+        onSuccess: () => {
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to delete experience:", error);
+        },
       }
-    });
+    );
   };
 
   const handleAddEducation = () => {
@@ -217,45 +261,54 @@ export default function CandidateProfilePage() {
       startDate: "",
       endDate: "",
       gpa: "",
-      description: ""
+      description: "",
     };
     setEducationForm(newEducation);
     setEditingEducation("new");
   };
 
   const handleSaveEducation = () => {
-    const updatedEducation = editingEducation === "new" 
-      ? [...(profile.education || []), educationForm]
-      : (profile.education || []).map(edu => 
-          edu.id === editingEducation ? educationForm : edu
-        );
+    const updatedEducation =
+      editingEducation === "new"
+        ? [...(profile.education || []), educationForm]
+        : (profile.education || []).map((edu) =>
+            edu.id === editingEducation ? educationForm : edu
+          );
 
-    updateProfile({
-      education: updatedEducation
-    }, {
-      onSuccess: () => {
-        setEditingEducation(null);
-        setEducationForm({});
-        refetch();
+    updateProfile(
+      {
+        education: updatedEducation,
       },
-      onError: (error) => {
-        console.error("Failed to update education:", error);
+      {
+        onSuccess: () => {
+          setEditingEducation(null);
+          setEducationForm({});
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to update education:", error);
+        },
       }
-    });
+    );
   };
 
   const handleDeleteEducation = (eduId: string) => {
-    const updatedEducation = (profile.education || []).filter(edu => edu.id !== eduId);
-    updateProfile({
-      education: updatedEducation
-    }, {
-      onSuccess: () => {
-        refetch();
+    const updatedEducation = (profile.education || []).filter(
+      (edu) => edu.id !== eduId
+    );
+    updateProfile(
+      {
+        education: updatedEducation,
       },
-      onError: (error) => {
-        console.error("Failed to delete education:", error);
+      {
+        onSuccess: () => {
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to delete education:", error);
+        },
       }
-    });
+    );
   };
 
   const handleAddSkill = () => {
@@ -263,68 +316,69 @@ export default function CandidateProfilePage() {
       id: Date.now().toString(),
       name: "",
       level: "beginner",
-      years: 0
+      years: 0,
     };
     setSkillForm(newSkill);
     setEditingSkill("new");
   };
 
   const handleSaveSkill = () => {
-    const updatedSkills = editingSkill === "new" 
-      ? [...(profile.skills || []), skillForm]
-      : (profile.skills || []).map(skill => 
-          skill.id === editingSkill ? skillForm : skill
-        );
+    const updatedSkills =
+      editingSkill === "new"
+        ? [...(profile.skills || []), skillForm]
+        : (profile.skills || []).map((skill) =>
+            skill.id === editingSkill ? skillForm : skill
+          );
 
-    updateProfile({
-      skills: updatedSkills
-    }, {
-      onSuccess: () => {
-        setEditingSkill(null);
-        setSkillForm({});
-        refetch();
+    updateProfile(
+      {
+        skills: updatedSkills,
       },
-      onError: (error) => {
-        console.error("Failed to update skills:", error);
+      {
+        onSuccess: () => {
+          setEditingSkill(null);
+          setSkillForm({});
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to update skills:", error);
+        },
       }
-    });
+    );
   };
 
   const handleDeleteSkill = (skillId: string) => {
-    const updatedSkills = (profile.skills || []).filter(skill => skill.id !== skillId);
-    updateProfile({
-      skills: updatedSkills
-    }, {
-      onSuccess: () => {
-        refetch();
+    const updatedSkills = (profile.skills || []).filter(
+      (skill) => skill.id !== skillId
+    );
+    updateProfile(
+      {
+        skills: updatedSkills,
       },
-      onError: (error) => {
-        console.error("Failed to delete skill:", error);
+      {
+        onSuccess: () => {
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to delete skill:", error);
+        },
       }
-    });
+    );
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      uploadResume(file, {
+      // Upload to Cloudinary only
+      uploadResumeToCloudinary(file, {
         onSuccess: (data) => {
-          updateProfile({
-            resume: {
-              fileName: file.name,
-              uploadDate: new Date().toISOString(),
-              fileSize: (file.size / 1024 / 1024).toFixed(2) + " MB",
-              url: data.url
-            }
-          }, {
-            onSuccess: () => {
-              refetch();
-            }
-          });
+          console.log("Resume uploaded to Cloudinary:", data);
+          // Profile will be automatically refetched due to query invalidation
         },
         onError: (error) => {
-          console.error("Failed to upload resume:", error);
-        }
+          console.error("Cloudinary upload error:", error);
+          alert("Failed to upload resume");
+        },
       });
     }
   };
@@ -347,8 +401,12 @@ export default function CandidateProfilePage() {
         <DashboardLayout>
           <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load profile</h3>
-            <p className="text-gray-600 mb-4">There was an error loading your profile.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Failed to load profile
+            </h3>
+            <p className="text-gray-600 mb-4">
+              There was an error loading your profile.
+            </p>
             <button
               onClick={() => refetch()}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -369,7 +427,9 @@ export default function CandidateProfilePage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-              <p className="mt-1 text-gray-600">Manage your professional information</p>
+              <p className="mt-1 text-gray-600">
+                Manage your professional information
+              </p>
             </div>
             <div className="mt-4 sm:mt-0 flex space-x-3">
               <button
@@ -385,12 +445,22 @@ export default function CandidateProfilePage() {
           {/* Personal Information */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Personal Information
+              </h2>
               <button
-                onClick={() => editingSection === "personal" ? setEditingSection(null) : setEditingSection("personal")}
+                onClick={() =>
+                  editingSection === "personal"
+                    ? setEditingSection(null)
+                    : setEditingSection("personal")
+                }
                 className="inline-flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
-                {editingSection === "personal" ? <X className="h-4 w-4 mr-1" /> : <Edit className="h-4 w-4 mr-1" />}
+                {editingSection === "personal" ? (
+                  <X className="h-4 w-4 mr-1" />
+                ) : (
+                  <Edit className="h-4 w-4 mr-1" />
+                )}
                 {editingSection === "personal" ? "Cancel" : "Edit"}
               </button>
             </div>
@@ -398,75 +468,131 @@ export default function CandidateProfilePage() {
             {editingSection === "personal" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    First Name
+                  </label>
                   <input
                     type="text"
                     value={personalInfoForm.firstName || ""}
-                    onChange={(e) => setPersonalInfoForm({...personalInfoForm, firstName: e.target.value})}
+                    onChange={(e) =>
+                      setPersonalInfoForm({
+                        ...personalInfoForm,
+                        firstName: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Last Name
+                  </label>
                   <input
                     type="text"
                     value={personalInfoForm.lastName || ""}
-                    onChange={(e) => setPersonalInfoForm({...personalInfoForm, lastName: e.target.value})}
+                    onChange={(e) =>
+                      setPersonalInfoForm({
+                        ...personalInfoForm,
+                        lastName: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
                   <input
                     type="email"
                     value={personalInfoForm.email || ""}
-                    onChange={(e) => setPersonalInfoForm({...personalInfoForm, email: e.target.value})}
+                    onChange={(e) =>
+                      setPersonalInfoForm({
+                        ...personalInfoForm,
+                        email: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone
+                  </label>
                   <input
                     type="tel"
                     value={personalInfoForm.phone || ""}
-                    onChange={(e) => setPersonalInfoForm({...personalInfoForm, phone: e.target.value})}
+                    onChange={(e) =>
+                      setPersonalInfoForm({
+                        ...personalInfoForm,
+                        phone: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location
+                  </label>
                   <input
                     type="text"
                     value={personalInfoForm.location || ""}
-                    onChange={(e) => setPersonalInfoForm({...personalInfoForm, location: e.target.value})}
+                    onChange={(e) =>
+                      setPersonalInfoForm({
+                        ...personalInfoForm,
+                        location: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Zip Code</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Zip Code
+                  </label>
                   <input
                     type="text"
                     value={personalInfoForm.zipCode || ""}
-                    onChange={(e) => setPersonalInfoForm({...personalInfoForm, zipCode: e.target.value})}
+                    onChange={(e) =>
+                      setPersonalInfoForm({
+                        ...personalInfoForm,
+                        zipCode: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Professional Headline</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Professional Headline
+                  </label>
                   <input
                     type="text"
                     value={personalInfoForm.headline || ""}
-                    onChange={(e) => setPersonalInfoForm({...personalInfoForm, headline: e.target.value})}
+                    onChange={(e) =>
+                      setPersonalInfoForm({
+                        ...personalInfoForm,
+                        headline: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g., Senior Software Engineer with 5+ years experience"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Professional Summary</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Professional Summary
+                  </label>
                   <textarea
                     rows={4}
                     value={personalInfoForm.summary || ""}
-                    onChange={(e) => setPersonalInfoForm({...personalInfoForm, summary: e.target.value})}
+                    onChange={(e) =>
+                      setPersonalInfoForm({
+                        ...personalInfoForm,
+                        summary: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Write a brief summary of your professional background and goals..."
                   />
@@ -477,7 +603,11 @@ export default function CandidateProfilePage() {
                     disabled={isUpdating}
                     className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
-                    {isUpdating ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    {isUpdating ? (
+                      <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
                     Save Changes
                   </button>
                   <button
@@ -494,7 +624,10 @@ export default function CandidateProfilePage() {
                   <User className="h-5 w-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Name</p>
-                    <p className="font-medium">{profile.personalInfo?.firstName} {profile.personalInfo?.lastName}</p>
+                    <p className="font-medium">
+                      {profile.personalInfo?.firstName}{" "}
+                      {profile.personalInfo?.lastName}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -508,26 +641,39 @@ export default function CandidateProfilePage() {
                   <Phone className="h-5 w-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>
-                    <p className="font-medium">{profile.personalInfo?.phone || "Not provided"}</p>
+                    <p className="font-medium">
+                      {profile.personalInfo?.phone || "Not provided"}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-5 w-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Location</p>
-                    <p className="font-medium">{profile.personalInfo?.location} {profile.personalInfo?.zipCode}</p>
+                    <p className="font-medium">
+                      {profile.personalInfo?.location}{" "}
+                      {profile.personalInfo?.zipCode}
+                    </p>
                   </div>
                 </div>
                 {profile.personalInfo?.headline && (
                   <div className="md:col-span-2">
-                    <p className="text-sm text-gray-600">Professional Headline</p>
-                    <p className="font-medium">{profile.personalInfo.headline}</p>
+                    <p className="text-sm text-gray-600">
+                      Professional Headline
+                    </p>
+                    <p className="font-medium">
+                      {profile.personalInfo.headline}
+                    </p>
                   </div>
                 )}
                 {profile.personalInfo?.summary && (
                   <div className="md:col-span-2">
-                    <p className="text-sm text-gray-600">Professional Summary</p>
-                    <p className="text-gray-700 mt-1">{profile.personalInfo.summary}</p>
+                    <p className="text-sm text-gray-600">
+                      Professional Summary
+                    </p>
+                    <p className="text-gray-700 mt-1">
+                      {profile.personalInfo.summary}
+                    </p>
                   </div>
                 )}
               </div>
@@ -537,7 +683,9 @@ export default function CandidateProfilePage() {
           {/* Work Experience */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Work Experience</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Work Experience
+              </h2>
               <button
                 onClick={handleAddExperience}
                 className="inline-flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
@@ -549,46 +697,81 @@ export default function CandidateProfilePage() {
 
             <div className="space-y-6">
               {(profile.experience || []).map((exp: any, index: number) => (
-                <div key={exp.id} className="border-l-2 border-gray-200 pl-6 relative">
+                <div
+                  key={exp.id}
+                  className="border-l-2 border-gray-200 pl-6 relative"
+                >
                   <div className="absolute -left-2 top-0 w-4 h-4 bg-blue-600 rounded-full"></div>
-                  
+
                   {editingExperience === exp.id ? (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Job Title
+                          </label>
                           <input
                             type="text"
                             value={experienceForm.title || ""}
-                            onChange={(e) => setExperienceForm({...experienceForm, title: e.target.value})}
+                            onChange={(e) =>
+                              setExperienceForm({
+                                ...experienceForm,
+                                title: e.target.value,
+                              })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Company
+                          </label>
                           <input
                             type="text"
                             value={experienceForm.company || ""}
-                            onChange={(e) => setExperienceForm({...experienceForm, company: e.target.value})}
+                            onChange={(e) =>
+                              setExperienceForm({
+                                ...experienceForm,
+                                company: e.target.value,
+                              })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Start Date
+                          </label>
                           <input
                             type="month"
                             value={experienceForm.startDate || ""}
-                            onChange={(e) => setExperienceForm({...experienceForm, startDate: e.target.value})}
+                            onChange={(e) =>
+                              setExperienceForm({
+                                ...experienceForm,
+                                startDate: e.target.value,
+                              })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            End Date
+                          </label>
                           <div className="space-y-2">
                             <input
                               type="month"
-                              value={experienceForm.current ? "" : experienceForm.endDate || ""}
-                              onChange={(e) => setExperienceForm({...experienceForm, endDate: e.target.value})}
+                              value={
+                                experienceForm.current
+                                  ? ""
+                                  : experienceForm.endDate || ""
+                              }
+                              onChange={(e) =>
+                                setExperienceForm({
+                                  ...experienceForm,
+                                  endDate: e.target.value,
+                                })
+                              }
                               disabled={experienceForm.current}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                             />
@@ -596,20 +779,35 @@ export default function CandidateProfilePage() {
                               <input
                                 type="checkbox"
                                 checked={experienceForm.current || false}
-                                onChange={(e) => setExperienceForm({...experienceForm, current: e.target.checked, endDate: ""})}
+                                onChange={(e) =>
+                                  setExperienceForm({
+                                    ...experienceForm,
+                                    current: e.target.checked,
+                                    endDate: "",
+                                  })
+                                }
                                 className="mr-2"
                               />
-                              <span className="text-sm text-gray-600">I currently work here</span>
+                              <span className="text-sm text-gray-600">
+                                I currently work here
+                              </span>
                             </label>
                           </div>
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Description
+                        </label>
                         <textarea
                           rows={3}
                           value={experienceForm.description || ""}
-                          onChange={(e) => setExperienceForm({...experienceForm, description: e.target.value})}
+                          onChange={(e) =>
+                            setExperienceForm({
+                              ...experienceForm,
+                              description: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Describe your role and achievements..."
                         />
@@ -620,7 +818,11 @@ export default function CandidateProfilePage() {
                           disabled={isUpdating}
                           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                         >
-                          {isUpdating ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                          {isUpdating ? (
+                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4 mr-2" />
+                          )}
                           Save
                         </button>
                         <button
@@ -635,12 +837,21 @@ export default function CandidateProfilePage() {
                     <div>
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{exp.title}</h3>
-                          <p className="text-blue-600 font-medium">{exp.company}</p>
-                          <p className="text-sm text-gray-600">
-                            {formatDate(exp.startDate)} - {exp.current ? "Present" : formatDate(exp.endDate)}
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {exp.title}
+                          </h3>
+                          <p className="text-blue-600 font-medium">
+                            {exp.company}
                           </p>
-                          {exp.location && <p className="text-sm text-gray-600">{exp.location}</p>}
+                          <p className="text-sm text-gray-600">
+                            {formatDate(exp.startDate)} -{" "}
+                            {exp.current ? "Present" : formatDate(exp.endDate)}
+                          </p>
+                          {exp.location && (
+                            <p className="text-sm text-gray-600">
+                              {exp.location}
+                            </p>
+                          )}
                         </div>
                         <div className="flex space-x-2">
                           <button
@@ -674,39 +885,71 @@ export default function CandidateProfilePage() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Job Title
+                        </label>
                         <input
                           type="text"
                           value={experienceForm.title || ""}
-                          onChange={(e) => setExperienceForm({...experienceForm, title: e.target.value})}
+                          onChange={(e) =>
+                            setExperienceForm({
+                              ...experienceForm,
+                              title: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Company
+                        </label>
                         <input
                           type="text"
                           value={experienceForm.company || ""}
-                          onChange={(e) => setExperienceForm({...experienceForm, company: e.target.value})}
+                          onChange={(e) =>
+                            setExperienceForm({
+                              ...experienceForm,
+                              company: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Start Date
+                        </label>
                         <input
                           type="month"
                           value={experienceForm.startDate || ""}
-                          onChange={(e) => setExperienceForm({...experienceForm, startDate: e.target.value})}
+                          onChange={(e) =>
+                            setExperienceForm({
+                              ...experienceForm,
+                              startDate: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          End Date
+                        </label>
                         <div className="space-y-2">
                           <input
                             type="month"
-                            value={experienceForm.current ? "" : experienceForm.endDate || ""}
-                            onChange={(e) => setExperienceForm({...experienceForm, endDate: e.target.value})}
+                            value={
+                              experienceForm.current
+                                ? ""
+                                : experienceForm.endDate || ""
+                            }
+                            onChange={(e) =>
+                              setExperienceForm({
+                                ...experienceForm,
+                                endDate: e.target.value,
+                              })
+                            }
                             disabled={experienceForm.current}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                           />
@@ -714,20 +957,35 @@ export default function CandidateProfilePage() {
                             <input
                               type="checkbox"
                               checked={experienceForm.current || false}
-                              onChange={(e) => setExperienceForm({...experienceForm, current: e.target.checked, endDate: ""})}
+                              onChange={(e) =>
+                                setExperienceForm({
+                                  ...experienceForm,
+                                  current: e.target.checked,
+                                  endDate: "",
+                                })
+                              }
                               className="mr-2"
                             />
-                            <span className="text-sm text-gray-600">I currently work here</span>
+                            <span className="text-sm text-gray-600">
+                              I currently work here
+                            </span>
                           </label>
                         </div>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
                       <textarea
                         rows={3}
                         value={experienceForm.description || ""}
-                        onChange={(e) => setExperienceForm({...experienceForm, description: e.target.value})}
+                        onChange={(e) =>
+                          setExperienceForm({
+                            ...experienceForm,
+                            description: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Describe your role and achievements..."
                       />
@@ -738,7 +996,11 @@ export default function CandidateProfilePage() {
                         disabled={isUpdating}
                         className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                       >
-                        {isUpdating ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                        {isUpdating ? (
+                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4 mr-2" />
+                        )}
                         Save
                       </button>
                       <button
@@ -752,18 +1014,19 @@ export default function CandidateProfilePage() {
                 </div>
               )}
 
-              {(!profile.experience || profile.experience.length === 0) && editingExperience !== "new" && (
-                <div className="text-center py-8 text-gray-500">
-                  <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>No work experience added yet</p>
-                  <button
-                    onClick={handleAddExperience}
-                    className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Add your first experience
-                  </button>
-                </div>
-              )}
+              {(!profile.experience || profile.experience.length === 0) &&
+                editingExperience !== "new" && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No work experience added yet</p>
+                    <button
+                      onClick={handleAddExperience}
+                      className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Add your first experience
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
 
@@ -782,23 +1045,37 @@ export default function CandidateProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(profile.skills || []).map((skill: any) => (
-                <div key={skill.id} className="border border-gray-200 rounded-lg p-4">
+                <div
+                  key={skill.id}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
                   {editingSkill === skill.id ? (
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Skill Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Skill Name
+                        </label>
                         <input
                           type="text"
                           value={skillForm.name || ""}
-                          onChange={(e) => setSkillForm({...skillForm, name: e.target.value})}
+                          onChange={(e) =>
+                            setSkillForm({ ...skillForm, name: e.target.value })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Level
+                        </label>
                         <select
                           value={skillForm.level || "beginner"}
-                          onChange={(e) => setSkillForm({...skillForm, level: e.target.value})}
+                          onChange={(e) =>
+                            setSkillForm({
+                              ...skillForm,
+                              level: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="beginner">Beginner</option>
@@ -808,12 +1085,19 @@ export default function CandidateProfilePage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Years of Experience
+                        </label>
                         <input
                           type="number"
                           min="0"
                           value={skillForm.years || 0}
-                          onChange={(e) => setSkillForm({...skillForm, years: parseInt(e.target.value) || 0})}
+                          onChange={(e) =>
+                            setSkillForm({
+                              ...skillForm,
+                              years: parseInt(e.target.value) || 0,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
@@ -823,7 +1107,11 @@ export default function CandidateProfilePage() {
                           disabled={isUpdating}
                           className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                         >
-                          {isUpdating ? <Loader className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+                          {isUpdating ? (
+                            <Loader className="h-3 w-3 mr-1 animate-spin" />
+                          ) : (
+                            <Save className="h-3 w-3 mr-1" />
+                          )}
                           Save
                         </button>
                         <button
@@ -838,8 +1126,14 @@ export default function CandidateProfilePage() {
                     <div>
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="font-medium text-gray-900">{skill.name}</h3>
-                          <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getSkillLevelColor(skill.level)}`}>
+                          <h3 className="font-medium text-gray-900">
+                            {skill.name}
+                          </h3>
+                          <span
+                            className={`inline-block px-2 py-1 rounded text-xs font-medium ${getSkillLevelColor(
+                              skill.level
+                            )}`}
+                          >
                             {skill.level}
                           </span>
                         </div>
@@ -863,9 +1157,15 @@ export default function CandidateProfilePage() {
                       </div>
                       <div className="space-y-2">
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className={`bg-blue-600 h-2 rounded-full ${getSkillLevelWidth(skill.level)}`}></div>
+                          <div
+                            className={`bg-blue-600 h-2 rounded-full ${getSkillLevelWidth(
+                              skill.level
+                            )}`}
+                          ></div>
                         </div>
-                        <p className="text-xs text-gray-600">{skill.years} years experience</p>
+                        <p className="text-xs text-gray-600">
+                          {skill.years} years experience
+                        </p>
                       </div>
                     </div>
                   )}
@@ -876,19 +1176,27 @@ export default function CandidateProfilePage() {
                 <div className="border border-gray-200 rounded-lg p-4">
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Skill Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Skill Name
+                      </label>
                       <input
                         type="text"
                         value={skillForm.name || ""}
-                        onChange={(e) => setSkillForm({...skillForm, name: e.target.value})}
+                        onChange={(e) =>
+                          setSkillForm({ ...skillForm, name: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Level
+                      </label>
                       <select
                         value={skillForm.level || "beginner"}
-                        onChange={(e) => setSkillForm({...skillForm, level: e.target.value})}
+                        onChange={(e) =>
+                          setSkillForm({ ...skillForm, level: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="beginner">Beginner</option>
@@ -898,12 +1206,19 @@ export default function CandidateProfilePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Years of Experience
+                      </label>
                       <input
                         type="number"
                         min="0"
                         value={skillForm.years || 0}
-                        onChange={(e) => setSkillForm({...skillForm, years: parseInt(e.target.value) || 0})}
+                        onChange={(e) =>
+                          setSkillForm({
+                            ...skillForm,
+                            years: parseInt(e.target.value) || 0,
+                          })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -913,7 +1228,11 @@ export default function CandidateProfilePage() {
                         disabled={isUpdating}
                         className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                       >
-                        {isUpdating ? <Loader className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+                        {isUpdating ? (
+                          <Loader className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Save className="h-3 w-3 mr-1" />
+                        )}
                         Save
                       </button>
                       <button
@@ -928,18 +1247,19 @@ export default function CandidateProfilePage() {
               )}
             </div>
 
-            {(!profile.skills || profile.skills.length === 0) && editingSkill !== "new" && (
-              <div className="text-center py-8 text-gray-500">
-                <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No skills added yet</p>
-                <button
-                  onClick={handleAddSkill}
-                  className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Add your first skill
-                </button>
-              </div>
-            )}
+            {(!profile.skills || profile.skills.length === 0) &&
+              editingSkill !== "new" && (
+                <div className="text-center py-8 text-gray-500">
+                  <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No skills added yet</p>
+                  <button
+                    onClick={handleAddSkill}
+                    className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Add your first skill
+                  </button>
+                </div>
+              )}
           </div>
 
           {/* Resume */}
@@ -953,17 +1273,29 @@ export default function CandidateProfilePage() {
                 <div className="flex items-center space-x-3">
                   <FileText className="h-8 w-8 text-red-600" />
                   <div>
-                    <p className="font-medium text-gray-900">{profile.resume.fileName}</p>
+                    <p className="font-medium text-gray-900">
+                      {profile.resume.originalName || profile.resume.fileName}
+                    </p>
                     <p className="text-sm text-gray-600">
-                      Uploaded {formatDate(profile.resume.uploadDate)} • {profile.resume.fileSize}
+                      Uploaded {formatDate(profile.resume.uploadDate)} •{" "}
+                      {profile.resume.fileSize}
                     </p>
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  <button
+                    onClick={handleViewResume}
+                    className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
                     View
                   </button>
-                  <label className="cursor-pointer px-3 py-1 text-sm text-green-600 hover:text-green-700 font-medium">
+                  <button
+                    onClick={handleDownloadResume}
+                    className="px-3 py-1 text-sm text-green-600 hover:text-green-700 font-medium"
+                  >
+                    Download
+                  </button>
+                  <label className="cursor-pointer px-3 py-1 text-sm text-orange-600 hover:text-orange-700 font-medium">
                     Replace
                     <input
                       type="file"
@@ -977,9 +1309,11 @@ export default function CandidateProfilePage() {
             ) : (
               <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                 <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 mb-4">Upload your resume to increase your visibility</p>
+                <p className="text-gray-600 mb-4">
+                  Upload your resume to increase your visibility
+                </p>
                 <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                  {isUploading ? (
+                  {isUploadingAny ? (
                     <>
                       <Loader className="h-4 w-4 mr-2 animate-spin" />
                       Uploading...
@@ -995,15 +1329,148 @@ export default function CandidateProfilePage() {
                     accept=".pdf,.doc,.docx"
                     onChange={handleFileUpload}
                     className="hidden"
-                    disabled={isUploading}
+                    disabled={isUploadingAny}
                   />
                 </label>
-                <p className="text-xs text-gray-500 mt-2">PDF, DOC, or DOCX files only</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  PDF, DOC, or DOCX files only
+                </p>
               </div>
             )}
           </div>
         </div>
+
+        {/* Resume Modal */}
+        {showResumeModal && profile.resume && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-6xl h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h2 className="text-lg font-semibold">
+                  {profile.resume.originalName || profile.resume.fileName}
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleDownloadResume}
+                    className="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </button>
+                  <button
+                    onClick={() => setShowResumeModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 p-4">
+                {profile.resume?.cloudinaryUrl ? (
+                  <div className="w-full h-full">
+                    {/* Check if it's a PDF for inline viewing */}
+                    {profile.resume.originalName
+                      ?.toLowerCase()
+                      .endsWith(".pdf") ? (
+                      <div className="w-full h-full">
+                        {!pdfViewError ? (
+                          /* Try Google Docs Viewer first */
+                          <iframe
+                            src={`https://docs.google.com/viewer?url=${encodeURIComponent(
+                              profile.resume.cloudinaryUrl
+                            )}&embedded=true`}
+                            title="Resume Preview"
+                            className="w-full h-full border rounded-lg"
+                            onLoad={() => {
+                              console.log(
+                                "PDF loaded successfully with Google Viewer"
+                              );
+                            }}
+                            onError={(e) => {
+                              console.error(
+                                "Failed to load PDF with Google Viewer:",
+                                e
+                              );
+                              setPdfViewError(true);
+                            }}
+                          />
+                        ) : (
+                          /* Fallback view when iframe fails */
+                          <div className="flex flex-col items-center justify-center h-full space-y-4">
+                            <div className="text-center">
+                              <FileText className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+                              <h3 className="text-lg font-semibold mb-2">
+                                PDF Preview Unavailable
+                              </h3>
+                              <p className="text-gray-600 mb-4">
+                                {profile.resume.originalName}
+                              </p>
+                              <p className="text-sm text-gray-500 mb-6">
+                                Unable to preview this PDF in the browser. You
+                                can download it to view.
+                              </p>
+                            </div>
+                            <div className="space-y-3">
+                              <button
+                                onClick={handleDownloadResume}
+                                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              >
+                                <Download className="h-5 w-5 mr-2" />
+                                Download PDF
+                              </button>
+                              <button
+                                onClick={() =>
+                                  window.open(
+                                    profile.resume.cloudinaryUrl,
+                                    "_blank"
+                                  )
+                                }
+                                className="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                              >
+                                Open in New Tab
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* For DOC/DOCX files, show message with download option */
+                      <div className="flex flex-col items-center justify-center h-full space-y-4">
+                        <div className="text-center">
+                          <FileText className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+                          <h3 className="text-lg font-semibold mb-2">
+                            Document Preview
+                          </h3>
+                          <p className="text-gray-600 mb-4">
+                            {profile.resume.originalName}
+                          </p>
+                          <p className="text-sm text-gray-500 mb-6">
+                            This file type cannot be previewed in the browser.
+                            Click download to view the file.
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleDownloadResume}
+                          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <Download className="h-5 w-5 mr-2" />
+                          Download Resume
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-500">
+                    <div className="text-center">
+                      <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                      <p>Resume not available for preview</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );
-} 
+}

@@ -31,26 +31,45 @@ export default function CandidateApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Use real API data instead of mock data
-  const { data: applicationsData, isLoading, error, refetch } = useCandidateApplications();
+  const {
+    data: applicationsData,
+    isLoading,
+    error,
+    refetch,
+  } = useCandidateApplications();
   const applications = applicationsData?.applications || [];
 
   // Filter applications based on search and status
   const filteredApplications = applications.filter((app: any) => {
-    const matchesSearch = app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.companyName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      app?.jobTitle?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
+      app?.companyName?.toLowerCase()?.includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   // Calculate stats from real data
   const totalApplications = applications.length;
-  const pendingCount = applications.filter((app: any) => app.status === "pending").length;
-  const underReviewCount = applications.filter((app: any) => app.status === "under_review").length;
-  const interviewCount = applications.filter((app: any) => app.status === "interview_scheduled").length;
-  const acceptedCount = applications.filter((app: any) => app.status === "accepted").length;
-  const rejectedCount = applications.filter((app: any) => app.status === "rejected").length;
-  
-  const successRate = totalApplications > 0 ? Math.round((acceptedCount / totalApplications) * 100) : 0;
+  const pendingCount = applications.filter(
+    (app: any) => app.status === "pending"
+  ).length;
+  const underReviewCount = applications.filter(
+    (app: any) => app.status === "under_review"
+  ).length;
+  const interviewCount = applications.filter(
+    (app: any) => app.status === "interview_scheduled"
+  ).length;
+  const acceptedCount = applications.filter(
+    (app: any) => app.status === "accepted"
+  ).length;
+  const rejectedCount = applications.filter(
+    (app: any) => app.status === "rejected"
+  ).length;
+
+  const successRate =
+    totalApplications > 0
+      ? Math.round((acceptedCount / totalApplications) * 100)
+      : 0;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -100,10 +119,10 @@ export default function CandidateApplicationsPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -138,8 +157,12 @@ export default function CandidateApplicationsPage() {
         <DashboardLayout>
           <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load applications</h3>
-            <p className="text-gray-600 mb-4">There was an error loading your applications.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Failed to load applications
+            </h3>
+            <p className="text-gray-600 mb-4">
+              There was an error loading your applications.
+            </p>
             <button
               onClick={() => refetch()}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -159,8 +182,12 @@ export default function CandidateApplicationsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Applications</h1>
-              <p className="mt-1 text-gray-600">Track and manage your job applications</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                My Applications
+              </h1>
+              <p className="mt-1 text-gray-600">
+                Track and manage your job applications
+              </p>
             </div>
             <div className="mt-4 sm:mt-0 flex space-x-3">
               <button
@@ -188,8 +215,12 @@ export default function CandidateApplicationsPage() {
                   <Briefcase className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Applications</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalApplications}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Applications
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {totalApplications}
+                  </p>
                 </div>
               </div>
             </div>
@@ -200,8 +231,12 @@ export default function CandidateApplicationsPage() {
                   <Calendar className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Interviews</p>
-                  <p className="text-2xl font-bold text-gray-900">{interviewCount}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Interviews
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {interviewCount}
+                  </p>
                 </div>
               </div>
             </div>
@@ -212,8 +247,12 @@ export default function CandidateApplicationsPage() {
                   <Eye className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Under Review</p>
-                  <p className="text-2xl font-bold text-gray-900">{underReviewCount}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Under Review
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {underReviewCount}
+                  </p>
                 </div>
               </div>
             </div>
@@ -225,7 +264,9 @@ export default function CandidateApplicationsPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Accepted</p>
-                  <p className="text-2xl font-bold text-gray-900">{acceptedCount}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {acceptedCount}
+                  </p>
                 </div>
               </div>
             </div>
@@ -236,8 +277,12 @@ export default function CandidateApplicationsPage() {
                   <TrendingUp className="h-6 w-6 text-yellow-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                  <p className="text-2xl font-bold text-gray-900">{successRate}%</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Success Rate
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {successRate}%
+                  </p>
                 </div>
               </div>
             </div>
@@ -267,7 +312,9 @@ export default function CandidateApplicationsPage() {
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
                   <option value="under_review">Under Review</option>
-                  <option value="interview_scheduled">Interview Scheduled</option>
+                  <option value="interview_scheduled">
+                    Interview Scheduled
+                  </option>
                   <option value="accepted">Accepted</option>
                   <option value="rejected">Rejected</option>
                 </select>
@@ -294,7 +341,9 @@ export default function CandidateApplicationsPage() {
                           </h3>
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <button
-                              onClick={() => handleViewCompany(application.companyName)}
+                              onClick={() =>
+                                handleViewCompany(application.companyName)
+                              }
                               className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
                             >
                               <Building className="h-4 w-4" />
@@ -329,12 +378,19 @@ export default function CandidateApplicationsPage() {
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-6 text-sm text-gray-500">
-                          <span>Applied: {formatDate(application.appliedDate)}</span>
-                          <span className="capitalize">{application.jobType}</span>
+                          <span>
+                            Applied: {formatDate(application.appliedDate)}
+                          </span>
+                          <span className="capitalize">
+                            {application.jobType}
+                          </span>
                           {application.interviewDate && (
                             <span className="flex items-center space-x-1 text-purple-600">
                               <Calendar className="h-4 w-4" />
-                              <span>Interview: {formatDate(application.interviewDate)}</span>
+                              <span>
+                                Interview:{" "}
+                                {formatDate(application.interviewDate)}
+                              </span>
                             </span>
                           )}
                         </div>
@@ -349,7 +405,9 @@ export default function CandidateApplicationsPage() {
                             </button>
                           )}
                           <button
-                            onClick={() => handleViewCompany(application.companyName)}
+                            onClick={() =>
+                              handleViewCompany(application.companyName)
+                            }
                             className="inline-flex items-center px-3 py-1 text-sm text-gray-600 hover:text-gray-700 font-medium"
                           >
                             <Building className="h-4 w-4 mr-1" />
@@ -368,7 +426,9 @@ export default function CandidateApplicationsPage() {
                             </span>
                           </div>
                           <p className="text-sm text-purple-700 mt-1">
-                            Prepare for your interview on {application.interviewDate && formatDate(application.interviewDate)}
+                            Prepare for your interview on{" "}
+                            {application.interviewDate &&
+                              formatDate(application.interviewDate)}
                           </p>
                         </div>
                       )}
@@ -391,9 +451,13 @@ export default function CandidateApplicationsPage() {
                         <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                           <div className="flex items-center mb-1">
                             <MessageSquare className="h-4 w-4 text-gray-600 mr-2" />
-                            <span className="text-sm font-medium text-gray-700">Notes</span>
+                            <span className="text-sm font-medium text-gray-700">
+                              Notes
+                            </span>
                           </div>
-                          <p className="text-sm text-gray-600">{application.notes}</p>
+                          <p className="text-sm text-gray-600">
+                            {application.notes}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -404,16 +468,14 @@ export default function CandidateApplicationsPage() {
               <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-100">
                 <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchTerm || statusFilter !== "all" 
-                    ? "No applications match your search" 
-                    : "No applications yet"
-                  }
+                  {searchTerm || statusFilter !== "all"
+                    ? "No applications match your search"
+                    : "No applications yet"}
                 </h3>
                 <p className="text-gray-600 mb-6">
                   {searchTerm || statusFilter !== "all"
                     ? "Try adjusting your search criteria to find applications."
-                    : "Start applying to jobs to track your applications here."
-                  }
+                    : "Start applying to jobs to track your applications here."}
                 </p>
                 <button
                   onClick={handleSearchJobs}
@@ -429,4 +491,4 @@ export default function CandidateApplicationsPage() {
       </DashboardLayout>
     </ProtectedRoute>
   );
-} 
+}
