@@ -131,19 +131,55 @@ exports.getApplications = async (req, res) => {
 
     // Get all jobs for this employer
     const jobs = await Job.find({ employer: employer._id });
-    const jobIds = jobs.map((job) => job._id);
+    const jobIds = jobs.map((job) => job._id.toString());
 
-    // Get all candidates that applied to these jobs
-    const applications = await Candidate.find({ job: { $in: jobIds } })
-      .populate({
-        path: "job",
-        select: "title location",
-      })
-      .populate({
-        path: "recruitmentPartner",
-        select: "companyName contactPersonName",
-      })
-      .sort({ createdAt: -1 });
+    // Get all users with applications to these jobs
+    const User = require("../models/user.model");
+    const users = await User.find({
+      role: "candidate",
+      "applications.job": { $in: jobIds },
+    }).populate({
+      path: "applications.job",
+      select: "title location",
+    });
+
+    // Extract applications for employer's jobs
+    const applications = [];
+    users.forEach((user) => {
+      user.applications.forEach((app) => {
+        if (jobIds.includes(app.job._id.toString())) {
+          applications.push({
+            _id: app._id,
+            job: app.job,
+            candidate: {
+              _id: user._id,
+              firstName: user.firstName || "Not Provided",
+              lastName: user.lastName || "Not Provided",
+              email: user.email,
+              phone: user.phoneNumber,
+            },
+            status: app.status,
+            appliedAt: app.appliedAt
+              ? new Date(app.appliedAt).toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })
+              : "Not Available",
+            appliedAtRaw: app.appliedAt,
+            coverLetter: app.coverLetter,
+          });
+        }
+      });
+    });
+
+    // Sort by application date (newest first)
+    applications.sort(
+      (a, b) => new Date(b.appliedAtRaw) - new Date(a.appliedAtRaw)
+    );
 
     res.json({ applications });
   } catch (error) {
@@ -171,17 +207,53 @@ exports.getJobApplications = async (req, res) => {
       });
     }
 
-    // Get all candidates that applied to this specific job
-    const applications = await Candidate.find({ job: jobId })
-      .populate({
-        path: "job",
-        select: "title location description status",
-      })
-      .populate({
-        path: "recruitmentPartner",
-        select: "companyName contactPersonName",
-      })
-      .sort({ createdAt: -1 });
+    // Get all users with applications to this specific job
+    const User = require("../models/user.model");
+    const users = await User.find({
+      role: "candidate",
+      "applications.job": jobId,
+    }).populate({
+      path: "applications.job",
+      select: "title location description status",
+    });
+
+    // Extract applications for this job
+    const applications = [];
+    users.forEach((user) => {
+      user.applications.forEach((app) => {
+        if (app.job._id.toString() === jobId) {
+          applications.push({
+            _id: app._id,
+            job: app.job,
+            candidate: {
+              _id: user._id,
+              firstName: user.firstName || "Not Provided",
+              lastName: user.lastName || "Not Provided",
+              email: user.email,
+              phone: user.phoneNumber,
+            },
+            status: app.status,
+            appliedAt: app.appliedAt
+              ? new Date(app.appliedAt).toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })
+              : "Not Available",
+            appliedAtRaw: app.appliedAt,
+            coverLetter: app.coverLetter,
+          });
+        }
+      });
+    });
+
+    // Sort by application date (newest first)
+    applications.sort(
+      (a, b) => new Date(b.appliedAtRaw) - new Date(a.appliedAtRaw)
+    );
 
     res.json({
       applications,
@@ -199,13 +271,29 @@ exports.getJobApplications = async (req, res) => {
   }
 };
 
-// Update candidate status
+// Update application status
 exports.updateCandidateStatus = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { candidateId, applicationId } = req.params;
     const { status } = req.body;
 
-    // Find employer to verify they own this candidate (through their jobs)
+    // Validate status
+    const validStatuses = [
+      "pending",
+      "reviewed",
+      "shortlisted",
+      "interviewed",
+      "hired",
+      "rejected",
+    ];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        message:
+          "Invalid status. Valid statuses are: " + validStatuses.join(", "),
+      });
+    }
+
+    // Find employer to verify permissions
     const employer = await Employer.findOne({ user: req.user.id });
     if (!employer) {
       return res.status(404).json({ message: "Employer profile not found" });
@@ -213,28 +301,40 @@ exports.updateCandidateStatus = async (req, res) => {
 
     // Get all jobs for this employer
     const jobs = await Job.find({ employer: employer._id });
-    const jobIds = jobs.map((job) => job._id);
+    const jobIds = jobs.map((job) => job._id.toString());
 
-    // Find the candidate and verify they applied to this employer's job
-    const candidate = await Candidate.findOne({
-      _id: id,
-      job: { $in: jobIds },
-    });
+    // Find the user and update their application status
+    const User = require("../models/user.model");
+    const user = await User.findById(candidateId);
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
 
-    if (!candidate) {
-      return res.status(404).json({
-        message: "Candidate not found or not associated with your jobs",
+    // Find the specific application
+    const application = user.applications.id(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    // Verify the application is for this employer's job
+    if (!jobIds.includes(application.job.toString())) {
+      return res.status(403).json({
+        message: "Unauthorized: Application is not for your job",
       });
     }
 
-    // Update the candidate status
-    candidate.status = status;
-    candidate.updatedAt = new Date();
-    await candidate.save();
+    // Update the application status
+    application.status = status;
+    application.statusUpdatedAt = new Date();
+    await user.save();
 
     res.json({
-      candidate,
-      message: "Candidate status updated successfully",
+      message: "Application status updated successfully",
+      application: {
+        _id: application._id,
+        status: application.status,
+        statusUpdatedAt: application.statusUpdatedAt,
+      },
     });
   } catch (error) {
     console.error("Update candidate status error:", error);

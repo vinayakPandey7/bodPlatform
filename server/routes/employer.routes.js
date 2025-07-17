@@ -29,7 +29,7 @@ router.get(
   employerController.getJobApplications
 );
 router.put(
-  "/candidates/:id/status",
+  "/candidates/:candidateId/applications/:applicationId/status",
   auth,
   authorizeRoles("employer"),
   employerController.updateCandidateStatus
