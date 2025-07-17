@@ -29,6 +29,7 @@ import {
   Calendar,
   ChevronRight,
 } from "lucide-react";
+import { toast } from "sonner";
 
 // Generic Input Component
 interface InputProps {
@@ -44,6 +45,7 @@ interface InputProps {
   icon?: React.ReactNode;
   endIcon?: React.ReactNode;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -59,6 +61,7 @@ const Input: React.FC<InputProps> = ({
   icon,
   endIcon,
   placeholder,
+  disabled,
 }) => {
   return (
     <div className="w-full">
@@ -74,6 +77,7 @@ const Input: React.FC<InputProps> = ({
         helperText={touched && error}
         required={required}
         placeholder={placeholder}
+        disabled={disabled}
         variant="outlined"
         InputProps={{
           startAdornment: icon && (
@@ -208,8 +212,8 @@ const employerValidationSchema = baseValidationSchema.shape({
   industry: Yup.string().required("Please select an industry"),
   companySize: Yup.string().required("Please select company size"),
   address: Yup.string().required("Address is required"),
-  city: Yup.string().required("City is required"),
-  state: Yup.string().required("State is required"),
+  city: Yup.string(),
+  state: Yup.string(),
   zipCode: Yup.string()
     .matches(/^\d{5}$/, "ZIP code must be 5 digits")
     .required("ZIP code is required"),
@@ -258,7 +262,6 @@ export default function RegisterPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -432,7 +435,6 @@ export default function RegisterPage() {
   const handleSubmit = async (values: any) => {
     setLoading(true);
     setError("");
-    setSuccess("");
 
     try {
       const endpoint =
@@ -457,7 +459,7 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess(
+        toast.success(
           data.message || "Registration successful! Redirecting to login..."
         );
         // Increase timeout to make success message more visible
@@ -583,13 +585,7 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                {success && (
-                  <div className="max-w-2xl mx-auto">
-                    <Alert severity="success" className="rounded-2xl">
-                      {success}
-                    </Alert>
-                  </div>
-                )}
+
 
                 {/* Single Combined Form */}
                 <div className="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
@@ -1105,7 +1101,8 @@ export default function RegisterPage() {
                                     ? touched.partnerCity
                                     : touched.candidateCity
                                 }
-                                required
+                                required={values.role !== "employer"}
+                                disabled={values.role === "employer"}
                               />
 
                               <Input
@@ -1140,7 +1137,8 @@ export default function RegisterPage() {
                                     ? touched.partnerState
                                     : touched.candidateState
                                 }
-                                required
+                                required={values.role !== "employer"}
+                                disabled={values.role === "employer"}
                               />
                             </div>
 

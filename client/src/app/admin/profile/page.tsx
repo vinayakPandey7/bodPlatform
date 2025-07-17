@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useCurrentUser } from "@/lib/hooks";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface AdminProfile {
   _id: string;
@@ -26,7 +27,6 @@ export default function AdminProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -90,7 +90,6 @@ export default function AdminProfilePage() {
   const handleSave = async () => {
     try {
       setError("");
-      setSuccess("");
       const response = await api.put("/admin/profile", formData);
       setProfile({
         ...profile!,
@@ -98,7 +97,7 @@ export default function AdminProfilePage() {
         updatedAt: new Date().toISOString(),
       });
       setEditing(false);
-      setSuccess("Profile updated successfully!");
+              toast.success("Profile updated successfully!");
     } catch (err: any) {
       console.error("Error updating profile:", err);
       setError(err.response?.data?.message || "Failed to update profile");
@@ -109,7 +108,7 @@ export default function AdminProfilePage() {
         updatedAt: new Date().toISOString(),
       });
       setEditing(false);
-      setSuccess("Profile updated successfully! (Demo mode)");
+              toast.success("Profile updated successfully! (Demo mode)");
     }
   };
 
@@ -125,7 +124,6 @@ export default function AdminProfilePage() {
     }
     setEditing(false);
     setError("");
-    setSuccess("");
   };
 
   const handleChange = (
@@ -232,11 +230,7 @@ export default function AdminProfilePage() {
             </div>
           )}
 
-          {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-              {success}
-            </div>
-          )}
+
 
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">

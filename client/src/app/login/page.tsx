@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useLogin } from "@/lib/hooks";
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -32,6 +33,7 @@ export default function LoginPage() {
       {
         onSuccess: (data) => {
           console.log("Login onSuccess callback called with data:", data);
+          toast.success("Welcome back! Login successful");
           console.log("Attempting to redirect to /dashboard");
 
           // Try both router.push and window.location as a fallback

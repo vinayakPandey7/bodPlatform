@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useCreateJob } from "@/lib/queries";
+import { toast } from "sonner";
 
 interface JobFormData {
   title: string;
@@ -197,6 +198,7 @@ export default function CreateJobPage() {
       };
 
       await createJobMutation.mutateAsync(jobData);
+      toast.success("Job created successfully!");
       router.push("/employer/jobs");
     } catch (error: any) {
       console.error("Error creating job:", error);

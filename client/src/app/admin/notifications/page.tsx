@@ -8,6 +8,7 @@ import {
   useMarkAllNotificationsAsRead,
   useDeleteNotification,
 } from "@/lib/queries";
+import { toast } from "sonner";
 
 interface Notification {
   _id: string;
@@ -46,6 +47,7 @@ export default function AdminNotificationsPage() {
   const handleMarkAsRead = async (notificationId: string) => {
     try {
       await markAsReadMutation.mutateAsync(notificationId);
+      toast.success("Notification marked as read");
     } catch (err: any) {
       console.error("Error marking notification as read:", err);
     }
@@ -54,6 +56,7 @@ export default function AdminNotificationsPage() {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsReadMutation.mutateAsync();
+      toast.success("All notifications marked as read");
     } catch (err: any) {
       console.error("Error marking all notifications as read:", err);
     }
@@ -62,6 +65,7 @@ export default function AdminNotificationsPage() {
   const handleDeleteNotification = async (notificationId: string) => {
     try {
       await deleteNotificationMutation.mutateAsync(notificationId);
+      toast.success("Notification deleted successfully");
     } catch (err: any) {
       console.error("Error deleting notification:", err);
     }

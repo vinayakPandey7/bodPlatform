@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface JobDetailsModalProps {
   jobId: string;
@@ -56,7 +57,7 @@ export default function JobDetailsModal({
   const handleSaveJob = () => {
     saveJob(jobId, {
       onSuccess: () => {
-        console.log("Job saved successfully");
+        toast.success("Job saved successfully");
       },
       onError: (error) => {
         console.error("Failed to save job:", error);
@@ -69,7 +70,7 @@ export default function JobDetailsModal({
       { jobId, data: {} },
       {
         onSuccess: () => {
-          console.log("Applied to job successfully");
+          toast.success("Application submitted successfully!");
         },
         onError: (error) => {
           console.error("Failed to apply to job:", error);

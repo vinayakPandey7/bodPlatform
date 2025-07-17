@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { adminFetchers } from "@/lib/fetchers";
+import { toast } from "sonner";
 
 interface RecruitmentPartner {
   _id: string;
@@ -635,7 +636,7 @@ export default function AdminRecruitmentPartnersPage() {
         
         setIsEditModalOpen(false);
         setEditingPartner(null);
-        alert("Recruitment partner updated successfully!");
+        toast.success("Recruitment partner updated successfully!");
       } else if (isAddModalOpen) {
         const newPartner: RecruitmentPartner = {
           _id: (partners.length + 1).toString(),
@@ -658,7 +659,7 @@ export default function AdminRecruitmentPartnersPage() {
 
         setPartners([...partners, newPartner]);
         setIsAddModalOpen(false);
-        alert("Recruitment partner added successfully!");
+        toast.success("Recruitment partner added successfully!");
       }
     } catch (err: any) {
       console.error("Error saving partner:", err);

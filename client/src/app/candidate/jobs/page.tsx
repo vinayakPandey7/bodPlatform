@@ -7,6 +7,7 @@ import JobDetailsModal from "@/components/JobDetailsModal";
 import { useJobsForCandidates, useApplyToJob } from "@/lib/hooks/job.hooks";
 import { useSaveJob, useUnsaveJob } from "@/lib/hooks/candidate.hooks";
 import { useCurrentUser } from "@/lib/hooks/auth.hooks";
+import { toast } from "sonner";
 
 interface JobSearchFilters {
   zipCode: string;
@@ -193,8 +194,7 @@ export default function CandidateJobsPage() {
   const handleSaveJob = (jobId: string) => {
     saveJob(jobId, {
       onSuccess: () => {
-        console.log("Job saved successfully");
-        // You could add a toast notification here
+        toast.success("Job saved successfully");
       },
       onError: (error) => {
         console.error("Failed to save job:", error);
@@ -206,7 +206,7 @@ export default function CandidateJobsPage() {
   const handleUnsaveJob = (jobId: string) => {
     unsaveJob(jobId, {
       onSuccess: () => {
-        console.log("Job unsaved successfully");
+        toast.success("Job removed from saved list");
       },
       onError: (error) => {
         console.error("Failed to unsave job:", error);
@@ -219,8 +219,7 @@ export default function CandidateJobsPage() {
       { jobId, data: {} },
       {
         onSuccess: () => {
-          console.log("Applied to job successfully");
-          // You could add a success toast notification here
+          toast.success("Application submitted successfully!");
         },
         onError: (error) => {
           console.error("Failed to apply to job:", error);

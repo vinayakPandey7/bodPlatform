@@ -5,7 +5,6 @@
   "author": "CIERO",
   "scripts": {
     "dev": "next dev",
-    
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -26,6 +25,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.58.1",
     "react-icons": "^5.5.0",
+    "sonner": "^2.0.6",
     "uuid": "^11.1.0",
     "yup": "^1.6.1"
   },

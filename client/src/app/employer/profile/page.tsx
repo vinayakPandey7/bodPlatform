@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useCurrentUser } from "@/lib/hooks";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface EmployerProfile {
   ownerName: string;
@@ -33,7 +34,6 @@ export default function EmployerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     fetchProfile();
@@ -57,11 +57,10 @@ export default function EmployerProfilePage() {
     e.preventDefault();
     setSaving(true);
     setError("");
-    setSuccess("");
 
     try {
       await api.patch("/employer/profile", profile);
-      setSuccess("Profile updated successfully");
+      toast.success("Profile updated successfully");
     } catch (error: any) {
       setError(error.response?.data?.message || "Failed to update profile");
     } finally {
@@ -153,11 +152,7 @@ export default function EmployerProfilePage() {
                 </div>
               )}
 
-              {success && (
-                <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                  {success}
-                </div>
-              )}
+
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

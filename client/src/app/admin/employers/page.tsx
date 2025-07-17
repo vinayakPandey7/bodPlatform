@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useEmployers } from "@/lib/hooks/employer.hooks";
 import { adminFetchers } from "@/lib/fetchers";
+import { toast } from "sonner";
 
 interface Employer {
   _id: string;
@@ -632,7 +633,7 @@ export default function AdminEmployersPage() {
         
         setIsEditModalOpen(false);
         setEditingEmployer(null);
-        alert("Employer updated successfully!");
+        toast.success("Employer updated successfully!");
       } else if (isAddModalOpen) {
         // Add new employer
         const newEmployer: Employer = {
@@ -656,7 +657,7 @@ export default function AdminEmployersPage() {
 
         setEmployers([...employers, newEmployer]);
         setIsAddModalOpen(false);
-        alert("Employer added successfully!");
+        toast.success("Employer added successfully!");
       }
     } catch (err: any) {
       console.error("Error saving employer:", err);

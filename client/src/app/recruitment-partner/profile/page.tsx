@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface RecruitmentPartner {
   _id: string;
@@ -24,7 +25,6 @@ export default function RecruitmentPartnerProfilePage() {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<RecruitmentPartner>>({});
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     fetchProfile();
@@ -69,13 +69,12 @@ export default function RecruitmentPartnerProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccessMessage("");
 
     try {
       const response = await api.put("/recruitment-partner/profile", formData);
       setProfile(response.data.profile);
       setEditing(false);
-      setSuccessMessage("Profile updated successfully");
+      toast.success("Profile updated successfully");
     } catch (error: any) {
       console.error("Error updating profile:", error);
       setError(error.response?.data?.message || "Failed to update profile");
@@ -187,11 +186,7 @@ export default function RecruitmentPartnerProfilePage() {
             </div>
           )}
 
-          {successMessage && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-              {successMessage}
-            </div>
-          )}
+
 
           <div className="bg-white rounded-lg shadow">
             <form onSubmit={handleSubmit} className="p-6 space-y-6">

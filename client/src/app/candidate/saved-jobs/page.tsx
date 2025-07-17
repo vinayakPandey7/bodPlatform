@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useCandidateSavedJobs, useUnsaveJob } from "@/lib/hooks/candidate.hooks";
 import { useApplyToJob } from "@/lib/hooks/job.hooks";
+import { toast } from "sonner";
 import {
   Heart,
   MapPin,
@@ -114,11 +115,10 @@ export default function CandidateSavedJobsPage() {
   const handleUnsaveJob = (jobId: string) => {
     unsaveJob(jobId, {
       onSuccess: () => {
-        // Job will be automatically removed from the list when the query refetches
+        toast.success("Job removed from saved list");
       },
       onError: (error) => {
         console.error("Failed to unsave job:", error);
-        // You could add a toast notification here
       }
     });
   };
@@ -128,7 +128,7 @@ export default function CandidateSavedJobsPage() {
       onSuccess: () => {
         // Refresh the saved jobs to update the applied status
         refetch();
-        // You could add a success toast notification here
+        toast.success("Application submitted successfully!");
       },
       onError: (error) => {
         console.error("Failed to apply to job:", error);

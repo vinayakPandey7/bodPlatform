@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { adminFetchers } from "@/lib/fetchers";
+import { toast } from "sonner";
 
 interface Job {
   _id: string;
@@ -809,7 +810,7 @@ export default function AdminJobsPage() {
         
         setIsEditModalOpen(false);
         setEditingJob(null);
-        alert("Job updated successfully!");
+        toast.success("Job updated successfully!");
       } else if (isAddModalOpen) {
         const newJob: Job = {
           _id: (jobs.length + 1).toString(),
@@ -823,7 +824,7 @@ export default function AdminJobsPage() {
 
         setJobs([...jobs, newJob]);
         setIsAddModalOpen(false);
-        alert("Job added successfully!");
+        toast.success("Job added successfully!");
       }
     } catch (err: any) {
       console.error("Error saving job:", err);
