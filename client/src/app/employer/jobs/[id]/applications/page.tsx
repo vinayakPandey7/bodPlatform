@@ -46,20 +46,30 @@ export default function JobApplicationsPage() {
 
   const fetchJobAndApplications = async () => {
     try {
-      // Fetch job details
-      const jobResponse = await api.get(`/jobs/${jobId}`);
-      setJob(jobResponse.data.job);
+      console.log(`Fetching applications for job ID: ${jobId}`);
 
-      // Fetch all applications and filter for this job
-      const applicationsResponse = await api.get("/employer/applications");
-      const allApplications = applicationsResponse.data.applications || [];
-      const jobApplications = allApplications.filter(
-        (app: Application) => app.job._id === jobId
+      // Fetch job and applications in one call using the new endpoint
+      const response = await api.get(`/employer/jobs/${jobId}/applications`);
+
+      console.log("Job applications response:", response.data);
+
+      setJob(response.data.job);
+      setApplications(response.data.applications || []);
+
+      console.log(
+        `Found ${response.data.applications?.length || 0} applications`
       );
-      setApplications(jobApplications);
     } catch (error: any) {
       console.error("Error fetching job applications:", error);
-      setError("Failed to fetch job applications");
+      if (error.response?.status === 404) {
+        setError(
+          "Job not found or you don't have permission to view its applications"
+        );
+      } else {
+        setError(
+          error.response?.data?.message || "Failed to fetch job applications"
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -177,7 +187,35 @@ export default function JobApplicationsPage() {
           )}
 
           <div className="bg-white shadow rounded-lg overflow-hidden">
-            {filteredApplications.length === 0 ? (
+            {error ? (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-12 h-12 text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Error Loading Applications
+                </h3>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <button
+                  onClick={fetchJobAndApplications}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : filteredApplications.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <svg
@@ -283,7 +321,13 @@ export default function JobApplicationsPage() {
                             </select>
                             {application.resume && (
                               <a
-                                href={`/api/uploads/${application.resume}`}
+                                href={
+                                  application.resume.startsWith("http")
+                                    ? application.resume
+                                    : `https://docs.google.com/viewer?url=${encodeURIComponent(
+                                        application.resume
+                                      )}&embedded=true`
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-indigo-600 hover:text-indigo-900 text-xs"

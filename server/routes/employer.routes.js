@@ -22,6 +22,12 @@ router.get(
   authorizeRoles("employer"),
   employerController.getApplications
 );
+router.get(
+  "/jobs/:jobId/applications",
+  auth,
+  authorizeRoles("employer"),
+  employerController.getJobApplications
+);
 router.put(
   "/candidates/:id/status",
   auth,

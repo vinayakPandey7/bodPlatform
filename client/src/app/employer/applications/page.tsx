@@ -35,7 +35,7 @@ export default function EmployerApplicationsPage() {
       setApplications(response.data.applications || []);
     } catch (error: any) {
       console.error("Error fetching applications:", error);
-      setError("Failed to fetch applications");
+      setError(error.response?.data?.message || "Failed to fetch applications");
     } finally {
       setLoading(false);
     }
@@ -251,7 +251,13 @@ export default function EmployerApplicationsPage() {
                             </select>
                             {application?.resume && (
                               <a
-                                href={`/api/uploads/${application?.resume}`}
+                                href={
+                                  application.resume.startsWith("http")
+                                    ? application.resume
+                                    : `https://docs.google.com/viewer?url=${encodeURIComponent(
+                                        application.resume
+                                      )}&embedded=true`
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-indigo-600 hover:text-indigo-900 text-xs"

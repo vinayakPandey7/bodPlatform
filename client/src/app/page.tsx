@@ -131,11 +131,10 @@ export default function HomePage() {
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto">
             Whether you're an employer looking to hire, a job seeker finding
-            opportunities, a recruitment partner building placements, or an
-            admin managing the platform - CIERO connects everyone
-            in the hiring process.
+            opportunities, a recruitment partner building placements - CIERO
+            connects everyone in the hiring process.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
             <Link
               href="/register?type=employer"
               className="bg-blue-600 text-white px-6 py-4 rounded-lg text-base font-semibold hover:bg-blue-700 transition-colors text-center"
@@ -154,12 +153,6 @@ export default function HomePage() {
             >
               I'm a Recruiter
             </Link>
-            <Link
-              href="/login"
-              className="bg-gray-800 text-white px-6 py-4 rounded-lg text-base font-semibold hover:bg-gray-900 transition-colors text-center"
-            >
-              Admin Portal
-            </Link>
           </div>
         </div>
       </div>
@@ -175,7 +168,7 @@ export default function HomePage() {
               Tailored experiences for all stakeholders in the hiring process
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Employers */}
             <div className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -289,50 +282,6 @@ export default function HomePage() {
                 Join Network →
               </Link>
             </div>
-
-            {/* Admins */}
-            <div className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                For Admins
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Oversee platform operations, manage users, monitor activities,
-                and ensure smooth platform functioning.
-              </p>
-              <ul className="text-sm text-gray-500 space-y-1 mb-4">
-                <li>• User management</li>
-                <li>• Platform oversight</li>
-                <li>• Analytics & reporting</li>
-                <li>• System administration</li>
-              </ul>
-              <Link
-                href="/login"
-                className="text-gray-600 hover:text-gray-700 font-medium"
-              >
-                Admin Login →
-              </Link>
-            </div>
           </div>
         </div>
       </div>
@@ -433,8 +382,8 @@ export default function HomePage() {
             Ready to Transform Your Career or Business?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of professionals who trust CIERO for
-            their recruitment needs.
+            Join thousands of professionals who trust CIERO for their
+            recruitment needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -569,7 +518,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                          <p>&copy; 2025 CIERO. All rights reserved.</p>
+            <p>&copy; 2025 CIERO. All rights reserved.</p>
           </div>
         </div>
       </footer>

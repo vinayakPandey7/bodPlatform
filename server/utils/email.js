@@ -21,7 +21,7 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Password Reset Request - BOD Platform",
+      subject: "Password Reset Request - CIERO",
       html: `
         <!DOCTYPE html>
         <html>
@@ -44,7 +44,7 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
             <div class="content">
               <p>Hello ${userName},</p>
               
-              <p>You recently requested to reset your password for your BOD Platform account. Click the button below to reset it:</p>
+              <p>You recently requested to reset your password for your CIERO account. Click the button below to reset it:</p>
               
               <div style="text-align: center;">
                 <a href="${resetUrl}" class="button">Reset Your Password</a>
@@ -64,22 +64,22 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
               
               <p>If you have any questions or need assistance, please contact our support team.</p>
               
-              <p>Best regards,<br>The BOD Platform Team</p>
+              <p>Best regards,<br>The CIERO Team</p>
             </div>
             <div class="footer">
               <p>This is an automated message, please do not reply to this email.</p>
-              <p>&copy; 2025 BOD Platform. All rights reserved.</p>
+              <p>&copy; 2025 CIERO. All rights reserved.</p>
             </div>
           </div>
         </body>
         </html>
       `,
       text: `
-        Password Reset Request - BOD Platform
+        Password Reset Request - CIERO
         
         Hello ${userName},
         
-        You recently requested to reset your password for your BOD Platform account.
+        You recently requested to reset your password for your CIERO account.
         
         Please click the following link to reset your password:
         ${resetUrl}
@@ -90,7 +90,7 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
         Your password will remain unchanged until you create a new one.
         
         Best regards,
-        The BOD Platform Team
+        The CIERO Team
         
         ---
         This is an automated message, please do not reply to this email.

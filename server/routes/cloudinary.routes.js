@@ -5,6 +5,77 @@ const {
   cloudinary,
 } = require("../middlewares/cloudinary.middleware");
 const { auth } = require("../middlewares/auth.middleware");
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
+// Configure Cloudinary storage for profile pictures
+const profilePictureStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "profile-pictures", // Different folder for profile pics
+    allowedFormats: ["jpg", "jpeg", "png", "gif"],
+    transformation: [
+      { width: 300, height: 300, crop: "fill" }, // Resize to 300x300
+      { quality: "auto" },
+    ],
+  },
+});
+
+const profilePictureUpload = multer({
+  storage: profilePictureStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit for profile pictures
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed for profile pictures"), false);
+    }
+  },
+});
+
+// Upload profile picture to Cloudinary
+router.post(
+  "/profile-picture",
+  auth,
+  (req, res, next) => {
+    profilePictureUpload.single("profilePicture")(req, res, (err) => {
+      if (err) {
+        console.error("Profile picture upload error:", err);
+        return res.status(400).json({
+          message: "Profile picture upload failed",
+          error: err.message,
+        });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file uploaded" });
+      }
+
+      res.json({
+        message: "Profile picture uploaded successfully",
+        cloudinaryUrl: req.file.path,
+        publicId: req.file.filename,
+        originalName: req.file.originalname,
+        size: req.file.size,
+      });
+    } catch (error) {
+      console.error("Profile picture upload error:", error);
+      res
+        .status(500)
+        .json({
+          message: "Profile picture upload failed",
+          error: error.message,
+        });
+    }
+  }
+);
 
 // Upload resume to Cloudinary
 router.post(

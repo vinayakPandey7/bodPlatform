@@ -156,8 +156,16 @@ const userSchema = new mongoose.Schema({
     phone: String,
     location: String,
     zipCode: String,
+    gender: String,
     headline: String,
     summary: String,
+    profilePicture: {
+      cloudinaryUrl: String,
+      publicId: String,
+      originalName: String,
+      fileSize: String,
+      uploadDate: Date,
+    },
   },
 
   experience: [

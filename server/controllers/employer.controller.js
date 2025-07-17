@@ -152,6 +152,53 @@ exports.getApplications = async (req, res) => {
   }
 };
 
+// Get applications for a specific job
+exports.getJobApplications = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const employer = await Employer.findOne({ user: req.user.id });
+
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Verify the job belongs to this employer
+    const job = await Job.findOne({ _id: jobId, employer: employer._id });
+    if (!job) {
+      return res.status(404).json({
+        message:
+          "Job not found or you don't have permission to view its applications",
+      });
+    }
+
+    // Get all candidates that applied to this specific job
+    const applications = await Candidate.find({ job: jobId })
+      .populate({
+        path: "job",
+        select: "title location description status",
+      })
+      .populate({
+        path: "recruitmentPartner",
+        select: "companyName contactPersonName",
+      })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      applications,
+      job: {
+        _id: job._id,
+        title: job.title,
+        location: job.location,
+        description: job.description,
+        status: job.status,
+      },
+    });
+  } catch (error) {
+    console.error("Get job applications error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 // Update candidate status
 exports.updateCandidateStatus = async (req, res) => {
   try {
