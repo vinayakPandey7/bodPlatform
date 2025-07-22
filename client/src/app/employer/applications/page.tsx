@@ -99,7 +99,6 @@ export default function EmployerApplicationsPage() {
         <div className="space-y-6 text-black">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
               <p className="mt-1 text-gray-600">
                 Review and manage candidate applications for your jobs
               </p>

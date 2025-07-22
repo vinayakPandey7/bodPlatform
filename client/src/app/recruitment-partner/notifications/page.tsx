@@ -176,9 +176,9 @@ export default function RecruitmentPartnerNotificationsPage() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              {/* <h1 className="text-2xl font-bold text-gray-900">
                 Notifications
-              </h1>
+              </h1> */}
               <p className="mt-1 text-gray-600">
                 Stay updated with important alerts and updates
                 {unreadCount > 0 && (

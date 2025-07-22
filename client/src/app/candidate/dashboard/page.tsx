@@ -35,6 +35,7 @@ import {
   CheckCircle,
   PlusCircle,
   Edit,
+  BarChart3,
 } from "lucide-react";
 
 export default function CandidateDashboard() {
@@ -136,6 +137,13 @@ export default function CandidateDashboard() {
     return "bg-red-500";
   };
 
+  const getProfileCompletionMessage = (percentage: number) => {
+    if (percentage >= 90) return "Excellent! Your profile is almost complete.";
+    if (percentage >= 70) return "Good profile strength. Add more details to stand out.";
+    if (percentage >= 50) return "Your profile needs more information to attract employers.";
+    return "Complete your profile to increase your chances of being discovered.";
+  };
+
   // Use real job categories data or fallback
   const quickSearchCategories = dashboardData?.jobCategories || [
     { name: "Software Engineer", count: "2.3k jobs", icon: "💻" },
@@ -171,7 +179,7 @@ export default function CandidateDashboard() {
     return (
       <ProtectedRoute allowedRoles={["candidate"]}>
         <DashboardLayout>
-          <div className="flex items-center justify-center min-h-96">
+          <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         </DashboardLayout>
@@ -180,111 +188,132 @@ export default function CandidateDashboard() {
   }
 
   return (
-    <ProtectedRoute allowedRoles={["candidate"]}>
+    <ProtectedRoute allowedRoles={["candidate", "recruitment_partner"]}>
       <DashboardLayout>
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Welcome Header */}
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-8 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">
-                  Welcome back, {currentUser?.firstName || "Job Seeker"}! 👋
-                </h1>
-                <p className="text-blue-100 text-lg">
-                  Find your dream job and take the next step in your career
-                </p>
-              </div>
-              <div className="hidden md:flex items-center space-x-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {dashboardStats.applications}
+        <div className="space-y-8">
+          {/* Welcome Section */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-3xl p-8 text-white">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row items-center justify-between">
+                <div className="text-center md:text-left mb-6 md:mb-0">
+                  <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                    Welcome back, {profileData?.profile?.personalInfo?.firstName || 'Candidate'}! 👋
+                  </h1>
+                  <p className="text-lg text-white/90 mb-4">
+                    {getProfileCompletionMessage(dashboardStats.profileCompletion)}
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={handleSearchJobs}
+                      className="inline-flex items-center px-6 py-3 bg-white/20 backdrop-blur-md text-white font-medium rounded-xl hover:bg-white/30 transition-all duration-200 border border-white/30"
+                    >
+                      <Search className="h-5 w-5 mr-2" />
+                      Find Jobs
+                    </button>
+                    <button
+                      onClick={handleViewProfile}
+                      className="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-medium rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg"
+                    >
+                      <User className="h-5 w-5 mr-2" />
+                      Complete Profile
+                    </button>
                   </div>
-                  <div className="text-blue-100 text-sm">Applications</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {dashboardStats.profileViews}
+                
+                {/* Profile Picture */}
+                <div className="relative">
+                  <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                    <img
+                      src={profileData?.profile?.personalInfo?.avatarUrl || "https://res.cloudinary.com/dbeii9aot/image/upload/v1752680789/profile-pictures/zcay0rbjehnqpvwyesfn.png"}
+                      alt="Profile"
+                      className="w-28 h-28 rounded-full object-cover border-4 border-white/30"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://res.cloudinary.com/dbeii9aot/image/upload/v1752680789/profile-pictures/zcay0rbjehnqpvwyesfn.png";
+                      }}
+                    />
                   </div>
-                  <div className="text-blue-100 text-sm">Profile Views</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {dashboardStats.savedJobs}
-                  </div>
-                  <div className="text-blue-100 text-sm">Saved Jobs</div>
                 </div>
               </div>
             </div>
+            
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-lg"></div>
           </div>
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <button
               onClick={handleSearchJobs}
-              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-200 transition-all duration-200"
+              className="group relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                  <Search className="h-6 w-6 text-blue-600" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10 text-center">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg w-fit mx-auto mb-4">
+                  <Search className="h-6 w-6 text-white" />
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Search Jobs
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Find your perfect job match
+                </p>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors mt-2 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Search Jobs
-              </h3>
-              <p className="text-gray-600 text-sm">
-                Find your perfect job match
-              </p>
             </button>
 
             <button
               onClick={handleViewApplications}
-              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-green-200 transition-all duration-200"
+              className="group relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                  <FileText className="h-6 w-6 text-green-600" />
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10 text-center">
+                <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg w-fit mx-auto mb-4">
+                  <FileText className="h-6 w-6 text-white" />
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-600 transition-colors" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  My Applications
+                </h3>
+                <p className="text-gray-600 text-sm">Track application status</p>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-600 transition-colors mt-2 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                My Applications
-              </h3>
-              <p className="text-gray-600 text-sm">Track application status</p>
             </button>
 
             <button
               onClick={handleViewSavedJobs}
-              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-purple-200 transition-all duration-200"
+              className="group relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                  <Bookmark className="h-6 w-6 text-purple-600" />
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10 text-center">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg w-fit mx-auto mb-4">
+                  <Bookmark className="h-6 w-6 text-white" />
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Saved Jobs
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Review bookmarked positions
+                </p>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors mt-2 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Saved Jobs
-              </h3>
-              <p className="text-gray-600 text-sm">
-                Review bookmarked positions
-              </p>
             </button>
 
             <button
               onClick={handleViewProfile}
-              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-200 transition-all duration-200"
+              className="group relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
-                  <User className="h-6 w-6 text-orange-600" />
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10 text-center">
+                <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg w-fit mx-auto mb-4">
+                  <User className="h-6 w-6 text-white" />
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-orange-600 transition-colors" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  My Profile
+                </h3>
+                <p className="text-gray-600 text-sm">Update your information</p>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-orange-600 transition-colors mt-2 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                My Profile
-              </h3>
-              <p className="text-gray-600 text-sm">Update your information</p>
             </button>
           </div>
 
@@ -292,7 +321,7 @@ export default function CandidateDashboard() {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Profile Completion */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">
                     Profile Strength
@@ -311,30 +340,18 @@ export default function CandidateDashboard() {
                     ></div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-gray-600">Basic Info</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-gray-600">
-                      Work Experience
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Edit className="h-5 w-5 text-orange-500" />
-                    <span className="text-sm text-gray-600">
-                      Skills & Portfolio
-                    </span>
-                  </div>
+                <div className="text-sm text-gray-600">
+                  {getProfileCompletionMessage(dashboardStats.profileCompletion)}
                 </div>
-                <button
-                  onClick={handleViewProfile}
-                  className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Complete Profile
-                </button>
+                {dashboardStats.profileCompletion < 100 && (
+                  <button
+                    onClick={handleViewProfile}
+                    className="mt-4 inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Complete Profile
+                  </button>
+                )}
               </div>
 
               {/* Job Recommendations */}
@@ -435,32 +452,53 @@ export default function CandidateDashboard() {
             {/* Sidebar */}
             <div className="space-y-8">
               {/* Performance Stats */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
                   Your Performance
                 </h3>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Profile Views</span>
-                    <span className="font-semibold text-blue-600">
+                  <div className="group flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Eye className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <span className="text-gray-600">Profile Views</span>
+                    </div>
+                    <span className="font-bold text-blue-600 text-lg">
                       {dashboardStats.profileViews}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Applications Sent</span>
-                    <span className="font-semibold text-green-600">
+                  <div className="group flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <FileText className="h-4 w-4 text-green-600" />
+                      </div>
+                      <span className="text-gray-600">Applications Sent</span>
+                    </div>
+                    <span className="font-bold text-green-600 text-lg">
                       {dashboardStats.applications}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Jobs Saved</span>
-                    <span className="font-semibold text-purple-600">
+                  <div className="group flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <Bookmark className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <span className="text-gray-600">Jobs Saved</span>
+                    </div>
+                    <span className="font-bold text-purple-600 text-lg">
                       {dashboardStats.savedJobs}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Response Rate</span>
-                    <span className="font-semibold text-orange-600">
+                  <div className="group flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-orange-100 rounded-lg">
+                        <TrendingUp className="h-4 w-4 text-orange-600" />
+                      </div>
+                      <span className="text-gray-600">Response Rate</span>
+                    </div>
+                    <span className="font-bold text-orange-600 text-lg">
                       {dashboardStats.applications > 0
                         ? Math.round((dashboardData?.responseRate || 0) * 100) +
                           "%"

@@ -1,30 +1,311 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { useCurrentUser, useLogout } from "@/lib/hooks/auth.hooks";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import Logo from "@/components/Logo";
+import {
+  LayoutDashboard,
+  Search,
+  FileText,
+  Bookmark,
+  User,
+  Briefcase,
+  Building2,
+  Bell,
+  Users,
+  UserPlus,
+  Settings,
+  HelpCircle,
+  MessageSquare,
+  BarChart3,
+  Target,
+  Clock,
+  ChevronRight,
+  LogOut,
+  Menu,
+  X
+} from "lucide-react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const { data } = useCurrentUser();
+// Memoized Navigation Item Component with stable props
+const NavigationItem = memo(({ item }: { item: any }) => {
+  const IconComponent = item.icon;
+  
+  return (
+    <Link
+      href={item.href}
+      className={`group flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+        item.current
+          ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+      }`}
+      prefetch={true}
+    >
+      <div className="flex items-center">
+        <IconComponent 
+          className={`mr-3 h-5 w-5 ${
+            item.current ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500"
+          }`} 
+        />
+        <span className="font-medium">{item.name}</span>
+      </div>
+      
+      {item.badge && (
+        <span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-blue-600 bg-blue-100 rounded-full">
+          {item.badge}
+        </span>
+      )}
+      
+      {item.current && (
+        <ChevronRight className="h-4 w-4 text-blue-600" />
+      )}
+    </Link>
+  );
+});
+
+NavigationItem.displayName = 'NavigationItem';
+
+// Simple Profile Avatar Component
+const ProfileAvatar = memo(({ user, profileHref }: { user: any; profileHref: string }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div className="relative">
+      <Link
+        href={profileHref}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+          <span className="text-sm font-medium text-white">
+            {user?.email?.charAt(0).toUpperCase() || 'U'}
+          </span>
+        </div>
+        <div className="hidden md:block text-left">
+          <p className="text-sm font-medium text-gray-700">
+            {user?.email?.split('@')[0] || 'User'}
+          </p>
+          <p className="text-xs text-gray-500 capitalize">
+            {user?.role?.replace("_", " ") || 'User'}
+          </p>
+        </div>
+      </Link>
+
+      {showTooltip && (
+        <div className="absolute top-full left-0 mt-2 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-200 rounded shadow-lg whitespace-nowrap z-50">
+          Go to Profile
+          <div className="absolute bottom-full left-3 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white transform -translate-y-px"></div>
+          <div className="absolute bottom-full left-3 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-200"></div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+ProfileAvatar.displayName = 'ProfileAvatar';
+
+// Simple Logout Button Component
+const LogoutButton = memo(({ onLogout }: { onLogout: () => void }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={onLogout}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        className="p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-gray-600 hover:text-red-600"
+      >
+        <LogOut className="h-5 w-5" />
+      </button>
+      
+      {showTooltip && (
+        <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-200 rounded shadow-lg whitespace-nowrap z-50">
+          Sign Out
+          <div className="absolute bottom-full right-2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white transform -translate-y-px"></div>
+          <div className="absolute bottom-full right-2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-200"></div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+LogoutButton.displayName = 'LogoutButton';
+
+// Memoized Sidebar Component with stable structure
+const Sidebar = memo(({ user, navigation, profileHref }: { 
+  user: any; 
+  navigation: any[];
+  profileHref: string;
+}) => {
+  return (
+    <div className="hidden md:flex md:w-64 md:flex-col">
+      <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+        {/* Logo Section */}
+        <div className="flex items-center flex-shrink-0 px-6 py-4 border-b border-gray-100">
+          <Logo />
+        </div>
+        
+        {/* Navigation Section */}
+        <div className="flex-grow flex flex-col py-6">
+          <nav className="flex-1 px-3 space-y-1">
+            {navigation.map((item) => (
+              <NavigationItem key={item.href} item={item} />
+            ))}
+          </nav>
+        </div>
+
+        {/* General Section */}
+        <div className="px-6 pb-6">
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+            General
+          </h2>
+          <div className="space-y-1">
+            <Link 
+              href={`${profileHref}?tab=security`}
+              className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+            >
+              <Settings className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+              <span className="font-medium">Settings</span>
+            </Link>
+            <Link 
+              href={`${profileHref}?tab=help`}
+              className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+            >
+              <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+              <span className="font-medium">Help Desk</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+Sidebar.displayName = 'Sidebar';
+
+// Mobile sidebar component
+const MobileSidebar = memo(({ isOpen, onClose, user, navigation, profileHref }: {
+  isOpen: boolean;
+  onClose: () => void;
+  user: any;
+  navigation: any[];
+  profileHref: string;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 md:hidden">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      <div className="fixed inset-y-0 left-0 w-64 bg-white">
+        <div className="flex items-center justify-between p-4 border-b">
+          <Logo />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <div className="flex-1 px-3 py-6 space-y-1">
+          {navigation.map((item) => (
+            <NavigationItem key={item.href} item={item} />
+          ))}
+        </div>
+
+        {/* General Section for Mobile */}
+        <div className="px-6 pb-6 border-t border-gray-200">
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-4">
+            General
+          </h2>
+          <div className="space-y-1">
+            <Link 
+              href={`${profileHref}?tab=security`}
+              onClick={onClose}
+              className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+            >
+              <Settings className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+              <span className="font-medium">Settings</span>
+            </Link>
+            <Link 
+              href={`${profileHref}?tab=help`}
+              onClick={onClose}
+              className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+            >
+              <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+              <span className="font-medium">Help Desk</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+MobileSidebar.displayName = 'MobileSidebar';
+
+// Static loading component to prevent layout shift
+const LoadingLayout = memo(() => (
+  <div className="h-screen flex overflow-hidden bg-gray-100">
+    {/* Sidebar skeleton */}
+    <div className="hidden md:flex md:w-64 md:flex-col">
+      <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+        <div className="flex items-center flex-shrink-0 px-6 py-4 border-b border-gray-100">
+          <div className="w-12 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="ml-3">
+            <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="flex-grow p-6">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center space-x-3 mb-4">
+              <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* Main content skeleton */}
+    <div className="flex flex-col flex-1 overflow-hidden">
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-3.5 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <div className="w-48 h-8 bg-gray-200 rounded animate-pulse"></div>
+          <div className="flex items-center space-x-4">
+            <div className="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      </header>
+      <main className="flex-1 relative overflow-y-auto">
+        <div className="py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+            <div className="w-full h-64 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+));
+
+LoadingLayout.displayName = 'LoadingLayout';
+
+function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { data, isLoading, error } = useCurrentUser();
   const { mutate: logout } = useLogout();
   const router = useRouter();
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Extract user from the data object (matches /auth/me response structure)
   const user = data?.user;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const handleLogout = () => {
+  // Stable logout handler
+  const handleLogout = useCallback(() => {
     console.log("Logout button clicked");
     logout(undefined, {
       onSuccess: () => {
@@ -37,226 +318,301 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         router.push("/login");
       },
     });
-  };
+  }, [logout, router]);
 
-  if (!mounted) {
+  const toggleMobileMenu = useCallback(() => {
+    setMobileMenuOpen(prev => !prev);
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false);
+  }, []);
+
+  // Memoize navigation items to prevent unnecessary recalculations
+  const navigation = useMemo(() => {
+    if (!user?.role) return [];
+
+    const getNavigationItems = () => {
+      if (user?.role === "candidate") {
+        return [
+          {
+            name: "Dashboard",
+            href: "/candidate/dashboard",
+            current: pathname === "/candidate/dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            name: "Find Jobs",
+            href: "/candidate/jobs",
+            current: pathname === "/candidate/jobs",
+            icon: Search,
+          },
+          {
+            name: "My Applications",
+            href: "/candidate/applications",
+            current: pathname === "/candidate/applications",
+            icon: FileText,
+          },
+          {
+            name: "Saved Jobs",
+            href: "/candidate/saved-jobs",
+            current: pathname === "/candidate/saved-jobs",
+            icon: Bookmark,
+          },
+          {
+            name: "Profile",
+            href: "/candidate/profile",
+            current: pathname === "/candidate/profile",
+            icon: User,
+          },
+        ];
+      } else if (user?.role === "employer") {
+        return [
+          {
+            name: "Dashboard",
+            href: "/employer/dashboard",
+            current: pathname === "/employer/dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            name: "My Jobs",
+            href: "/employer/jobs",
+            current: pathname === "/employer/jobs",
+            icon: Briefcase,
+          },
+          {
+            name: "Applications",
+            href: "/employer/applications",
+            current: pathname === "/employer/applications",
+            icon: FileText,
+          },
+          {
+            name: "Saved Candidates",
+            href: "/employer/saved-candidates",
+            current: pathname === "/employer/saved-candidates",
+            icon: Users,
+          },
+          {
+            name: "Notifications",
+            href: "/employer/notifications",
+            current: pathname === "/employer/notifications",
+            icon: Bell,
+            badge: "3", // You can make this dynamic based on actual notification count
+          },
+          {
+            name: "Profile",
+            href: "/employer/profile",
+            current: pathname === "/employer/profile",
+            icon: User,
+          },
+        ];
+      } else if (user?.role === "recruitment_partner") {
+        return [
+          {
+            name: "Dashboard",
+            href: "/recruitment-partner/dashboard",
+            current: pathname === "/recruitment-partner/dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            name: "Browse Jobs",
+            href: "/recruitment-partner/jobs",
+            current: pathname === "/recruitment-partner/jobs",
+            icon: Search,
+          },
+          {
+            name: "My Applications",
+            href: "/recruitment-partner/applications",
+            current: pathname === "/recruitment-partner/applications",
+            icon: FileText,
+          },
+          {
+            name: "Candidates",
+            href: "/recruitment-partner/candidates",
+            current: pathname === "/recruitment-partner/candidates",
+            icon: Users,
+          },
+          {
+            name: "Notifications",
+            href: "/recruitment-partner/notifications",
+            current: pathname === "/recruitment-partner/notifications",
+            icon: Bell,
+          },
+          {
+            name: "Profile",
+            href: "/recruitment-partner/profile",
+            current: pathname === "/recruitment-partner/profile",
+            icon: User,
+          },
+        ];
+      } else if (user?.role === "admin" || user?.role === "sub_admin") {
+        return [
+          {
+            name: "Dashboard",
+            href: "/admin/dashboard",
+            current: pathname === "/admin/dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            name: "Employers",
+            href: "/admin/employers",
+            current: pathname === "/admin/employers",
+            icon: Building2,
+          },
+          {
+            name: "Recruitment Partners",
+            href: "/admin/recruitment-partners",
+            current: pathname === "/admin/recruitment-partners",
+            icon: UserPlus,
+          },
+          {
+            name: "Jobs Management",
+            href: "/admin/jobs",
+            current: pathname === "/admin/jobs",
+            icon: Briefcase,
+          },
+          {
+            name: "Candidates",
+            href: "/admin/candidates",
+            current: pathname === "/admin/candidates",
+            icon: Users,
+          },
+          {
+            name: "Notifications",
+            href: "/admin/notifications",
+            current: pathname === "/admin/notifications",
+            icon: Bell,
+          },
+          {
+            name: "Profile",
+            href: "/admin/profile",
+            current: pathname === "/admin/profile",
+            icon: User,
+          },
+        ];
+      }
+      return [];
+    };
+
+    return getNavigationItems();
+  }, [user?.role, pathname]);
+
+  // Memoize dashboard title to prevent recalculation
+  const dashboardTitle = useMemo(() => {
+    // Find the current navigation item based on pathname
+    const currentNavItem = navigation.find(item => item.current);
+    
+    // Return the current section name if found, otherwise fallback to default
+    if (currentNavItem) {
+      return currentNavItem.name;
+    }
+    
+    // Fallback for when no navigation item matches
+    if (!user?.role) return "Dashboard";
+    
+    switch (user.role) {
+      case "candidate":
+        return "Dashboard";
+      case "employer":
+        return "Dashboard";
+      case "recruitment_partner":
+        return "Dashboard";
+      case "admin":
+      case "sub_admin":
+        return "Dashboard";
+      default:
+        return "Dashboard";
+    }
+  }, [navigation, user?.role]);
+
+  // Memoize profile href based on user role
+  const profileHref = useMemo(() => {
+    if (!user?.role) return "/profile";
+    
+    switch (user.role) {
+      case "candidate":
+        return "/candidate/profile";
+      case "employer":
+        return "/employer/profile";
+      case "recruitment_partner":
+        return "/recruitment-partner/profile";
+      case "admin":
+      case "sub_admin":
+        return "/admin/profile";
+      default:
+        return "/profile";
+    }
+  }, [user?.role]);
+
+  // Show loading layout that matches final layout structure
+  if (isLoading || !user || !data) {
+    return <LoadingLayout />;
+  }
+
+  // Handle errors gracefully
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4">
-            <div className="animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 w-full h-full"></div>
-          </div>
-          <p className="text-gray-600 text-sm font-medium">Initializing...</p>
+          <p className="text-red-600 text-sm font-medium">Something went wrong</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+          >
+            Refresh page
+          </button>
         </div>
       </div>
     );
   }
 
-  const getNavigationItems = () => {
-    if (user?.role === "candidate") {
-      return [
-        {
-          name: "Dashboard",
-          href: "/candidate/dashboard",
-          current: pathname === "/candidate/dashboard",
-        },
-        {
-          name: "Find Jobs",
-          href: "/candidate/jobs",
-          current: pathname === "/candidate/jobs",
-        },
-        {
-          name: "My Applications",
-          href: "/candidate/applications",
-          current: pathname === "/candidate/applications",
-        },
-        {
-          name: "Saved Jobs",
-          href: "/candidate/saved-jobs",
-          current: pathname === "/candidate/saved-jobs",
-        },
-        {
-          name: "Profile",
-          href: "/candidate/profile",
-          current: pathname === "/candidate/profile",
-        },
-      ];
-    } else if (user?.role === "employer") {
-      return [
-        {
-          name: "Dashboard",
-          href: "/employer/dashboard",
-          current: pathname === "/employer/dashboard",
-        },
-        {
-          name: "My Jobs",
-          href: "/employer/jobs",
-          current: pathname === "/employer/jobs",
-        },
-        {
-          name: "Applications",
-          href: "/employer/applications",
-          current: pathname === "/employer/applications",
-        },
-        {
-          name: "Saved Candidates",
-          href: "/employer/saved-candidates",
-          current: pathname === "/employer/saved-candidates",
-        },
-        {
-          name: "Notifications",
-          href: "/employer/notifications",
-          current: pathname === "/employer/notifications",
-        },
-        {
-          name: "Profile",
-          href: "/employer/profile",
-          current: pathname === "/employer/profile",
-        },
-      ];
-    } else if (user?.role === "recruitment_partner") {
-      return [
-        {
-          name: "Dashboard",
-          href: "/recruitment-partner/dashboard",
-          current: pathname === "/recruitment-partner/dashboard",
-        },
-        {
-          name: "Browse Jobs",
-          href: "/recruitment-partner/jobs",
-          current: pathname === "/recruitment-partner/jobs",
-        },
-        {
-          name: "My Applications",
-          href: "/recruitment-partner/applications",
-          current: pathname === "/recruitment-partner/applications",
-        },
-        {
-          name: "Candidates",
-          href: "/recruitment-partner/candidates",
-          current: pathname === "/recruitment-partner/candidates",
-        },
-        {
-          name: "Notifications",
-          href: "/recruitment-partner/notifications",
-          current: pathname === "/recruitment-partner/notifications",
-        },
-        {
-          name: "Profile",
-          href: "/recruitment-partner/profile",
-          current: pathname === "/recruitment-partner/profile",
-        },
-      ];
-    } else if (user?.role === "admin" || user?.role === "sub_admin") {
-      return [
-        {
-          name: "Dashboard",
-          href: "/admin/dashboard",
-          current: pathname === "/admin/dashboard",
-        },
-        {
-          name: "Employers",
-          href: "/admin/employers",
-          current: pathname === "/admin/employers",
-        },
-        {
-          name: "Recruitment Partners",
-          href: "/admin/recruitment-partners",
-          current: pathname === "/admin/recruitment-partners",
-        },
-        {
-          name: "Jobs Management",
-          href: "/admin/jobs",
-          current: pathname === "/admin/jobs",
-        },
-        {
-          name: "Candidates",
-          href: "/admin/candidates",
-          current: pathname === "/admin/candidates",
-        },
-        {
-          name: "Notifications",
-          href: "/admin/notifications",
-          current: pathname === "/admin/notifications",
-        },
-        {
-          name: "Profile",
-          href: "/admin/profile",
-          current: pathname === "/admin/profile",
-        },
-      ];
-    }
-    return [];
-  };
-
-  const navigation = getNavigationItems();
-
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-100">
-      {/* Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col">
-        <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r">
-          <div className="flex items-center flex-shrink-0 px-4">
-            <Logo />
-          </div>
-          <div className="mt-5 flex-grow flex flex-col">
-            <nav className="flex-1 px-2 space-y-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                    item.current
-                      ? "bg-indigo-100 text-indigo-900"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
-          </div>
-          <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
-            <div className="flex-shrink-0 w-full group block">
-              <div className="flex items-center">
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    {user?.email}
-                  </p>
-                  <p className="text-xs font-medium text-gray-500 capitalize">
-                    {user?.role?.replace("_", " ")}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="mt-2 w-full text-left text-sm text-gray-500 hover:text-gray-700"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="h-screen flex overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <Sidebar 
+        user={user} 
+        navigation={navigation} 
+        profileHref={profileHref}
+      />
+
+      <MobileSidebar
+        isOpen={mobileMenuOpen}
+        onClose={closeMobileMenu}
+        user={user}
+        navigation={navigation}
+        profileHref={profileHref}
+      />
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {user?.role === "candidate" && "Candidate Dashboard"}
-              {user?.role === "employer" && "Employer Dashboard"}
-              {user?.role === "recruitment_partner" &&
-                "Recruitment Partner Dashboard"}
-              {(user?.role === "admin" || user?.role === "sub_admin") &&
-                "Admin Dashboard"}
-            </h1>
+        <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200">
+          <div className="max-w-7xl mx-auto py-3.5 px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <button
+                  onClick={toggleMobileMenu}
+                  className="md:hidden p-2 rounded-lg hover:bg-gray-100 mr-3"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  {dashboardTitle}
+                </h1>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                {/* Profile Avatar */}
+                <ProfileAvatar user={user} profileHref={profileHref} />
+                
+                {/* Logout Button */}
+                <LogoutButton onLogout={handleLogout} />
+              </div>
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gradient-to-br from-blue-50 via-white to-purple-50">
+          <div className="p-6">
+            <div className="max-w-7xl mx-auto">
               {children}
             </div>
           </div>
@@ -265,3 +621,5 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     </div>
   );
 }
+
+export default memo(DashboardLayout);

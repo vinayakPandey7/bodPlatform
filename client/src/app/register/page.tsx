@@ -367,17 +367,23 @@ export default function RegisterPage() {
         const baseSchema = step3ValidationSchema;
         if (currentRole === "employer") {
           return baseSchema.shape({
-            zipCode: Yup.string().matches(/^\d{5}$/, "5 digits required").required("Required"),
+            zipCode: Yup.string()
+              .matches(/^\d{5}$/, "5 digits required")
+              .required("Required"),
             address: Yup.string().required("Required"),
           });
         } else if (currentRole === "recruitment_partner") {
           return baseSchema.shape({
-            partnerZipCode: Yup.string().matches(/^\d{5}$/, "5 digits required").required("Required"),
+            partnerZipCode: Yup.string()
+              .matches(/^\d{5}$/, "5 digits required")
+              .required("Required"),
             partnerAddress: Yup.string().required("Required"),
           });
         } else if (currentRole === "candidate") {
           return baseSchema.shape({
-            candidateZipCode: Yup.string().matches(/^\d{5}$/, "5 digits required").required("Required"),
+            candidateZipCode: Yup.string()
+              .matches(/^\d{5}$/, "5 digits required")
+              .required("Required"),
             candidateAddress: Yup.string().required("Required"),
           });
         }
@@ -391,14 +397,38 @@ export default function RegisterPage() {
   const isStepValid = (values: any, errors: any) => {
     switch (currentStep) {
       case 1:
-        return values.email && values.password && values.confirmPassword && !errors.email && !errors.password && !errors.confirmPassword;
+        return (
+          values.email &&
+          values.password &&
+          values.confirmPassword &&
+          !errors.email &&
+          !errors.password &&
+          !errors.confirmPassword
+        );
       case 2:
         if (currentRole === "employer") {
-          return values.role && values.companyName && values.ownerName && values.phoneNumber;
+          return (
+            values.role &&
+            values.companyName &&
+            values.ownerName &&
+            values.phoneNumber
+          );
         } else if (currentRole === "recruitment_partner") {
-          return values.role && values.partnerCompanyName && values.partnerContactPersonName && values.partnerPhone && values.yearsOfExperience && values.specialization;
+          return (
+            values.role &&
+            values.partnerCompanyName &&
+            values.partnerContactPersonName &&
+            values.partnerPhone &&
+            values.yearsOfExperience &&
+            values.specialization
+          );
         } else if (currentRole === "candidate") {
-          return values.role && values.candidateFirstName && values.candidateLastName && values.candidatePhone;
+          return (
+            values.role &&
+            values.candidateFirstName &&
+            values.candidateLastName &&
+            values.candidatePhone
+          );
         }
         return values.role;
       case 3:
@@ -425,8 +455,38 @@ export default function RegisterPage() {
         </div>
 
         {/* Steps */}
-        <div className="flex-1">
-          <div className="space-y-8">
+        <div className="flex-1 relative">
+          <div className="space-y-8 relative z-10">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {/* Floating circles */}
+              <div className="absolute top-20 right-20 w-32 h-32 bg-blue-100/60 rounded-full animate-float"></div>
+              <div className="absolute top-60 left-10 w-24 h-24 bg-purple-100/50 rounded-full animate-float-delayed"></div>
+              <div className="absolute bottom-40 right-32 w-20 h-20 bg-pink-100/60 rounded-full animate-float"></div>
+              <div className="absolute top-40 right-60 w-16 h-16 bg-indigo-100/50 rounded-full animate-float-delayed"></div>
+              <div className="absolute bottom-60 left-20 w-28 h-28 bg-cyan-100/40 rounded-full animate-float"></div>
+
+              {/* Geometric shapes */}
+              <div className="absolute top-32 left-32 w-12 h-12 bg-gradient-to-r from-blue-200/30 to-purple-200/30 transform rotate-45 animate-pulse"></div>
+              <div className="absolute bottom-32 right-20 w-8 h-8 bg-gradient-to-r from-pink-200/40 to-blue-200/40 transform rotate-12 animate-pulse"></div>
+              <div className="absolute top-80 right-40 w-6 h-6 bg-gradient-to-r from-indigo-200/30 to-cyan-200/30 transform -rotate-45 animate-pulse"></div>
+
+              {/* Subtle gradient orbs */}
+              <div className="absolute top-10 left-1/4 w-40 h-40 bg-gradient-radial from-blue-100/40 to-transparent rounded-full animate-float-slow"></div>
+              <div className="absolute bottom-20 right-1/4 w-36 h-36 bg-gradient-radial from-purple-100/35 to-transparent rounded-full animate-float-slow"></div>
+              <div className="absolute top-1/2 left-10 w-32 h-32 bg-gradient-radial from-pink-100/40 to-transparent rounded-full animate-float-slow"></div>
+
+              {/* Moving particles */}
+              <div className="absolute top-16 right-12 w-2 h-2 bg-blue-200/80 rounded-full animate-bounce"></div>
+              <div className="absolute top-72 left-16 w-1.5 h-1.5 bg-purple-200/70 rounded-full animate-pulse"></div>
+              <div className="absolute bottom-24 left-1/3 w-2.5 h-2.5 bg-pink-200/60 rounded-full animate-bounce"></div>
+              <div className="absolute top-96 right-24 w-1 h-1 bg-indigo-200/80 rounded-full animate-pulse"></div>
+              <div className="absolute bottom-48 right-16 w-2 h-2 bg-cyan-200/70 rounded-full animate-bounce"></div>
+
+              {/* Light rays effect */}
+              <div className="absolute top-0 left-1/3 w-px h-20 bg-gradient-to-b from-blue-200/50 to-transparent animate-pulse"></div>
+              <div className="absolute top-0 right-1/4 w-px h-16 bg-gradient-to-b from-purple-200/40 to-transparent animate-pulse"></div>
+              <div className="absolute bottom-0 left-1/4 w-px h-24 bg-gradient-to-t from-pink-200/45 to-transparent animate-pulse"></div>
+            </div>
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-start space-x-4">
                 {/* Step indicator */}
@@ -473,17 +533,17 @@ export default function RegisterPage() {
         </div>
 
         {/* Bottom navigation */}
-        <div className="pt-8 border-t border-gray-200">
+        <div className="pt-8 border-t border-gray-200 relative z-20">
           <div className="flex items-center justify-between">
             <Link
               href="/"
-              className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+              className="flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 relative z-30"
             >
               ← Back to home
             </Link>
             <Link
               href="/login"
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 relative z-30"
             >
               Sign in
             </Link>
@@ -494,59 +554,58 @@ export default function RegisterPage() {
       {/* Right side - Welcome section and Form */}
       <div className="flex-1 flex">
         {/* Welcome section with professional image */}
-      
 
-                  {/* Form section */}
-          <div className="w-full bg-gradient-to-br from-blue-50/30 via-white to-purple-50/20 border-l border-gray-200 overflow-y-auto relative">
-            {/* Background Animation Elements */}
-            <div className="absolute inset-0 overflow-hidden">
-              {/* Floating circles */}
-              <div className="absolute top-20 right-20 w-32 h-32 bg-blue-100/40 rounded-full animate-float"></div>
-              <div className="absolute top-60 left-10 w-24 h-24 bg-purple-100/30 rounded-full animate-float-delayed"></div>
-              <div className="absolute bottom-40 right-32 w-20 h-20 bg-pink-100/40 rounded-full animate-float"></div>
-              <div className="absolute top-40 right-60 w-16 h-16 bg-indigo-100/30 rounded-full animate-float-delayed"></div>
-              <div className="absolute bottom-60 left-20 w-28 h-28 bg-cyan-100/20 rounded-full animate-float"></div>
-              
-              {/* Geometric shapes */}
-              <div className="absolute top-32 left-32 w-12 h-12 bg-gradient-to-r from-blue-200/30 to-purple-200/30 transform rotate-45 animate-pulse"></div>
-              <div className="absolute bottom-32 right-20 w-8 h-8 bg-gradient-to-r from-pink-200/40 to-blue-200/40 transform rotate-12 animate-pulse"></div>
-              <div className="absolute top-80 right-40 w-6 h-6 bg-gradient-to-r from-indigo-200/30 to-cyan-200/30 transform -rotate-45 animate-pulse"></div>
-              
-              {/* Subtle gradient orbs */}
-              <div className="absolute top-10 left-1/4 w-40 h-40 bg-gradient-radial from-blue-100/20 to-transparent rounded-full animate-float-slow"></div>
-              <div className="absolute bottom-20 right-1/4 w-36 h-36 bg-gradient-radial from-purple-100/15 to-transparent rounded-full animate-float-slow"></div>
-              <div className="absolute top-1/2 left-10 w-32 h-32 bg-gradient-radial from-pink-100/20 to-transparent rounded-full animate-float-slow"></div>
-              
-              {/* Moving particles */}
-              <div className="absolute top-16 right-12 w-2 h-2 bg-blue-200/60 rounded-full animate-bounce"></div>
-              <div className="absolute top-72 left-16 w-1.5 h-1.5 bg-purple-200/50 rounded-full animate-pulse"></div>
-              <div className="absolute bottom-24 left-1/3 w-2.5 h-2.5 bg-pink-200/40 rounded-full animate-bounce"></div>
-              <div className="absolute top-96 right-24 w-1 h-1 bg-indigo-200/60 rounded-full animate-pulse"></div>
-              <div className="absolute bottom-48 right-16 w-2 h-2 bg-cyan-200/50 rounded-full animate-bounce"></div>
-              
-              {/* Light rays effect */}
-              <div className="absolute top-0 left-1/3 w-px h-20 bg-gradient-to-b from-blue-200/30 to-transparent animate-pulse"></div>
-              <div className="absolute top-0 right-1/4 w-px h-16 bg-gradient-to-b from-purple-200/20 to-transparent animate-pulse"></div>
-              <div className="absolute bottom-0 left-1/4 w-px h-24 bg-gradient-to-t from-pink-200/25 to-transparent animate-pulse"></div>
-            </div>
-            
-                        <div className="p-8 mx-auto w-1/2 h-full relative z-10">
-              <Formik
-                initialValues={initialValues}
-                validationSchema={getValidationSchema()}
-                onSubmit={handleSubmit}
-                enableReinitialize
-              >
-                {({
-                  values,
-                  errors,
-                  touched,
-                  handleChange,
-                  handleBlur,
-                  setFieldValue,
-                  isSubmitting,
-                }) => (
-                  <Form className="h-full flex flex-col justify-center bg-white/80 backdrop-blur-sm transition-all duration-500">
+        {/* Form section */}
+        <div className="w-full bg-gradient-to-br from-blue-50/30 via-white to-purple-50/20 border-l border-gray-200 overflow-y-auto relative">
+          {/* Background Animation Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {/* Floating circles */}
+            <div className="absolute top-20 right-20 w-32 h-32 bg-blue-100/60 rounded-full animate-float"></div>
+            <div className="absolute top-60 left-10 w-24 h-24 bg-purple-100/50 rounded-full animate-float-delayed"></div>
+            <div className="absolute bottom-40 right-32 w-20 h-20 bg-pink-100/60 rounded-full animate-float"></div>
+            <div className="absolute top-40 right-60 w-16 h-16 bg-indigo-100/50 rounded-full animate-float-delayed"></div>
+            <div className="absolute bottom-60 left-20 w-28 h-28 bg-cyan-100/40 rounded-full animate-float"></div>
+
+            {/* Geometric shapes */}
+            <div className="absolute top-32 left-32 w-12 h-12 bg-gradient-to-r from-blue-200/30 to-purple-200/30 transform rotate-45 animate-pulse"></div>
+            <div className="absolute bottom-32 right-20 w-8 h-8 bg-gradient-to-r from-pink-200/40 to-blue-200/40 transform rotate-12 animate-pulse"></div>
+            <div className="absolute top-80 right-40 w-6 h-6 bg-gradient-to-r from-indigo-200/30 to-cyan-200/30 transform -rotate-45 animate-pulse"></div>
+
+            {/* Subtle gradient orbs */}
+            <div className="absolute top-10 left-1/4 w-40 h-40 bg-gradient-radial from-blue-100/40 to-transparent rounded-full animate-float-slow"></div>
+            <div className="absolute bottom-20 right-1/4 w-36 h-36 bg-gradient-radial from-purple-100/35 to-transparent rounded-full animate-float-slow"></div>
+            <div className="absolute top-1/2 left-10 w-32 h-32 bg-gradient-radial from-pink-100/40 to-transparent rounded-full animate-float-slow"></div>
+
+            {/* Moving particles */}
+            <div className="absolute top-16 right-12 w-2 h-2 bg-blue-200/80 rounded-full animate-bounce"></div>
+            <div className="absolute top-72 left-16 w-1.5 h-1.5 bg-purple-200/70 rounded-full animate-pulse"></div>
+            <div className="absolute bottom-24 left-1/3 w-2.5 h-2.5 bg-pink-200/60 rounded-full animate-bounce"></div>
+            <div className="absolute top-96 right-24 w-1 h-1 bg-indigo-200/80 rounded-full animate-pulse"></div>
+            <div className="absolute bottom-48 right-16 w-2 h-2 bg-cyan-200/70 rounded-full animate-bounce"></div>
+
+            {/* Light rays effect */}
+            <div className="absolute top-0 left-1/3 w-px h-20 bg-gradient-to-b from-blue-200/50 to-transparent animate-pulse"></div>
+            <div className="absolute top-0 right-1/4 w-px h-16 bg-gradient-to-b from-purple-200/40 to-transparent animate-pulse"></div>
+            <div className="absolute bottom-0 left-1/4 w-px h-24 bg-gradient-to-t from-pink-200/45 to-transparent animate-pulse"></div>
+          </div>
+
+          <div className="p-8 mx-auto w-1/2 h-full relative z-10">
+            <Formik
+              initialValues={initialValues}
+              validationSchema={getValidationSchema()}
+              onSubmit={handleSubmit}
+              enableReinitialize
+            >
+              {({
+                values,
+                errors,
+                touched,
+                handleChange,
+                handleBlur,
+                setFieldValue,
+                isSubmitting,
+              }) => (
+                <Form className="h-full flex flex-col justify-center  backdrop-blur-sm transition-all duration-500">
                   {error && (
                     <Alert severity="error" className="rounded-lg text-sm mb-6">
                       {error}
@@ -677,7 +736,9 @@ export default function RegisterPage() {
                               error={errors.companyName}
                               touched={touched.companyName}
                               required
-                              icon={<Building size={20} className="text-gray-400" />}
+                              icon={
+                                <Building size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -689,7 +750,9 @@ export default function RegisterPage() {
                               error={errors.ownerName}
                               touched={touched.ownerName}
                               required
-                              icon={<User size={20} className="text-gray-400" />}
+                              icon={
+                                <User size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -701,7 +764,9 @@ export default function RegisterPage() {
                               error={errors.phoneNumber}
                               touched={touched.phoneNumber}
                               required
-                              icon={<Phone size={20} className="text-gray-400" />}
+                              icon={
+                                <Phone size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactSelect
@@ -718,7 +783,9 @@ export default function RegisterPage() {
                               <MenuItem value="healthcare">Healthcare</MenuItem>
                               <MenuItem value="finance">Finance</MenuItem>
                               <MenuItem value="education">Education</MenuItem>
-                              <MenuItem value="manufacturing">Manufacturing</MenuItem>
+                              <MenuItem value="manufacturing">
+                                Manufacturing
+                              </MenuItem>
                               <MenuItem value="retail">Retail</MenuItem>
                               <MenuItem value="other">Other</MenuItem>
                             </CompactSelect>
@@ -735,8 +802,12 @@ export default function RegisterPage() {
                             >
                               <MenuItem value="1-10">1-10 employees</MenuItem>
                               <MenuItem value="11-50">11-50 employees</MenuItem>
-                              <MenuItem value="51-200">51-200 employees</MenuItem>
-                              <MenuItem value="201-1000">201-1000 employees</MenuItem>
+                              <MenuItem value="51-200">
+                                51-200 employees
+                              </MenuItem>
+                              <MenuItem value="201-1000">
+                                201-1000 employees
+                              </MenuItem>
                               <MenuItem value="1000+">1000+ employees</MenuItem>
                             </CompactSelect>
                           </>
@@ -753,7 +824,9 @@ export default function RegisterPage() {
                               error={errors.partnerCompanyName}
                               touched={touched.partnerCompanyName}
                               required
-                              icon={<Building size={20} className="text-gray-400" />}
+                              icon={
+                                <Building size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -765,7 +838,9 @@ export default function RegisterPage() {
                               error={errors.partnerContactPersonName}
                               touched={touched.partnerContactPersonName}
                               required
-                              icon={<User size={20} className="text-gray-400" />}
+                              icon={
+                                <User size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -777,7 +852,9 @@ export default function RegisterPage() {
                               error={errors.partnerPhone}
                               touched={touched.partnerPhone}
                               required
-                              icon={<Phone size={20} className="text-gray-400" />}
+                              icon={
+                                <Phone size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -789,7 +866,9 @@ export default function RegisterPage() {
                               error={errors.yearsOfExperience}
                               touched={touched.yearsOfExperience}
                               required
-                              icon={<Calendar size={20} className="text-gray-400" />}
+                              icon={
+                                <Calendar size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -816,7 +895,9 @@ export default function RegisterPage() {
                               error={errors.candidateFirstName}
                               touched={touched.candidateFirstName}
                               required
-                              icon={<User size={20} className="text-gray-400" />}
+                              icon={
+                                <User size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -828,7 +909,9 @@ export default function RegisterPage() {
                               error={errors.candidateLastName}
                               touched={touched.candidateLastName}
                               required
-                              icon={<User size={20} className="text-gray-400" />}
+                              icon={
+                                <User size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -840,7 +923,9 @@ export default function RegisterPage() {
                               error={errors.candidatePhone}
                               touched={touched.candidatePhone}
                               required
-                              icon={<Phone size={20} className="text-gray-400" />}
+                              icon={
+                                <Phone size={20} className="text-gray-400" />
+                              }
                             />
                           </>
                         )}
@@ -867,13 +952,19 @@ export default function RegisterPage() {
                               value={values.zipCode}
                               onChange={(e) => {
                                 handleChange(e);
-                                handleZipCodeChange(e.target.value, setFieldValue, "");
+                                handleZipCodeChange(
+                                  e.target.value,
+                                  setFieldValue,
+                                  ""
+                                );
                               }}
                               onBlur={handleBlur}
                               error={errors.zipCode}
                               touched={touched.zipCode}
                               required
-                              icon={<MapPin size={20} className="text-gray-400" />}
+                              icon={
+                                <MapPin size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -903,7 +994,9 @@ export default function RegisterPage() {
                               error={errors.address}
                               touched={touched.address}
                               required
-                              icon={<MapPin size={20} className="text-gray-400" />}
+                              icon={
+                                <MapPin size={20} className="text-gray-400" />
+                              }
                             />
                           </>
                         )}
@@ -916,13 +1009,19 @@ export default function RegisterPage() {
                               value={values.partnerZipCode}
                               onChange={(e) => {
                                 handleChange(e);
-                                handleZipCodeChange(e.target.value, setFieldValue, "partner");
+                                handleZipCodeChange(
+                                  e.target.value,
+                                  setFieldValue,
+                                  "partner"
+                                );
                               }}
                               onBlur={handleBlur}
                               error={errors.partnerZipCode}
                               touched={touched.partnerZipCode}
                               required
-                              icon={<MapPin size={20} className="text-gray-400" />}
+                              icon={
+                                <MapPin size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -952,7 +1051,9 @@ export default function RegisterPage() {
                               error={errors.partnerAddress}
                               touched={touched.partnerAddress}
                               required
-                              icon={<MapPin size={20} className="text-gray-400" />}
+                              icon={
+                                <MapPin size={20} className="text-gray-400" />
+                              }
                             />
                           </>
                         )}
@@ -965,13 +1066,19 @@ export default function RegisterPage() {
                               value={values.candidateZipCode}
                               onChange={(e) => {
                                 handleChange(e);
-                                handleZipCodeChange(e.target.value, setFieldValue, "candidate");
+                                handleZipCodeChange(
+                                  e.target.value,
+                                  setFieldValue,
+                                  "candidate"
+                                );
                               }}
                               onBlur={handleBlur}
                               error={errors.candidateZipCode}
                               touched={touched.candidateZipCode}
                               required
-                              icon={<MapPin size={20} className="text-gray-400" />}
+                              icon={
+                                <MapPin size={20} className="text-gray-400" />
+                              }
                             />
 
                             <CompactInput
@@ -1001,7 +1108,9 @@ export default function RegisterPage() {
                               error={errors.candidateAddress}
                               touched={touched.candidateAddress}
                               required
-                              icon={<MapPin size={20} className="text-gray-400" />}
+                              icon={
+                                <MapPin size={20} className="text-gray-400" />
+                              }
                             />
                           </>
                         )}
@@ -1046,7 +1155,11 @@ export default function RegisterPage() {
                         </button>
                         <button
                           type="submit"
-                          disabled={isSubmitting || loading || !isStepValid(values, errors)}
+                          disabled={
+                            isSubmitting ||
+                            loading ||
+                            !isStepValid(values, errors)
+                          }
                           className="flex-1 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isSubmitting || loading ? (

@@ -4,6 +4,16 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import api from "@/lib/api";
+import {
+  Briefcase,
+  TrendingUp,
+  Users,
+  Target,
+  Plus,
+  Eye,
+  Settings,
+  BarChart3
+} from "lucide-react";
 
 interface DashboardStats {
   totalPublishedJobs: number;
@@ -41,10 +51,10 @@ export default function EmployerDashboard() {
         console.error("Error fetching stats:", error);
         // Fallback to placeholder data
         setStats({
-          totalPublishedJobs: 0,
-          totalActiveJobs: 0,
+          totalPublishedJobs: 8,
+          totalActiveJobs: 8,
           totalSelectedCandidates: 0,
-          totalPositionsPublished: 0,
+          totalPositionsPublished: 8,
         });
       } finally {
         setLoading(false);
@@ -70,12 +80,12 @@ export default function EmployerDashboard() {
     return (
       <ProtectedRoute allowedRoles={["employer"]}>
         <DashboardLayout>
-          <div className="animate-pulse">
+          <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg shadow p-6">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div key={i} className="bg-white/40 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 animate-pulse">
+                  <div className="h-4 bg-gray-200/50 rounded w-3/4 mb-2"></div>
+                  <div className="h-8 bg-gray-200/50 rounded w-1/2"></div>
                 </div>
               ))}
             </div>
@@ -88,124 +98,150 @@ export default function EmployerDashboard() {
   return (
     <ProtectedRoute allowedRoles={["employer"]}>
       <DashboardLayout>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
-                    <span className="text-white font-bold">J</span>
+        <div className="p-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Total Published Jobs */}
+            <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                    <Briefcase className="h-6 w-6 text-white" />
                   </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Published Jobs
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
                       {stats.totalPublishedJobs}
-                    </dd>
-                  </dl>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-600 group-hover:text-gray-800 transition-colors">
+                    Total Published Jobs
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">All job postings</p>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white font-bold">A</span>
+            {/* Active Jobs */}
+            <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg">
+                    <TrendingUp className="h-6 w-6 text-white" />
                   </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Active Jobs
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-800 group-hover:text-green-600 transition-colors">
                       {stats.totalActiveJobs}
-                    </dd>
-                  </dl>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-600 group-hover:text-gray-800 transition-colors">
+                    Active Jobs
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">Currently hiring</p>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white font-bold">C</span>
+            {/* Selected Candidates */}
+            <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl shadow-lg">
+                    <Users className="h-6 w-6 text-white" />
                   </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Selected Candidates
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-800 group-hover:text-cyan-600 transition-colors">
                       {stats.totalSelectedCandidates}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span className="text-white font-bold">P</span>
+                    </div>
                   </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Positions
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-600 group-hover:text-gray-800 transition-colors">
+                    Selected Candidates
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">Hired this month</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Positions */}
+            <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
+                    <Target className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-800 group-hover:text-purple-600 transition-colors">
                       {stats.totalPositionsPublished}
-                    </dd>
-                  </dl>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-600 group-hover:text-gray-800 transition-colors">
+                    Total Positions
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">Available roles</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="mt-8">
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                Quick Actions
-              </h3>
-              <div className="mt-5">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button
-                    onClick={handlePostNewJob}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 cursor-pointer justify-center"
-                  >
-                    Post New Job
-                  </button>
-                  <button
-                    onClick={handleViewApplications}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md  text-white bg-indigo-600 hover:bg-indigo-700 cursor-pointer justify-center"
-                  >
-                    View Applications
-                  </button>
-                  <button
-                    onClick={handleManageJobs}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md  text-white  bg-indigo-600 hover:bg-indigo-700 cursor-pointer justify-center"
-                  >
-                    Manage Jobs
-                  </button>
+          {/* Quick Actions */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Post New Job */}
+              <button
+                onClick={handlePostNewJob}
+                className="group relative bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-2xl p-8 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center">
+                  <div className="p-4 bg-white/20 rounded-xl w-fit mx-auto mb-4">
+                    <Plus className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Post New Job</h3>
+                  <p className="text-blue-100">Create and publish a new job posting</p>
                 </div>
-              </div>
+              </button>
+
+              {/* View Applications */}
+              <button
+                onClick={handleViewApplications}
+                className="group relative bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-2xl p-8 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center">
+                  <div className="p-4 bg-white/20 rounded-xl w-fit mx-auto mb-4">
+                    <Eye className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">View Applications</h3>
+                  <p className="text-green-100">Review candidate applications</p>
+                </div>
+              </button>
+
+              {/* Manage Jobs */}
+              <button
+                onClick={handleManageJobs}
+                className="group relative bg-gradient-to-br from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 rounded-2xl p-8 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center">
+                  <div className="p-4 bg-white/20 rounded-xl w-fit mx-auto mb-4">
+                    <Settings className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Manage Jobs</h3>
+                  <p className="text-orange-100">Edit and manage existing jobs</p>
+                </div>
+              </button>
             </div>
           </div>
         </div>
