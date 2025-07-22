@@ -159,7 +159,7 @@ router.post("/validate-coordinates", async (req, res) => {
     const withinUS = isWithinUSBounds([lon, lat]);
 
     if (!withinUS) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Coordinates are outside United States boundaries",
         error: "COORDINATES_OUTSIDE_US",

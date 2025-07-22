@@ -207,7 +207,6 @@ After running the seed script, you can log in with these credentials:
 ### Candidate Endpoints
 
 - `POST /api/candidates/apply` - Submit candidate application
-- `GET /api/candidates/my-candidates` - Get recruitment partner candidates
 - `PUT /api/candidates/:id/status` - Update candidate status
 - `POST /api/candidates/:id/notes` - Add candidate note
 

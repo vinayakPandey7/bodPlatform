@@ -26,6 +26,9 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import LocationDetector from "./LocationDetector";
+import LocationBanner from "./LocationBanner";
+import LocationModal from "./LocationModal";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -322,6 +325,9 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<any>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [shouldHighlightLocation, setShouldHighlightLocation] = useState(false);
 
   // Extract user from the data object (matches /auth/me response structure)
   const user = data?.user;
@@ -604,9 +610,26 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Location Banner for Candidates */}
+        {user?.role === "candidate" && (
+          <LocationBanner
+            currentLocation={userLocation}
+            onLocationClick={() => setShowLocationModal(true)}
+            highlight={shouldHighlightLocation}
+          />
+        )}
+
         <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200">
           <div className="max-w-7xl mx-auto py-3.5 px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center">
+              {user?.role !== "candidate" && (
+                <div className="flex-shrink-0">
+                  <LocationDetector
+                    onLocationChange={setUserLocation}
+                    className="max-w-md"
+                  />
+                </div>
+              )}
               <div className="flex items-center">
                 <button
                   onClick={toggleMobileMenu}
@@ -636,6 +659,21 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </main>
       </div>
+
+      {/* Location Modal for Candidates */}
+      {user?.role === "candidate" && (
+        <LocationModal
+          isOpen={showLocationModal}
+          onClose={() => setShowLocationModal(false)}
+          onLocationChange={(location) => {
+            setUserLocation(location);
+            if (location) {
+              setShouldHighlightLocation(false);
+            }
+          }}
+          userDefaultZipCode={user?.zipCode}
+        />
+      )}
     </div>
   );
 }

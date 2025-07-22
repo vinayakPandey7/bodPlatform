@@ -81,6 +81,37 @@ export default function CandidateJobsPage() {
     }
   }, [currentUser, filters.zipCode]);
 
+  // Listen for location changes from LocationDetector
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const savedLocation = localStorage.getItem("userLocation");
+      if (savedLocation) {
+        try {
+          const location = JSON.parse(savedLocation);
+          if (location.zipCode && location.zipCode !== filters.zipCode) {
+            setFilters((prev) => ({
+              ...prev,
+              zipCode: location.zipCode,
+            }));
+            setZipCodeError("");
+          }
+        } catch (e) {
+          console.error("Error parsing saved location:", e);
+        }
+      }
+    };
+
+    // Listen for storage changes (from other tabs/components)
+    window.addEventListener("storage", handleLocationChange);
+
+    // Check on component mount
+    handleLocationChange();
+
+    return () => {
+      window.removeEventListener("storage", handleLocationChange);
+    };
+  }, [filters.zipCode]);
+
   // Handle jobId from URL parameters
   useEffect(() => {
     const jobIdFromUrl = searchParams.get("jobId");
@@ -239,7 +270,9 @@ export default function CandidateJobsPage() {
                 Find Jobs Near You
               </h1>
               <p className="mt-1 text-gray-600">
-                Search for jobs within 4 miles of your location
+                {filters.zipCode
+                  ? `Showing jobs within 4 miles of ${filters.zipCode}`
+                  : "Set your location in the header to find jobs near you"}
               </p>
             </div>
           </div>

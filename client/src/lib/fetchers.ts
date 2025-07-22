@@ -151,6 +151,7 @@ export const authFetchers = {
   },
 
   forgotPassword: async (email: string) => {
+    debugger;
     const response = await Client.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
       email,
     });
@@ -158,10 +159,12 @@ export const authFetchers = {
   },
 
   resetPassword: async (token: string, password: string) => {
-    const response = await Client.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
-      token,
-      password,
-    });
+    const response = await Client.put(
+      `${API_ENDPOINTS.AUTH.RESET_PASSWORD}/${token}`,
+      {
+        password,
+      }
+    );
     return response.data;
   },
 };
@@ -251,7 +254,10 @@ export const candidateFetchers = {
   },
 
   updateCandidateProfile: async (data: any) => {
-    const response = await Client.put(API_ENDPOINTS.CANDIDATES.UPDATE_PROFILE, data);
+    const response = await Client.put(
+      API_ENDPOINTS.CANDIDATES.UPDATE_PROFILE,
+      data
+    );
     return response.data;
   },
 
