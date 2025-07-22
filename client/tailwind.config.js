@@ -43,6 +43,10 @@ module.exports = {
           100: '#ffe4e1',
           200: '#ffcac7',
           300: '#ffb0ac',
+        },
+        'primary': {
+          DEFAULT: '#4F46E5',
+          'dark': '#4338CA',
         }
       },
       backdropBlur: {

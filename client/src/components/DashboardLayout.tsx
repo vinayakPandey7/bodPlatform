@@ -24,7 +24,7 @@ import {
   ChevronRight,
   LogOut,
   Menu,
-  X
+  X,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -34,7 +34,7 @@ interface DashboardLayoutProps {
 // Memoized Navigation Item Component with stable props
 const NavigationItem = memo(({ item }: { item: any }) => {
   const IconComponent = item.icon;
-  
+
   return (
     <Link
       href={item.href}
@@ -46,68 +46,70 @@ const NavigationItem = memo(({ item }: { item: any }) => {
       prefetch={true}
     >
       <div className="flex items-center">
-        <IconComponent 
+        <IconComponent
           className={`mr-3 h-5 w-5 ${
-            item.current ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500"
-          }`} 
+            item.current
+              ? "text-blue-600"
+              : "text-gray-400 group-hover:text-gray-500"
+          }`}
         />
         <span className="font-medium">{item.name}</span>
       </div>
-      
+
       {item.badge && (
         <span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-blue-600 bg-blue-100 rounded-full">
           {item.badge}
         </span>
       )}
-      
-      {item.current && (
-        <ChevronRight className="h-4 w-4 text-blue-600" />
-      )}
+
+      {item.current && <ChevronRight className="h-4 w-4 text-blue-600" />}
     </Link>
   );
 });
 
-NavigationItem.displayName = 'NavigationItem';
+NavigationItem.displayName = "NavigationItem";
 
 // Simple Profile Avatar Component
-const ProfileAvatar = memo(({ user, profileHref }: { user: any; profileHref: string }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
+const ProfileAvatar = memo(
+  ({ user, profileHref }: { user: any; profileHref: string }) => {
+    const [showTooltip, setShowTooltip] = useState(false);
 
-  return (
-    <div className="relative">
-      <Link
-        href={profileHref}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-      >
-        <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-          <span className="text-sm font-medium text-white">
-            {user?.email?.charAt(0).toUpperCase() || 'U'}
-          </span>
-        </div>
-        <div className="hidden md:block text-left">
-          <p className="text-sm font-medium text-gray-700">
-            {user?.email?.split('@')[0] || 'User'}
-          </p>
-          <p className="text-xs text-gray-500 capitalize">
-            {user?.role?.replace("_", " ") || 'User'}
-          </p>
-        </div>
-      </Link>
+    return (
+      <div className="relative">
+        <Link
+          href={profileHref}
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+            <span className="text-sm font-medium text-white">
+              {user?.email?.charAt(0).toUpperCase() || "U"}
+            </span>
+          </div>
+          <div className="hidden md:block text-left">
+            <p className="text-sm font-medium text-gray-700">
+              {user?.email?.split("@")[0] || "User"}
+            </p>
+            <p className="text-xs text-gray-500 capitalize">
+              {user?.role?.replace("_", " ") || "User"}
+            </p>
+          </div>
+        </Link>
 
-      {showTooltip && (
-        <div className="absolute top-full left-0 mt-2 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-200 rounded shadow-lg whitespace-nowrap z-50">
-          Go to Profile
-          <div className="absolute bottom-full left-3 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white transform -translate-y-px"></div>
-          <div className="absolute bottom-full left-3 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-200"></div>
-        </div>
-      )}
-    </div>
-  );
-});
+        {showTooltip && (
+          <div className="absolute top-full left-0 mt-2 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-200 rounded shadow-lg whitespace-nowrap z-50">
+            Go to Profile
+            <div className="absolute bottom-full left-3 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white transform -translate-y-px"></div>
+            <div className="absolute bottom-full left-3 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-200"></div>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
-ProfileAvatar.displayName = 'ProfileAvatar';
+ProfileAvatar.displayName = "ProfileAvatar";
 
 // Simple Logout Button Component
 const LogoutButton = memo(({ onLogout }: { onLogout: () => void }) => {
@@ -123,9 +125,9 @@ const LogoutButton = memo(({ onLogout }: { onLogout: () => void }) => {
       >
         <LogOut className="h-5 w-5" />
       </button>
-      
+
       {showTooltip && (
-        <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-200 rounded shadow-lg whitespace-nowrap z-50">
+        <div className="absolute top-full  right-0 mt-2 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-200 rounded shadow-lg whitespace-nowrap !z-50">
           Sign Out
           <div className="absolute bottom-full right-2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white transform -translate-y-px"></div>
           <div className="absolute bottom-full right-2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-200"></div>
@@ -135,117 +137,137 @@ const LogoutButton = memo(({ onLogout }: { onLogout: () => void }) => {
   );
 });
 
-LogoutButton.displayName = 'LogoutButton';
+LogoutButton.displayName = "LogoutButton";
 
 // Memoized Sidebar Component with stable structure
-const Sidebar = memo(({ user, navigation, profileHref }: { 
-  user: any; 
-  navigation: any[];
-  profileHref: string;
-}) => {
-  return (
-    <div className="hidden md:flex md:w-64 md:flex-col">
-      <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
-        {/* Logo Section */}
-        <div className="flex items-center flex-shrink-0 px-6 py-4 border-b border-gray-100">
-          <Logo />
+const Sidebar = memo(
+  ({
+    user,
+    navigation,
+    profileHref,
+  }: {
+    user: any;
+    navigation: any[];
+    profileHref: string;
+  }) => {
+    return (
+      <div className="hidden md:flex md:w-64 md:flex-col">
+        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+          {/* Logo Section */}
+          <div className="flex items-center flex-shrink-0 px-6 py-4 border-b border-gray-100">
+            <Logo />
+          </div>
+
+          {/* Navigation Section */}
+          <div className="flex-grow flex flex-col py-6">
+            <nav className="flex-1 px-3 space-y-1">
+              {navigation.map((item) => (
+                <NavigationItem key={item.href} item={item} />
+              ))}
+            </nav>
+          </div>
+
+          {/* General Section */}
+          <div className="px-6 pb-6">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+              General
+            </h2>
+            <div className="space-y-1">
+              <Link
+                href={`${profileHref}?tab=security`}
+                className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+              >
+                <Settings className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+                <span className="font-medium">Settings</span>
+              </Link>
+              <Link
+                href={`${profileHref}?tab=help`}
+                className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+              >
+                <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+                <span className="font-medium">Help Desk</span>
+              </Link>
+            </div>
+          </div>
         </div>
-        
-        {/* Navigation Section */}
-        <div className="flex-grow flex flex-col py-6">
-          <nav className="flex-1 px-3 space-y-1">
+      </div>
+    );
+  }
+);
+
+Sidebar.displayName = "Sidebar";
+
+// Mobile sidebar component
+const MobileSidebar = memo(
+  ({
+    isOpen,
+    onClose,
+    user,
+    navigation,
+    profileHref,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    user: any;
+    navigation: any[];
+    profileHref: string;
+  }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 md:hidden">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50"
+          onClick={onClose}
+        />
+        <div className="fixed inset-y-0 left-0 w-64 bg-white">
+          <div className="flex items-center justify-between p-4 border-b">
+            <Logo />
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 px-3 py-6 space-y-1">
             {navigation.map((item) => (
               <NavigationItem key={item.href} item={item} />
             ))}
-          </nav>
-        </div>
+          </div>
 
-        {/* General Section */}
-        <div className="px-6 pb-6">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            General
-          </h2>
-          <div className="space-y-1">
-            <Link 
-              href={`${profileHref}?tab=security`}
-              className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-            >
-              <Settings className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-              <span className="font-medium">Settings</span>
-            </Link>
-            <Link 
-              href={`${profileHref}?tab=help`}
-              className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-            >
-              <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-              <span className="font-medium">Help Desk</span>
-            </Link>
+          {/* General Section for Mobile */}
+          <div className="px-6 pb-6 border-t border-gray-200">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-4">
+              General
+            </h2>
+            <div className="space-y-1">
+              <Link
+                href={`${profileHref}?tab=security`}
+                onClick={onClose}
+                className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+              >
+                <Settings className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+                <span className="font-medium">Settings</span>
+              </Link>
+              <Link
+                href={`${profileHref}?tab=help`}
+                onClick={onClose}
+                className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+              >
+                <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+                <span className="font-medium">Help Desk</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
-Sidebar.displayName = 'Sidebar';
-
-// Mobile sidebar component
-const MobileSidebar = memo(({ isOpen, onClose, user, navigation, profileHref }: {
-  isOpen: boolean;
-  onClose: () => void;
-  user: any;
-  navigation: any[];
-  profileHref: string;
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 md:hidden">
-      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
-      <div className="fixed inset-y-0 left-0 w-64 bg-white">
-        <div className="flex items-center justify-between p-4 border-b">
-          <Logo />
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        
-        <div className="flex-1 px-3 py-6 space-y-1">
-          {navigation.map((item) => (
-            <NavigationItem key={item.href} item={item} />
-          ))}
-        </div>
-
-        {/* General Section for Mobile */}
-        <div className="px-6 pb-6 border-t border-gray-200">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-4">
-            General
-          </h2>
-          <div className="space-y-1">
-            <Link 
-              href={`${profileHref}?tab=security`}
-              onClick={onClose}
-              className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-            >
-              <Settings className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-              <span className="font-medium">Settings</span>
-            </Link>
-            <Link 
-              href={`${profileHref}?tab=help`}
-              onClick={onClose}
-              className="group flex items-center w-full px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-            >
-              <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-              <span className="font-medium">Help Desk</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-MobileSidebar.displayName = 'MobileSidebar';
+MobileSidebar.displayName = "MobileSidebar";
 
 // Static loading component to prevent layout shift
 const LoadingLayout = memo(() => (
@@ -292,7 +314,7 @@ const LoadingLayout = memo(() => (
   </div>
 ));
 
-LoadingLayout.displayName = 'LoadingLayout';
+LoadingLayout.displayName = "LoadingLayout";
 
 function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data, isLoading, error } = useCurrentUser();
@@ -321,7 +343,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [logout, router]);
 
   const toggleMobileMenu = useCallback(() => {
-    setMobileMenuOpen(prev => !prev);
+    setMobileMenuOpen((prev) => !prev);
   }, []);
 
   const closeMobileMenu = useCallback(() => {
@@ -500,16 +522,16 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   // Memoize dashboard title to prevent recalculation
   const dashboardTitle = useMemo(() => {
     // Find the current navigation item based on pathname
-    const currentNavItem = navigation.find(item => item.current);
-    
+    const currentNavItem = navigation.find((item) => item.current);
+
     // Return the current section name if found, otherwise fallback to default
     if (currentNavItem) {
       return currentNavItem.name;
     }
-    
+
     // Fallback for when no navigation item matches
     if (!user?.role) return "Dashboard";
-    
+
     switch (user.role) {
       case "candidate":
         return "Dashboard";
@@ -528,7 +550,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   // Memoize profile href based on user role
   const profileHref = useMemo(() => {
     if (!user?.role) return "/profile";
-    
+
     switch (user.role) {
       case "candidate":
         return "/candidate/profile";
@@ -554,9 +576,11 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="text-red-600 text-sm font-medium">Something went wrong</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <p className="text-red-600 text-sm font-medium">
+            Something went wrong
+          </p>
+          <button
+            onClick={() => window.location.reload()}
             className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
           >
             Refresh page
@@ -568,11 +592,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Sidebar 
-        user={user} 
-        navigation={navigation} 
-        profileHref={profileHref}
-      />
+      <Sidebar user={user} navigation={navigation} profileHref={profileHref} />
 
       <MobileSidebar
         isOpen={mobileMenuOpen}
@@ -598,11 +618,11 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                   {dashboardTitle}
                 </h1>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 {/* Profile Avatar */}
                 <ProfileAvatar user={user} profileHref={profileHref} />
-                
+
                 {/* Logout Button */}
                 <LogoutButton onLogout={handleLogout} />
               </div>
@@ -612,9 +632,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
 
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gradient-to-br from-blue-50 via-white to-purple-50">
           <div className="p-6">
-            <div className="max-w-7xl mx-auto">
-              {children}
-            </div>
+            <div className="max-w-7xl mx-auto">{children}</div>
           </div>
         </main>
       </div>

@@ -82,3 +82,31 @@ export const useUpdateCandidateProfile = () => {
     },
   });
 };
+
+export const useSaveJob = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: candidateFetchers.saveJob,
+    onSuccess: () => {
+      // Invalidate saved jobs query to refresh the list
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS() });
+      // Optionally invalidate dashboard if it shows saved jobs count
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.DASHBOARD });
+    },
+  });
+};
+
+export const useUnsaveJob = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: candidateFetchers.unsaveJob,
+    onSuccess: () => {
+      // Invalidate saved jobs query to refresh the list
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.SAVED_JOBS() });
+      // Optionally invalidate dashboard if it shows saved jobs count
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.DASHBOARD });
+    },
+  });
+};

@@ -25,7 +25,7 @@ import {
   Target,
   RefreshCw,
   ChevronDown,
-  X
+  X,
 } from "lucide-react";
 
 interface Job {
@@ -65,11 +65,11 @@ export default function EmployerJobsPage() {
   const [filters, setFilters] = useState<JobFilters>({
     search: "",
     status: "all",
-    approval: "all", 
+    approval: "all",
     jobRole: "all",
     jobType: "all",
     sortBy: "newest",
-    dateRange: "all"
+    dateRange: "all",
   });
 
   useEffect(() => {
@@ -94,42 +94,45 @@ export default function EmployerJobsPage() {
 
     // Search filter
     if (filters.search) {
-      filtered = filtered.filter(job =>
-        job.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        job.description.toLowerCase().includes(filters.search.toLowerCase()) ||
-        job.location.toLowerCase().includes(filters.search.toLowerCase())
+      filtered = filtered.filter(
+        (job) =>
+          job.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+          job.description
+            .toLowerCase()
+            .includes(filters.search.toLowerCase()) ||
+          job.location.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
 
     // Status filter
     if (filters.status !== "all") {
-      filtered = filtered.filter(job => 
+      filtered = filtered.filter((job) =>
         filters.status === "active" ? job.isActive : !job.isActive
       );
     }
 
     // Approval filter
     if (filters.approval !== "all") {
-      filtered = filtered.filter(job => 
+      filtered = filtered.filter((job) =>
         filters.approval === "approved" ? job.isApproved : !job.isApproved
       );
     }
 
     // Job role filter
     if (filters.jobRole !== "all") {
-      filtered = filtered.filter(job => job.jobRole === filters.jobRole);
+      filtered = filtered.filter((job) => job.jobRole === filters.jobRole);
     }
 
     // Job type filter
     if (filters.jobType !== "all") {
-      filtered = filtered.filter(job => job.jobType === filters.jobType);
+      filtered = filtered.filter((job) => job.jobType === filters.jobType);
     }
 
     // Date range filter
     if (filters.dateRange !== "all") {
       const now = new Date();
       const jobDate = new Date();
-      
+
       switch (filters.dateRange) {
         case "week":
           jobDate.setDate(now.getDate() - 7);
@@ -141,25 +144,34 @@ export default function EmployerJobsPage() {
           jobDate.setMonth(now.getMonth() - 3);
           break;
       }
-      
+
       if (filters.dateRange !== "all") {
-        filtered = filtered.filter(job => new Date(job.createdAt) >= jobDate);
+        filtered = filtered.filter((job) => new Date(job.createdAt) >= jobDate);
       }
     }
 
     // Sort jobs
     switch (filters.sortBy) {
       case "newest":
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
         break;
       case "oldest":
-        filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        filtered.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
         break;
       case "title":
         filtered.sort((a, b) => a.title.localeCompare(b.title));
         break;
       case "expires":
-        filtered.sort((a, b) => new Date(a.expires).getTime() - new Date(b.expires).getTime());
+        filtered.sort(
+          (a, b) =>
+            new Date(a.expires).getTime() - new Date(b.expires).getTime()
+        );
         break;
       case "positions":
         filtered.sort((a, b) => b.numberOfPositions - a.numberOfPositions);
@@ -172,9 +184,12 @@ export default function EmployerJobsPage() {
   // Calculate stats
   const stats = useMemo(() => {
     const total = jobs.length;
-    const active = jobs.filter(job => job.isActive).length;
-    const approved = jobs.filter(job => job.isApproved).length;
-    const totalPositions = jobs.reduce((sum, job) => sum + job.numberOfPositions, 0);
+    const active = jobs.filter((job) => job.isActive).length;
+    const approved = jobs.filter((job) => job.isApproved).length;
+    const totalPositions = jobs.reduce(
+      (sum, job) => sum + job.numberOfPositions,
+      0
+    );
 
     return { total, active, approved, totalPositions };
   }, [jobs]);
@@ -201,7 +216,7 @@ export default function EmployerJobsPage() {
   };
 
   const handleFilterChange = (key: keyof JobFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
@@ -209,15 +224,15 @@ export default function EmployerJobsPage() {
       search: "",
       status: "all",
       approval: "all",
-      jobRole: "all", 
+      jobRole: "all",
       jobType: "all",
       sortBy: "newest",
-      dateRange: "all"
+      dateRange: "all",
     });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => 
-    value !== "all" && value !== "newest" && value !== ""
+  const hasActiveFilters = Object.values(filters).some(
+    (value) => value !== "all" && value !== "newest" && value !== ""
   );
 
   if (loading) {
@@ -228,12 +243,18 @@ export default function EmployerJobsPage() {
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white/60 backdrop-blur-md rounded-2xl p-6 h-24"></div>
+                <div
+                  key={i}
+                  className="bg-white/60 backdrop-blur-md rounded-2xl p-6 h-24"
+                ></div>
               ))}
             </div>
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white/60 backdrop-blur-md rounded-2xl p-6 h-48"></div>
+                <div
+                  key={i}
+                  className="bg-white/60 backdrop-blur-md rounded-2xl p-6 h-48"
+                ></div>
               ))}
             </div>
           </div>
@@ -276,8 +297,12 @@ export default function EmployerJobsPage() {
             <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Jobs</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Jobs
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {stats.total}
+                  </p>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-xl">
                   <Briefcase className="h-6 w-6 text-blue-600" />
@@ -288,8 +313,12 @@ export default function EmployerJobsPage() {
             <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active Jobs</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.active}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Active Jobs
+                  </p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {stats.active}
+                  </p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
                   <TrendingUp className="h-6 w-6 text-green-600" />
@@ -301,7 +330,9 @@ export default function EmployerJobsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-3xl font-bold text-purple-600">{stats.approved}</p>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {stats.approved}
+                  </p>
                 </div>
                 <div className="p-3 bg-purple-100 rounded-xl">
                   <CheckCircle className="h-6 w-6 text-purple-600" />
@@ -312,8 +343,12 @@ export default function EmployerJobsPage() {
             <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Positions</p>
-                  <p className="text-3xl font-bold text-orange-600">{stats.totalPositions}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Positions
+                  </p>
+                  <p className="text-3xl font-bold text-orange-600">
+                    {stats.totalPositions}
+                  </p>
                 </div>
                 <div className="p-3 bg-orange-100 rounded-xl">
                   <Target className="h-6 w-6 text-orange-600" />
@@ -350,7 +385,12 @@ export default function EmployerJobsPage() {
                 Filters
                 {hasActiveFilters && (
                   <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
-                    {Object.values(filters).filter(value => value !== "all" && value !== "newest" && value !== "").length}
+                    {
+                      Object.values(filters).filter(
+                        (value) =>
+                          value !== "all" && value !== "newest" && value !== ""
+                      ).length
+                    }
                   </span>
                 )}
               </button>
@@ -362,10 +402,14 @@ export default function EmployerJobsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                   {/* Status Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
                     <select
                       value={filters.status}
-                      onChange={(e) => handleFilterChange("status", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("status", e.target.value)
+                      }
                       className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="all">All Status</option>
@@ -376,10 +420,14 @@ export default function EmployerJobsPage() {
 
                   {/* Approval Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Approval</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Approval
+                    </label>
                     <select
                       value={filters.approval}
-                      onChange={(e) => handleFilterChange("approval", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("approval", e.target.value)
+                      }
                       className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="all">All</option>
@@ -390,10 +438,14 @@ export default function EmployerJobsPage() {
 
                   {/* Job Role Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Job Role</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Job Role
+                    </label>
                     <select
                       value={filters.jobRole}
-                      onChange={(e) => handleFilterChange("jobRole", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("jobRole", e.target.value)
+                      }
                       className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="all">All Roles</option>
@@ -406,10 +458,14 @@ export default function EmployerJobsPage() {
 
                   {/* Job Type Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Work Type</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Work Type
+                    </label>
                     <select
                       value={filters.jobType}
-                      onChange={(e) => handleFilterChange("jobType", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("jobType", e.target.value)
+                      }
                       className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="all">All Types</option>
@@ -421,10 +477,14 @@ export default function EmployerJobsPage() {
 
                   {/* Date Range Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Posted</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Posted
+                    </label>
                     <select
                       value={filters.dateRange}
-                      onChange={(e) => handleFilterChange("dateRange", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("dateRange", e.target.value)
+                      }
                       className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="all">All Time</option>
@@ -436,10 +496,14 @@ export default function EmployerJobsPage() {
 
                   {/* Sort Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sort By
+                    </label>
                     <select
                       value={filters.sortBy}
-                      onChange={(e) => handleFilterChange("sortBy", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("sortBy", e.target.value)
+                      }
                       className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="newest">Newest First</option>
@@ -482,13 +546,14 @@ export default function EmployerJobsPage() {
                   <Briefcase className="w-12 h-12 text-gray-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {jobs.length === 0 ? "No jobs posted yet" : "No jobs match your filters"}
+                  {jobs.length === 0
+                    ? "No jobs posted yet"
+                    : "No jobs match your filters"}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {jobs.length === 0 
+                  {jobs.length === 0
                     ? "Start by posting your first job to attract candidates."
-                    : "Try adjusting your search criteria or filters."
-                  }
+                    : "Try adjusting your search criteria or filters."}
                 </p>
                 {jobs.length === 0 ? (
                   <button
@@ -566,11 +631,16 @@ export default function EmployerJobsPage() {
                         </div>
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                           <Users className="h-4 w-4 text-gray-400" />
-                          <span>{job.numberOfPositions} Position{job.numberOfPositions > 1 ? 's' : ''}</span>
+                          <span>
+                            {job.numberOfPositions} Position
+                            {job.numberOfPositions > 1 ? "s" : ""}
+                          </span>
                         </div>
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                           <Clock className="h-4 w-4 text-gray-400" />
-                          <span>Expires {new Date(job.expires).toLocaleDateString()}</span>
+                          <span>
+                            Expires {new Date(job.expires).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
 
@@ -582,7 +652,10 @@ export default function EmployerJobsPage() {
                       {/* Posted Date */}
                       <div className="flex items-center space-x-2 text-xs text-gray-500">
                         <Calendar className="h-3 w-3" />
-                        <span>Posted on {new Date(job.createdAt).toLocaleDateString()}</span>
+                        <span>
+                          Posted on{" "}
+                          {new Date(job.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
 
