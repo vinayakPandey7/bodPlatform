@@ -34,5 +34,23 @@ router.put(
   authorizeRoles("employer"),
   employerController.updateCandidateStatus
 );
+router.get(
+  "/candidates/:candidateId/profile",
+  auth,
+  authorizeRoles("employer"),
+  employerController.getCandidateProfile
+);
+router.put(
+  "/candidates/:candidateId/save",
+  auth,
+  authorizeRoles("employer"),
+  employerController.saveCandidateForEmployer
+);
+router.get(
+  "/saved-candidates",
+  auth,
+  authorizeRoles("employer"),
+  employerController.getSavedCandidatesForEmployer
+);
 
 module.exports = router;

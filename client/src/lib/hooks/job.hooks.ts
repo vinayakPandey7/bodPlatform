@@ -76,6 +76,10 @@ export const useApplyToJob = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.CANDIDATES.DASHBOARD,
       });
+      // Refresh user data to update applications list
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AUTH.ME,
+      });
     },
   });
 };

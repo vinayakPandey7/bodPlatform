@@ -111,6 +111,19 @@ const employerSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  savedCandidates: [
+    {
+      candidate: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      savedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,

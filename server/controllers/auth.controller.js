@@ -245,13 +245,24 @@ exports.getMe = async (req, res) => {
       profile = await RecruitmentPartner.findOne({ user: user._id });
     }
 
+    // For candidates, include applications to check applied jobs
+    let userResponse = {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      zipCode: user.zipCode,
+      profile,
+    };
+
+    // Add applications for candidates
+    if (user.role === "candidate" && user.applications) {
+      userResponse.applications = user.applications;
+    }
+
     res.json({
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        profile,
-      },
+      user: userResponse,
     });
   } catch (error) {
     console.error("Get profile error:", error);

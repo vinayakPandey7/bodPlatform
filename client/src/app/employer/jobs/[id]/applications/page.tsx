@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import CandidateProfileModal from "@/components/CandidateProfileModal";
 import api from "@/lib/api";
 
 interface Application {
@@ -39,6 +40,10 @@ export default function JobApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
+    null
+  );
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const params = useParams();
   const router = useRouter();
   const jobId = params.id as string;
@@ -103,6 +108,16 @@ export default function JobApplicationsPage() {
     } catch (error) {
       console.error("Error updating candidate status:", error);
     }
+  };
+
+  const openCandidateProfile = (candidateId: string) => {
+    setSelectedCandidateId(candidateId);
+    setIsProfileModalOpen(true);
+  };
+
+  const closeCandidateProfile = () => {
+    setSelectedCandidateId(null);
+    setIsProfileModalOpen(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -281,6 +296,7 @@ export default function JobApplicationsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Applied Date
                       </th>
+
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
@@ -316,6 +332,14 @@ export default function JobApplicationsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex space-x-2">
+                            <button
+                              onClick={() =>
+                                openCandidateProfile(application.candidate._id)
+                              }
+                              className="text-indigo-600 hover:text-indigo-900 text-xs px-2 py-1 border border-indigo-300 rounded hover:bg-indigo-50 transition-colors"
+                            >
+                              View Profile
+                            </button>
                             <select
                               value={application.status}
                               onChange={(e) =>
@@ -353,6 +377,15 @@ export default function JobApplicationsPage() {
             )}
           </div>
         </div>
+
+        {/* Candidate Profile Modal */}
+        {selectedCandidateId && (
+          <CandidateProfileModal
+            candidateId={selectedCandidateId}
+            isOpen={isProfileModalOpen}
+            onClose={closeCandidateProfile}
+          />
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );

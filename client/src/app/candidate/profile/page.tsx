@@ -79,6 +79,7 @@ export default function CandidateProfilePage() {
   const [editingSkill, setEditingSkill] = useState<string | null>(null);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [pdfViewError, setPdfViewError] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showProfilePicModal, setShowProfilePicModal] = useState(false);
   const [profilePicDragOver, setProfilePicDragOver] = useState(false);
@@ -682,23 +683,26 @@ export default function CandidateProfilePage() {
         onSuccess: (data) => {
           console.log("Resume uploaded to Cloudinary:", data);
           // Update profile with the resume data
-          updateProfile({
-            resume: {
-              cloudinaryUrl: data.url, // Use url from response
-              originalName: file.name,
-              fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-              uploadDate: new Date().toISOString(),
+          updateProfile(
+            {
+              resume: {
+                cloudinaryUrl: data.url, // Use url from response
+                originalName: file.name,
+                fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                uploadDate: new Date().toISOString(),
+              },
             },
-          }, {
-            onSuccess: () => {
-              refetch();
-              alert("Resume uploaded successfully!");
-            },
-            onError: (error) => {
-              console.error("Failed to update profile with resume:", error);
-              alert("Failed to save resume to profile");
+            {
+              onSuccess: () => {
+                refetch();
+                alert("Resume uploaded successfully!");
+              },
+              onError: (error) => {
+                console.error("Failed to update profile with resume:", error);
+                alert("Failed to save resume to profile");
+              },
             }
-          });
+          );
         },
         onError: (error) => {
           console.error("Cloudinary upload error:", error);
@@ -748,23 +752,26 @@ export default function CandidateProfilePage() {
         onSuccess: (data) => {
           console.log("Resume uploaded to Cloudinary:", data);
           // Update profile with the resume data
-          updateProfile({
-            resume: {
-              cloudinaryUrl: data.url, // Use url from response
-              originalName: file.name,
-              fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-              uploadDate: new Date().toISOString(),
+          updateProfile(
+            {
+              resume: {
+                cloudinaryUrl: data.url, // Use url from response
+                originalName: file.name,
+                fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                uploadDate: new Date().toISOString(),
+              },
             },
-          }, {
-            onSuccess: () => {
-              refetch();
-              alert("Resume uploaded successfully!");
-            },
-            onError: (error) => {
-              console.error("Failed to update profile with resume:", error);
-              alert("Failed to save resume to profile");
+            {
+              onSuccess: () => {
+                refetch();
+                alert("Resume uploaded successfully!");
+              },
+              onError: (error) => {
+                console.error("Failed to update profile with resume:", error);
+                alert("Failed to save resume to profile");
+              },
             }
-          });
+          );
         },
         onError: (error) => {
           console.error("Cloudinary upload error:", error);
@@ -816,6 +823,8 @@ export default function CandidateProfilePage() {
       alert("Failed to update privacy settings");
     }
   };
+
+  console.log("profileprofile", profile);
 
   // FAQ data
   const faqData = [
@@ -922,7 +931,7 @@ export default function CandidateProfilePage() {
                         />
 
                         {/* Upload overlay */}
-                        <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-50 transition-opacity duration-600 flex items-center justify-center">
                           <div className="text-center">
                             <label className="cursor-pointer">
                               <input
@@ -931,7 +940,7 @@ export default function CandidateProfilePage() {
                                 onChange={handleProfilePicUpload}
                                 className="hidden"
                               />
-                              <div className="bg-white bg-opacity-20 rounded-lg p-3 mb-2">
+                              <div className=" bg-opacity-10 rounded-lg p-3 mb-2">
                                 <Upload className="h-6 w-6 text-white mx-auto" />
                               </div>
                               <p className="text-white text-sm font-medium">
@@ -1762,19 +1771,44 @@ export default function CandidateProfilePage() {
                       </button>
                     </div>
                   ) : (
-                    <object
-                      data={`${profile.resume.cloudinaryUrl}#toolbar=0`}
-                      type="application/pdf"
-                      className="w-full h-full"
-                    >
+                    <div className="w-full h-full">
+                      {/* Try Google Docs Viewer first */}
                       <iframe
-                        src={`${profile.resume.cloudinaryUrl}#toolbar=0`}
+                        src={`https://docs.google.com/gview?url=${encodeURIComponent(
+                          profile.resume.cloudinaryUrl
+                        )}&embedded=true`}
                         className="w-full h-full border rounded"
-                        onError={() => setPdfViewError(true)}
+                        onError={() => {
+                          // If Google viewer fails, try direct PDF display
+                          const iframe = document.querySelector(
+                            'iframe[title="Resume Preview"]'
+                          ) as HTMLIFrameElement;
+                          if (iframe) {
+                            iframe.src = `${profile.resume.cloudinaryUrl}#view=FitH&toolbar=0&navpanes=0`;
+                            iframe.onload = () => {
+                              // If still fails after trying direct PDF, show error
+                              setTimeout(() => {
+                                try {
+                                  if (
+                                    iframe.contentDocument?.title === "" ||
+                                    iframe.contentDocument?.readyState !==
+                                      "complete"
+                                  ) {
+                                    setPdfViewError(true);
+                                  }
+                                } catch (e) {
+                                  setPdfViewError(true);
+                                }
+                              }, 3000);
+                            };
+                            iframe.onerror = () => setPdfViewError(true);
+                          }
+                        }}
+                        title="Resume Preview"
                       >
                         <p>This browser does not support PDF preview.</p>
                       </iframe>
-                    </object>
+                    </div>
                   )
                 ) : (
                   <div className="flex items-center justify-center h-full">

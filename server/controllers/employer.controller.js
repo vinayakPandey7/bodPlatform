@@ -345,3 +345,156 @@ exports.updateCandidateStatus = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+// Get candidate profile for employer
+exports.getCandidateProfile = async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+
+    // Find employer to verify permissions
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Get all jobs for this employer to verify they have permission to view this candidate
+    const jobs = await Job.find({ employer: employer._id });
+    const jobIds = jobs.map((job) => job._id.toString());
+
+    // Find candidate to check if they have applied to any of the employer's jobs
+    const candidate = await User.findById(candidateId);
+    if (!candidate || candidate.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    // Check if the candidate has applied to any of this employer's jobs
+    const hasAppliedToEmployerJobs = candidate.applications.some((app) =>
+      jobIds.includes(app.job.toString())
+    );
+
+    if (!hasAppliedToEmployerJobs) {
+      return res.status(403).json({
+        message: "Unauthorized: Candidate has not applied to your jobs",
+      });
+    }
+
+    // Check if this candidate is saved by the employer
+    const isSaved = employer.savedCandidates.some(
+      (saved) => saved.candidate.toString() === candidateId
+    );
+
+    // Return candidate profile data (excluding sensitive information)
+    const candidateProfile = {
+      _id: candidate._id,
+      firstName: candidate.firstName,
+      lastName: candidate.lastName,
+      email: candidate.email,
+      phoneNumber: candidate.phoneNumber,
+      isSaved: isSaved,
+      personalInfo: candidate.personalInfo,
+      experience: candidate.experience,
+      education: candidate.education,
+      skills: candidate.skills,
+      socialLinks: candidate.socialLinks,
+      preferences: candidate.preferences,
+      resume: candidate.resume,
+      createdAt: candidate.createdAt,
+    };
+
+    res.json({
+      candidate: candidateProfile,
+    });
+  } catch (error) {
+    console.error("Get candidate profile error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Save/Unsave candidate for employer
+exports.saveCandidateForEmployer = async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+
+    // Find employer
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Verify the candidate exists and has applied to employer's jobs
+    const jobs = await Job.find({ employer: employer._id });
+    const jobIds = jobs.map((job) => job._id.toString());
+
+    const candidate = await User.findById(candidateId);
+    if (!candidate || candidate.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    const hasAppliedToEmployerJobs = candidate.applications.some((app) =>
+      jobIds.includes(app.job.toString())
+    );
+
+    if (!hasAppliedToEmployerJobs) {
+      return res.status(403).json({
+        message: "Unauthorized: Candidate has not applied to your jobs",
+      });
+    }
+
+    // Check if already saved
+    const savedIndex = employer.savedCandidates.findIndex(
+      (saved) => saved.candidate.toString() === candidateId
+    );
+
+    let action;
+    if (savedIndex > -1) {
+      // Remove from saved
+      employer.savedCandidates.splice(savedIndex, 1);
+      action = "unsaved";
+    } else {
+      // Add to saved
+      employer.savedCandidates.push({
+        candidate: candidateId,
+        savedAt: new Date(),
+      });
+      action = "saved";
+    }
+
+    await employer.save();
+
+    res.json({
+      message: `Candidate ${action} successfully`,
+      isSaved: action === "saved",
+    });
+  } catch (error) {
+    console.error("Save candidate error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get saved candidates for employer
+exports.getSavedCandidatesForEmployer = async (req, res) => {
+  try {
+    const employer = await Employer.findOne({ user: req.user.id }).populate({
+      path: "savedCandidates.candidate",
+      select: "firstName lastName email phoneNumber personalInfo createdAt",
+    });
+
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Format the response
+    const savedCandidates = employer.savedCandidates.map((saved) => ({
+      candidate: saved.candidate,
+      savedAt: saved.savedAt,
+    }));
+
+    res.json({
+      savedCandidates: savedCandidates,
+      total: savedCandidates.length,
+    });
+  } catch (error) {
+    console.error("Get saved candidates error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
