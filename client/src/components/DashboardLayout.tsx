@@ -25,10 +25,24 @@ import {
   LogOut,
   Menu,
   X,
+  MapPin,
+  ChevronDown,
 } from "lucide-react";
 import LocationDetector from "./LocationDetector";
 import LocationBanner from "./LocationBanner";
 import LocationModal from "./LocationModal";
+import Tooltip from "./Tooltip";
+
+interface LocationInfo {
+  city: string;
+  state: string;
+  zipCode: string;
+  fullLocation: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -76,13 +90,20 @@ NavigationItem.displayName = "NavigationItem";
 const ProfileAvatar = memo(
   ({ user, profileHref }: { user: any; profileHref: string }) => {
     const [showTooltip, setShowTooltip] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
     return (
       <div className="relative">
         <Link
           href={profileHref}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
+          onMouseEnter={(e) => {
+            setShowTooltip(true);
+            setAnchorEl(e.currentTarget);
+          }}
+          onMouseLeave={() => {
+            setShowTooltip(false);
+            setAnchorEl(null);
+          }}
           className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
@@ -100,13 +121,12 @@ const ProfileAvatar = memo(
           </div>
         </Link>
 
-        {showTooltip && (
-          <div className="absolute top-full left-0 mt-2 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-200 rounded shadow-lg whitespace-nowrap z-50">
-            Go to Profile
-            <div className="absolute bottom-full left-3 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white transform -translate-y-px"></div>
-            <div className="absolute bottom-full left-3 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-200"></div>
-          </div>
-        )}
+        <Tooltip
+          text="Go to Profile"
+          show={showTooltip}
+          anchorEl={anchorEl}
+          position="left"
+        />
       </div>
     );
   }
@@ -114,28 +134,38 @@ const ProfileAvatar = memo(
 
 ProfileAvatar.displayName = "ProfileAvatar";
 
+interface LogoutButtonProps {
+  onLogout: () => void;
+}
+
 // Simple Logout Button Component
-const LogoutButton = memo(({ onLogout }: { onLogout: () => void }) => {
+const LogoutButton = memo(({ onLogout }: LogoutButtonProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   return (
     <div className="relative">
       <button
         onClick={onLogout}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        className="p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-gray-600 hover:text-red-600"
+        onMouseEnter={(e) => {
+          setShowTooltip(true);
+          setAnchorEl(e.currentTarget);
+        }}
+        onMouseLeave={() => {
+          setShowTooltip(false);
+          setAnchorEl(null);
+        }}
+        className="p-2 cursor-pointer rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-gray-600 hover:text-red-600"
       >
         <LogOut className="h-5 w-5" />
       </button>
 
-      {showTooltip && (
-        <div className="absolute top-full  right-0 mt-2 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-200 rounded shadow-lg whitespace-nowrap !z-50">
-          Sign Out
-          <div className="absolute bottom-full right-2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white transform -translate-y-px"></div>
-          <div className="absolute bottom-full right-2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-200"></div>
-        </div>
-      )}
+      <Tooltip
+        text="Sign Out"
+        show={showTooltip}
+        anchorEl={anchorEl}
+        position="right"
+      />
     </div>
   );
 });
@@ -325,9 +355,19 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userLocation, setUserLocation] = useState<any>(null);
+  const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [shouldHighlightLocation, setShouldHighlightLocation] = useState(false);
+  const [shouldPulse, setShouldPulse] = useState(false);
+
+  useEffect(() => {
+    if (shouldHighlightLocation) {
+      setShouldPulse(true);
+      // Stop pulsing after 5 seconds
+      const timer = setTimeout(() => setShouldPulse(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldHighlightLocation]);
 
   // Extract user from the data object (matches /auth/me response structure)
   const user = data?.user;
@@ -622,14 +662,6 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
         <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200">
           <div className="max-w-7xl mx-auto py-3.5 px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center">
-              {user?.role !== "candidate" && (
-                <div className="flex-shrink-0">
-                  <LocationDetector
-                    onLocationChange={setUserLocation}
-                    className="max-w-md"
-                  />
-                </div>
-              )}
               <div className="flex items-center">
                 <button
                   onClick={toggleMobileMenu}
@@ -637,9 +669,100 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   <Menu className="h-5 w-5" />
                 </button>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  {dashboardTitle}
-                </h1>
+                {user?.role === "candidate" ? (
+                  <div className="flex-shrink-0 min-w-[400px]">
+                    <div
+                      className={`
+                        bg-white cursor-pointer transition-all duration-300
+                        ${
+                          shouldPulse
+                            ? "animate-pulse bg-yellow-50 border-yellow-300"
+                            : ""
+                        }
+                        ${
+                          shouldHighlightLocation && !userLocation
+                            ? "border-l-4 border-l-orange-500 bg-orange-50"
+                            : ""
+                        }
+                        hover:bg-gray-50
+                      `}
+                      onClick={() => setShowLocationModal(true)}
+                    >
+                      <div className="max-w-7xl mx-auto flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className={`
+                              p-2 rounded-lg transition-colors
+                              ${shouldPulse ? "bg-yellow-200" : "bg-gray-100"}
+                              ${
+                                shouldHighlightLocation && !userLocation
+                                  ? "bg-orange-200"
+                                  : ""
+                              }
+                            `}
+                          >
+                            <MapPin
+                              className={`
+                                h-5 w-5 transition-colors
+                                ${
+                                  shouldPulse
+                                    ? "text-yellow-700"
+                                    : "text-gray-600"
+                                }
+                                ${
+                                  shouldHighlightLocation && !userLocation
+                                    ? "text-orange-600"
+                                    : ""
+                                }
+                              `}
+                            />
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-medium text-gray-900">
+                                {userLocation
+                                  ? "Location"
+                                  : "Select your location"}
+                              </span>
+                              {shouldHighlightLocation && !userLocation && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                  Required
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <span
+                                className={`
+                                  text-sm transition-colors
+                                  ${
+                                    userLocation
+                                      ? "text-green-600 font-medium"
+                                      : "text-gray-500"
+                                  }
+                                  ${
+                                    shouldHighlightLocation && !userLocation
+                                      ? "text-orange-600"
+                                      : ""
+                                  }
+                                `}
+                              >
+                                {userLocation &&
+                                userLocation?.fullLocation?.length > 0
+                                  ? userLocation.fullLocation
+                                  : "Choose your location to see nearby jobs"}
+                              </span>
+                              <ChevronDown className="h-4 w-4 text-gray-400" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {dashboardTitle}
+                  </h1>
+                )}
               </div>
 
               <div className="flex items-center space-x-4">

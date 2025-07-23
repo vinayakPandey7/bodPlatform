@@ -40,14 +40,18 @@ import {
   Bell,
   Globe,
   Users,
-  Key
+  Key,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function CandidateProfilePage() {
   const router = useRouter();
-  const { data: currentUserData, isLoading: userLoading, error: userError } = useCurrentUser();
+  const {
+    data: currentUserData,
+    isLoading: userLoading,
+    error: userError,
+  } = useCurrentUser();
   const {
     data: profileData,
     isLoading,
@@ -93,7 +97,7 @@ export default function CandidateProfilePage() {
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -103,7 +107,7 @@ export default function CandidateProfilePage() {
     profileVisibility: "public",
     contactVisibility: "authenticated",
     emailNotifications: true,
-    smsNotifications: false
+    smsNotifications: false,
   });
 
   // Initialize form data when profile loads
@@ -118,10 +122,13 @@ export default function CandidateProfilePage() {
 
   // Handle URL parameters for tab navigation
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
-      const tabParam = urlParams.get('tab');
-      if (tabParam && ['profile', 'security', 'privacy', 'help'].includes(tabParam)) {
+      const tabParam = urlParams.get("tab");
+      if (
+        tabParam &&
+        ["profile", "security", "privacy", "help"].includes(tabParam)
+      ) {
         setActiveTab(tabParam);
       }
     }
@@ -164,7 +171,9 @@ export default function CandidateProfilePage() {
         <DashboardLayout>
           <div className="flex items-center justify-center min-h-96">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to load user data</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Unable to load user data
+              </h2>
               <p className="text-gray-600">Please try refreshing the page</p>
             </div>
           </div>
@@ -212,6 +221,11 @@ export default function CandidateProfilePage() {
     resume: null,
   };
 
+  const handleViewResume = () => {
+    setPdfViewError(false);
+    setShowResumeModal(true);
+  };
+
   const handleDownloadResume = () => {
     if (profile.resume?.cloudinaryUrl) {
       const link = document.createElement("a");
@@ -222,11 +236,6 @@ export default function CandidateProfilePage() {
       link.click();
       document.body.removeChild(link);
     }
-  };
-
-  const handleViewResume = () => {
-    setPdfViewError(false);
-    setShowResumeModal(true);
   };
 
   const handleRemoveResume = async () => {
@@ -651,20 +660,45 @@ export default function CandidateProfilePage() {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Upload to Cloudinary only
+      // Validate file type
+      const allowedTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        alert("Please upload only PDF, DOC, or DOCX files");
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File size must be less than 10MB");
+        return;
+      }
+
+      // Upload to Cloudinary
       uploadResumeToCloudinary(file, {
         onSuccess: (data) => {
           console.log("Resume uploaded to Cloudinary:", data);
-          // Update profile immediately and refetch
+          // Update profile with the resume data
           updateProfile({
             resume: {
-              cloudinaryUrl: data.cloudinaryUrl || data.url, // Use cloudinaryUrl from server response
+              cloudinaryUrl: data.url, // Use url from response
               originalName: file.name,
               fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
               uploadDate: new Date().toISOString(),
             },
+          }, {
+            onSuccess: () => {
+              refetch();
+              alert("Resume uploaded successfully!");
+            },
+            onError: (error) => {
+              console.error("Failed to update profile with resume:", error);
+              alert("Failed to save resume to profile");
+            }
           });
-          refetch();
         },
         onError: (error) => {
           console.error("Cloudinary upload error:", error);
@@ -713,16 +747,24 @@ export default function CandidateProfilePage() {
       uploadResumeToCloudinary(file, {
         onSuccess: (data) => {
           console.log("Resume uploaded to Cloudinary:", data);
-          // Update profile immediately and refetch
+          // Update profile with the resume data
           updateProfile({
             resume: {
-              cloudinaryUrl: data.secure_url,
+              cloudinaryUrl: data.url, // Use url from response
               originalName: file.name,
               fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
               uploadDate: new Date().toISOString(),
             },
+          }, {
+            onSuccess: () => {
+              refetch();
+              alert("Resume uploaded successfully!");
+            },
+            onError: (error) => {
+              console.error("Failed to update profile with resume:", error);
+              alert("Failed to save resume to profile");
+            }
           });
-          refetch();
         },
         onError: (error) => {
           console.error("Cloudinary upload error:", error);
@@ -751,7 +793,7 @@ export default function CandidateProfilePage() {
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
       });
       setShowPasswordForm(false);
     } catch (error) {
@@ -779,28 +821,34 @@ export default function CandidateProfilePage() {
   const faqData = [
     {
       question: "How do I make my profile more visible to employers?",
-      answer: "Complete all sections of your profile, add a professional photo, upload your resume, and keep your skills updated. Profiles that are 90%+ complete get 5x more views."
+      answer:
+        "Complete all sections of your profile, add a professional photo, upload your resume, and keep your skills updated. Profiles that are 90%+ complete get 5x more views.",
     },
     {
       question: "Can I control who sees my profile?",
-      answer: "Yes! In your privacy settings, you can choose to make your profile public, visible only to authenticated employers, or private. You can also control visibility of your contact information separately."
+      answer:
+        "Yes! In your privacy settings, you can choose to make your profile public, visible only to authenticated employers, or private. You can also control visibility of your contact information separately.",
     },
     {
       question: "How do I update my resume?",
-      answer: "Click on the 'Resume' section and either drag & drop your new resume file or click 'Upload Resume'. We support PDF, DOC, and DOCX formats up to 10MB."
+      answer:
+        "Click on the 'Resume' section and either drag & drop your new resume file or click 'Upload Resume'. We support PDF, DOC, and DOCX formats up to 10MB.",
     },
     {
       question: "What should I include in my professional summary?",
-      answer: "Write 2-3 sentences highlighting your key skills, experience, and career goals. Focus on what makes you unique and what value you bring to potential employers."
+      answer:
+        "Write 2-3 sentences highlighting your key skills, experience, and career goals. Focus on what makes you unique and what value you bring to potential employers.",
     },
     {
       question: "How often should I update my profile?",
-      answer: "Update your profile whenever you gain new skills, complete projects, or change your career goals. We recommend reviewing and updating at least once every 3 months."
+      answer:
+        "Update your profile whenever you gain new skills, complete projects, or change your career goals. We recommend reviewing and updating at least once every 3 months.",
     },
     {
       question: "Can I export my profile data?",
-      answer: "Yes, you can download your profile data anytime by contacting our support team. We'll provide a complete export of your information within 48 hours."
-    }
+      answer:
+        "Yes, you can download your profile data anytime by contacting our support team. We'll provide a complete export of your information within 48 hours.",
+    },
   ];
 
   return (
@@ -827,13 +875,13 @@ export default function CandidateProfilePage() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
+          <div className="relative">
             <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
               {[
                 { id: "profile", label: "Profile", icon: User },
                 { id: "security", label: "Security", icon: Shield },
                 { id: "privacy", label: "Privacy", icon: Lock },
-                { id: "help", label: "Help & FAQ", icon: HelpCircle }
+                { id: "help", label: "Help & FAQ", icon: HelpCircle },
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 return (
@@ -868,10 +916,11 @@ export default function CandidateProfilePage() {
                           alt="Profile"
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.currentTarget.src = "https://res.cloudinary.com/dbeii9aot/image/upload/v1752680789/profile-pictures/zcay0rbjehnqpvwyesfn.png";
+                            e.currentTarget.src =
+                              "https://res.cloudinary.com/dbeii9aot/image/upload/v1752680789/profile-pictures/zcay0rbjehnqpvwyesfn.png";
                           }}
                         />
-                        
+
                         {/* Upload overlay */}
                         <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                           <div className="text-center">
@@ -885,7 +934,9 @@ export default function CandidateProfilePage() {
                               <div className="bg-white bg-opacity-20 rounded-lg p-3 mb-2">
                                 <Upload className="h-6 w-6 text-white mx-auto" />
                               </div>
-                              <p className="text-white text-sm font-medium">Change Photo</p>
+                              <p className="text-white text-sm font-medium">
+                                Change Photo
+                              </p>
                             </label>
                           </div>
                         </div>
@@ -1041,14 +1092,17 @@ export default function CandidateProfilePage() {
                               <div>
                                 <p className="text-sm text-gray-600">Phone</p>
                                 <p className="font-medium">
-                                  {profile.personalInfo?.phone || "Not provided"}
+                                  {profile.personalInfo?.phone ||
+                                    "Not provided"}
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center space-x-3">
                               <MapPin className="h-5 w-5 text-gray-400" />
                               <div>
-                                <p className="text-sm text-gray-600">Location</p>
+                                <p className="text-sm text-gray-600">
+                                  Location
+                                </p>
                                 <p className="font-medium">
                                   {profile.personalInfo?.location}{" "}
                                   {profile.personalInfo?.zipCode}
@@ -1059,6 +1113,113 @@ export default function CandidateProfilePage() {
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Resume Section */}
+                  <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <FileText className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            Resume
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            Upload and manage your resume
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {profile.resume ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-5 w-5 text-green-600" />
+                            <div>
+                              <p className="font-medium text-green-800">
+                                {profile.resume.originalName}
+                              </p>
+                              <p className="text-sm text-green-600">
+                                {profile.resume.fileSize} • Uploaded{" "}
+                                {formatDate(profile.resume.uploadDate)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={handleViewResume}
+                              className="inline-flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </button>
+                            <button
+                              onClick={handleDownloadResume}
+                              className="inline-flex items-center px-3 py-1 text-sm text-green-600 hover:text-green-700 font-medium"
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              Download
+                            </button>
+                            <button
+                              onClick={handleRemoveResume}
+                              className="inline-flex items-center px-3 py-1 text-sm text-red-600 hover:text-red-700 font-medium"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                          isDragOver
+                            ? "border-blue-400 bg-blue-50"
+                            : "border-gray-300 hover:border-gray-400"
+                        }`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
+                        <div className="space-y-4">
+                          <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                            <Upload className="h-6 w-6 text-gray-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">
+                              <label className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium">
+                                Click to upload
+                              </label>{" "}
+                              or drag and drop
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              PDF, DOC, or DOCX (max 10MB)
+                            </p>
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="resume-upload"
+                          />
+                          <label
+                            htmlFor="resume-upload"
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer"
+                          >
+                            {isUploadingAny ? (
+                              <Loader className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Upload className="h-4 w-4 mr-2" />
+                            )}
+                            {isUploadingAny ? "Uploading..." : "Upload Resume"}
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1073,8 +1234,12 @@ export default function CandidateProfilePage() {
                           <Key className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <h2 className="text-lg font-semibold text-gray-900">Password & Security</h2>
-                          <p className="text-sm text-gray-600">Manage your account security settings</p>
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            Password & Security
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            Manage your account security settings
+                          </p>
                         </div>
                       </div>
                       <button
@@ -1096,16 +1261,27 @@ export default function CandidateProfilePage() {
                             <input
                               type={showCurrentPassword ? "text" : "password"}
                               value={passwordForm.currentPassword}
-                              onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                              onChange={(e) =>
+                                setPasswordForm({
+                                  ...passwordForm,
+                                  currentPassword: e.target.value,
+                                })
+                              }
                               className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Enter current password"
                             />
                             <button
                               type="button"
-                              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                              onClick={() =>
+                                setShowCurrentPassword(!showCurrentPassword)
+                              }
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
-                              {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showCurrentPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </div>
@@ -1118,16 +1294,27 @@ export default function CandidateProfilePage() {
                             <input
                               type={showNewPassword ? "text" : "password"}
                               value={passwordForm.newPassword}
-                              onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                              onChange={(e) =>
+                                setPasswordForm({
+                                  ...passwordForm,
+                                  newPassword: e.target.value,
+                                })
+                              }
                               className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Enter new password (min 8 characters)"
                             />
                             <button
                               type="button"
-                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              onClick={() =>
+                                setShowNewPassword(!showNewPassword)
+                              }
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
-                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showNewPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </div>
@@ -1140,16 +1327,27 @@ export default function CandidateProfilePage() {
                             <input
                               type={showConfirmPassword ? "text" : "password"}
                               value={passwordForm.confirmPassword}
-                              onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                              onChange={(e) =>
+                                setPasswordForm({
+                                  ...passwordForm,
+                                  confirmPassword: e.target.value,
+                                })
+                              }
                               className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Confirm new password"
                             />
                             <button
                               type="button"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
-                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showConfirmPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </div>
@@ -1178,20 +1376,32 @@ export default function CandidateProfilePage() {
                           <div className="flex items-center space-x-3">
                             <Shield className="h-5 w-5 text-green-600" />
                             <div>
-                              <p className="font-medium text-green-800">Account Security</p>
-                              <p className="text-sm text-green-600">Your account is secure</p>
+                              <p className="font-medium text-green-800">
+                                Account Security
+                              </p>
+                              <p className="text-sm text-green-600">
+                                Your account is secure
+                              </p>
                             </div>
                           </div>
-                          <span className="text-green-600 font-medium">✓ Protected</span>
+                          <span className="text-green-600 font-medium">
+                            ✓ Protected
+                          </span>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="p-4 bg-gray-50 rounded-lg">
-                            <h4 className="font-medium text-gray-900 mb-2">Password Strength</h4>
-                            <p className="text-sm text-gray-600">Last changed: Never</p>
+                            <h4 className="font-medium text-gray-900 mb-2">
+                              Password Strength
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Last changed: Never
+                            </p>
                           </div>
                           <div className="p-4 bg-gray-50 rounded-lg">
-                            <h4 className="font-medium text-gray-900 mb-2">Two-Factor Authentication</h4>
+                            <h4 className="font-medium text-gray-900 mb-2">
+                              Two-Factor Authentication
+                            </h4>
                             <p className="text-sm text-gray-600">Not enabled</p>
                           </div>
                         </div>
@@ -1210,8 +1420,12 @@ export default function CandidateProfilePage() {
                         <Globe className="h-5 w-5 text-purple-600" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Privacy Settings</h2>
-                        <p className="text-sm text-gray-600">Control who can see your information</p>
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          Privacy Settings
+                        </h2>
+                        <p className="text-sm text-gray-600">
+                          Control who can see your information
+                        </p>
                       </div>
                     </div>
 
@@ -1222,22 +1436,49 @@ export default function CandidateProfilePage() {
                         </label>
                         <div className="space-y-2">
                           {[
-                            { value: "public", label: "Public", desc: "Anyone can view your profile" },
-                            { value: "authenticated", label: "Authenticated Users Only", desc: "Only verified employers can view" },
-                            { value: "private", label: "Private", desc: "Only you can view your profile" }
+                            {
+                              value: "public",
+                              label: "Public",
+                              desc: "Anyone can view your profile",
+                            },
+                            {
+                              value: "authenticated",
+                              label: "Authenticated Users Only",
+                              desc: "Only verified employers can view",
+                            },
+                            {
+                              value: "private",
+                              label: "Private",
+                              desc: "Only you can view your profile",
+                            },
                           ].map((option) => (
-                            <label key={option.value} className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <label
+                              key={option.value}
+                              className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                            >
                               <input
                                 type="radio"
                                 name="profileVisibility"
                                 value={option.value}
-                                checked={privacySettings.profileVisibility === option.value}
-                                onChange={(e) => setPrivacySettings({...privacySettings, profileVisibility: e.target.value})}
+                                checked={
+                                  privacySettings.profileVisibility ===
+                                  option.value
+                                }
+                                onChange={(e) =>
+                                  setPrivacySettings({
+                                    ...privacySettings,
+                                    profileVisibility: e.target.value,
+                                  })
+                                }
                                 className="mt-1"
                               />
                               <div>
-                                <p className="font-medium text-gray-900">{option.label}</p>
-                                <p className="text-sm text-gray-600">{option.desc}</p>
+                                <p className="font-medium text-gray-900">
+                                  {option.label}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {option.desc}
+                                </p>
                               </div>
                             </label>
                           ))}
@@ -1253,14 +1494,23 @@ export default function CandidateProfilePage() {
                             <div className="flex items-center space-x-3">
                               <Bell className="h-5 w-5 text-gray-400" />
                               <div>
-                                <p className="font-medium text-gray-900">Email Notifications</p>
-                                <p className="text-sm text-gray-600">Get job alerts and updates via email</p>
+                                <p className="font-medium text-gray-900">
+                                  Email Notifications
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Get job alerts and updates via email
+                                </p>
                               </div>
                             </div>
                             <input
                               type="checkbox"
                               checked={privacySettings.emailNotifications}
-                              onChange={(e) => setPrivacySettings({...privacySettings, emailNotifications: e.target.checked})}
+                              onChange={(e) =>
+                                setPrivacySettings({
+                                  ...privacySettings,
+                                  emailNotifications: e.target.checked,
+                                })
+                              }
                               className="toggle"
                             />
                           </label>
@@ -1268,14 +1518,23 @@ export default function CandidateProfilePage() {
                             <div className="flex items-center space-x-3">
                               <Phone className="h-5 w-5 text-gray-400" />
                               <div>
-                                <p className="font-medium text-gray-900">SMS Notifications</p>
-                                <p className="text-sm text-gray-600">Get urgent updates via text message</p>
+                                <p className="font-medium text-gray-900">
+                                  SMS Notifications
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Get urgent updates via text message
+                                </p>
                               </div>
                             </div>
                             <input
                               type="checkbox"
                               checked={privacySettings.smsNotifications}
-                              onChange={(e) => setPrivacySettings({...privacySettings, smsNotifications: e.target.checked})}
+                              onChange={(e) =>
+                                setPrivacySettings({
+                                  ...privacySettings,
+                                  smsNotifications: e.target.checked,
+                                })
+                              }
                               className="toggle"
                             />
                           </label>
@@ -1308,26 +1567,36 @@ export default function CandidateProfilePage() {
                           <HelpCircle className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                          <h2 className="text-3xl font-bold text-white">Career Support Center</h2>
-                          <p className="text-white/90 text-lg">Everything you need to advance your career</p>
+                          <h2 className="text-3xl font-bold text-white">
+                            Career Support Center
+                          </h2>
+                          <p className="text-white/90 text-lg">
+                            Everything you need to advance your career
+                          </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                           <div className="text-2xl font-bold">100K+</div>
-                          <div className="text-sm text-white/80">Job Opportunities</div>
+                          <div className="text-sm text-white/80">
+                            Job Opportunities
+                          </div>
                         </div>
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                           <div className="text-2xl font-bold">90%</div>
-                          <div className="text-sm text-white/80">Profile Match Rate</div>
+                          <div className="text-sm text-white/80">
+                            Profile Match Rate
+                          </div>
                         </div>
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                           <div className="text-2xl font-bold">24/7</div>
-                          <div className="text-sm text-white/80">Career Support</div>
+                          <div className="text-sm text-white/80">
+                            Career Support
+                          </div>
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Decorative Elements */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-lg"></div>
@@ -1339,17 +1608,25 @@ export default function CandidateProfilePage() {
                       <div className="absolute inset-0 bg-black/10 rounded-2xl"></div>
                       <div className="relative z-10">
                         <Users className="h-8 w-8 mb-3" />
-                        <h3 className="text-xl font-bold mb-2">Career Coaching</h3>
-                        <p className="text-white/90">Get personalized career guidance</p>
+                        <h3 className="text-xl font-bold mb-2">
+                          Career Coaching
+                        </h3>
+                        <p className="text-white/90">
+                          Get personalized career guidance
+                        </p>
                       </div>
                     </div>
-                    
+
                     <div className="group relative bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl p-6 text-white hover:scale-105 transition-all duration-300 cursor-pointer">
                       <div className="absolute inset-0 bg-black/10 rounded-2xl"></div>
                       <div className="relative z-10">
                         <User className="h-8 w-8 mb-3" />
-                        <h3 className="text-xl font-bold mb-2">Profile Review</h3>
-                        <p className="text-white/90">Optimize your profile for success</p>
+                        <h3 className="text-xl font-bold mb-2">
+                          Profile Review
+                        </h3>
+                        <p className="text-white/90">
+                          Optimize your profile for success
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -1357,8 +1634,12 @@ export default function CandidateProfilePage() {
                   {/* Enhanced FAQ Section */}
                   <div className="relative bg-white/60 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white/20">
                     <div className="text-center mb-8">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h3>
-                      <p className="text-gray-600">Find instant answers to boost your career</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                        Frequently Asked Questions
+                      </h3>
+                      <p className="text-gray-600">
+                        Find instant answers to boost your career
+                      </p>
                     </div>
 
                     <div className="space-y-4">
@@ -1370,33 +1651,39 @@ export default function CandidateProfilePage() {
                               className="w-full px-6 py-5 text-left flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white/50 hover:from-emerald-50/50 hover:to-blue-50/50 transition-all duration-300"
                             >
                               <div className="flex items-center space-x-4">
-                                <div className={`p-2 rounded-xl transition-all duration-300 ${
-                                  expandedFAQ === index 
-                                    ? 'bg-gradient-to-br from-emerald-500 to-blue-600 text-white shadow-lg' 
-                                    : 'bg-gray-100 text-gray-500 group-hover:bg-emerald-100 group-hover:text-emerald-600'
-                                }`}>
+                                <div
+                                  className={`p-2 rounded-xl transition-all duration-300 ${
+                                    expandedFAQ === index
+                                      ? "bg-gradient-to-br from-emerald-500 to-blue-600 text-white shadow-lg"
+                                      : "bg-gray-100 text-gray-500 group-hover:bg-emerald-100 group-hover:text-emerald-600"
+                                  }`}
+                                >
                                   <HelpCircle className="h-5 w-5" />
                                 </div>
                                 <span className="font-semibold text-gray-900 group-hover:text-emerald-900 transition-colors">
                                   {faq.question}
                                 </span>
                               </div>
-                              <div className={`p-2 rounded-xl transition-all duration-300 ${
-                                expandedFAQ === index 
-                                  ? 'bg-emerald-100 text-emerald-600 rotate-180' 
-                                  : 'bg-gray-100 text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500'
-                              }`}>
+                              <div
+                                className={`p-2 rounded-xl transition-all duration-300 ${
+                                  expandedFAQ === index
+                                    ? "bg-emerald-100 text-emerald-600 rotate-180"
+                                    : "bg-gray-100 text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
+                              >
                                 <ChevronDown className="h-5 w-5" />
                               </div>
                             </button>
-                            
+
                             {expandedFAQ === index && (
                               <div className="px-6 py-5 bg-gradient-to-r from-emerald-50/30 to-blue-50/30 border-t border-gray-200/30 animate-in slide-in-from-top-2 duration-300">
                                 <div className="flex items-start space-x-4">
                                   <div className="p-2 bg-green-100 rounded-xl">
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                   </div>
-                                  <p className="text-gray-700 leading-relaxed flex-1">{faq.answer}</p>
+                                  <p className="text-gray-700 leading-relaxed flex-1">
+                                    {faq.answer}
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -1415,8 +1702,12 @@ export default function CandidateProfilePage() {
                               <Users className="h-8 w-8 text-white" />
                             </div>
                             <div>
-                              <h4 className="text-xl font-bold text-white mb-1">Still Need Help?</h4>
-                              <p className="text-white/90">Our career success team is here to support you</p>
+                              <h4 className="text-xl font-bold text-white mb-1">
+                                Still Need Help?
+                              </h4>
+                              <p className="text-white/90">
+                                Our career success team is here to support you
+                              </p>
                             </div>
                           </div>
                           <div className="flex space-x-3">
@@ -1428,7 +1719,7 @@ export default function CandidateProfilePage() {
                             </button>
                           </div>
                         </div>
-                        
+
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
                         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-lg"></div>
@@ -1471,11 +1762,19 @@ export default function CandidateProfilePage() {
                       </button>
                     </div>
                   ) : (
-                    <iframe
-                      src={profile.resume.cloudinaryUrl}
-                      className="w-full h-full border rounded"
-                      onError={() => setPdfViewError(true)}
-                    />
+                    <object
+                      data={`${profile.resume.cloudinaryUrl}#toolbar=0`}
+                      type="application/pdf"
+                      className="w-full h-full"
+                    >
+                      <iframe
+                        src={`${profile.resume.cloudinaryUrl}#toolbar=0`}
+                        className="w-full h-full border rounded"
+                        onError={() => setPdfViewError(true)}
+                      >
+                        <p>This browser does not support PDF preview.</p>
+                      </iframe>
+                    </object>
                   )
                 ) : (
                   <div className="flex items-center justify-center h-full">

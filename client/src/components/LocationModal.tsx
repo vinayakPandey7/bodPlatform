@@ -297,7 +297,7 @@ export default function LocationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div
         ref={modalRef}
         className={`bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden ${className}`}
@@ -348,7 +348,9 @@ export default function LocationModal({
               ) : (
                 <Navigation className="h-5 w-5" />
               )}
-              <span>{isDetecting ? "Detecting..." : "Detect my location"}</span>
+              <span className="cursor-pointer">
+                {isDetecting ? "Detecting..." : "Detect my location"}
+              </span>
             </button>
 
             {/* Divider */}
@@ -414,7 +416,7 @@ export default function LocationModal({
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
           <button
             onClick={handleClose}
-            className="w-full py-2 px-4 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+            className="w-full py-2 px-4 cursor-pointer text-gray-600 hover:text-gray-800 font-medium transition-colors"
           >
             Skip for now
           </button>
