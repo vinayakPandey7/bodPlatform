@@ -26,6 +26,42 @@ interface JobFormData {
   department: string;
   urgency: string;
   expires: string;
+  contactNumber: string;
+
+  // Licensed Candidate Search Requirements
+  candidateType: string[];
+  workSchedule: string;
+  partTimeWorkDays: string[];
+  hybridOfficeDays: string[];
+  officeRequirement: string;
+  officeDetails: string;
+  remoteWorkDays: string;
+  remoteWorkPreferredDays: string[];
+  payStructureType: string;
+  salaryType: string;
+  salaryRange: string;
+  hourlyPay: string;
+  payDays: string;
+  employeeBenefits: string[];
+  otherBenefits: string;
+  freeParking: string;
+  roleType: string;
+  qualifications: string[];
+  experienceLevel: string;
+  specificExperience: string;
+  educationLevel: string;
+  preferredFieldOfStudy: string;
+  requiredCertifications: string;
+  requiredSkills: string;
+  preferredSkills: string;
+  startDate: string;
+  startDateType: string;
+  specificStartDate: string;
+  travelRequirements: string;
+  backgroundCheckRequired: boolean;
+  drugTestRequired: boolean;
+  additionalRequirements: string;
+  applicationInstructions: string;
 }
 
 export default function CreateJobPage() {
@@ -49,6 +85,42 @@ export default function CreateJobPage() {
     department: "",
     urgency: "normal",
     expires: "",
+    contactNumber: "",
+
+    // Licensed Candidate Search Requirements
+    candidateType: [],
+    workSchedule: "",
+    partTimeWorkDays: [],
+    hybridOfficeDays: [],
+    officeRequirement: "",
+    officeDetails: "",
+    remoteWorkDays: "",
+    remoteWorkPreferredDays: [],
+    payStructureType: "",
+    salaryType: "",
+    salaryRange: "",
+    hourlyPay: "",
+    payDays: "",
+    employeeBenefits: [],
+    otherBenefits: "",
+    freeParking: "",
+    roleType: "",
+    qualifications: [],
+    experienceLevel: "",
+    specificExperience: "",
+    educationLevel: "",
+    preferredFieldOfStudy: "",
+    requiredCertifications: "",
+    requiredSkills: "",
+    preferredSkills: "",
+    startDate: "",
+    startDateType: "",
+    specificStartDate: "",
+    travelRequirements: "",
+    backgroundCheckRequired: false,
+    drugTestRequired: false,
+    additionalRequirements: "",
+    applicationInstructions: "",
   });
   const [benefitsInput, setBenefitsInput] = useState("");
   const [error, setError] = useState("");
@@ -58,6 +130,59 @@ export default function CreateJobPage() {
 
   // Use TanStack Query mutation
   const createJobMutation = useCreateJob();
+
+  // Days of the week options for multi-select
+  const daysOfWeek = [
+    { value: "monday", label: "Monday" },
+    { value: "tuesday", label: "Tuesday" },
+    { value: "wednesday", label: "Wednesday" },
+    { value: "thursday", label: "Thursday" },
+    { value: "friday", label: "Friday" },
+    { value: "saturday", label: "Saturday" },
+    { value: "sunday", label: "Sunday" },
+  ];
+
+  // Employee benefits options
+  const employeeBenefitOptions = [
+    { value: "health_insurance", label: "Health Insurance" },
+    { value: "dental_insurance", label: "Dental Insurance" },
+    { value: "vision_insurance", label: "Vision Insurance" },
+    { value: "retirement_plan", label: "Retirement Plan (401k)" },
+    { value: "paid_time_off", label: "Paid Time Off" },
+    { value: "sick_leave", label: "Sick Leave" },
+    { value: "life_insurance", label: "Life Insurance" },
+    { value: "disability_insurance", label: "Disability Insurance" },
+    { value: "flexible_schedule", label: "Flexible Schedule" },
+    { value: "professional_development", label: "Professional Development" },
+    { value: "tuition_reimbursement", label: "Tuition Reimbursement" },
+    { value: "employee_discounts", label: "Employee Discounts" },
+    { value: "commuter_benefits", label: "Commuter Benefits" },
+    { value: "wellness_programs", label: "Wellness Programs" },
+    { value: "other", label: "Other" },
+  ];
+
+  // Handle multi-select for days
+  const handleDayToggle = (
+    field: "partTimeWorkDays" | "remoteWorkPreferredDays" | "hybridOfficeDays",
+    day: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: prev[field].includes(day)
+        ? prev[field].filter((d) => d !== day)
+        : [...prev[field], day],
+    }));
+  };
+
+  // Handle employee benefits toggle
+  const handleBenefitToggle = (benefit: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      employeeBenefits: prev.employeeBenefits.includes(benefit)
+        ? prev.employeeBenefits.filter((b) => b !== benefit)
+        : [...prev.employeeBenefits, benefit],
+    }));
+  };
 
   // Function to validate zip code and auto-populate city/state
   const validateZipCode = async (zipCode: string) => {
@@ -164,6 +289,86 @@ export default function CreateJobPage() {
       return;
     }
 
+    // Validate contact number
+    if (!formData.contactNumber) {
+      setError("Contact number is required");
+      return;
+    }
+
+    // Basic phone number validation (allows various formats)
+    const phoneRegex = /^[\+]?[\d\s\-\(\)\.]{10,}$/;
+    if (!phoneRegex.test(formData.contactNumber.trim())) {
+      setError("Please provide a valid contact number (minimum 10 digits)");
+      return;
+    }
+
+    // Validate licensed candidate search requirements
+    if (formData.candidateType.length === 0) {
+      setError("Please select at least one candidate type");
+      return;
+    }
+
+    if (!formData.workSchedule) {
+      setError("Please select work schedule (Full-Time or Part-Time)");
+      return;
+    }
+
+    if (
+      formData.workSchedule === "part_time" &&
+      formData.partTimeWorkDays.length === 0
+    ) {
+      setError("Please select part-time work days");
+      return;
+    }
+
+    if (!formData.officeRequirement) {
+      setError("Please specify office requirement");
+      return;
+    }
+
+    if (formData.officeRequirement === "yes" && !formData.officeDetails) {
+      setError("Please provide office requirement details");
+      return;
+    }
+
+    if (!formData.payStructureType) {
+      setError("Please specify pay structure type");
+      return;
+    }
+
+    if (
+      formData.payStructureType === "hourly" &&
+      (!formData.hourlyPay || !formData.payDays)
+    ) {
+      setError("Please provide hourly pay and pay days information");
+      return;
+    }
+
+    if (formData.employeeBenefits.length === 0) {
+      setError("Please specify employee benefits");
+      return;
+    }
+
+    if (!formData.freeParking) {
+      setError("Please specify parking availability");
+      return;
+    }
+
+    if (!formData.roleType) {
+      setError("Please specify role type (service-only, sales-only, or mixed)");
+      return;
+    }
+
+    if (formData.qualifications.length === 0) {
+      setError("Please specify required qualifications");
+      return;
+    }
+
+    if (!formData.startDate) {
+      setError("Please specify desired start date");
+      return;
+    }
+
     try {
       // Process benefits from the input string
       const benefitsArray = benefitsInput
@@ -195,14 +400,35 @@ export default function CreateJobPage() {
         department: formData.department,
         urgency: formData.urgency,
         expires: formData.expires ? new Date(formData.expires) : undefined,
+        contactNumber: formData.contactNumber,
+
+        // Licensed Candidate Search Requirements
+        candidateType: formData.candidateType,
+        workSchedule: formData.workSchedule,
+        partTimeWorkDays: formData.partTimeWorkDays,
+        officeRequirement: formData.officeRequirement,
+        officeDetails: formData.officeDetails,
+        remoteWorkDays: formData.remoteWorkDays,
+        remoteWorkPreferredDays: formData.remoteWorkPreferredDays,
+        payStructureType: formData.payStructureType,
+        hourlyPay: formData.hourlyPay,
+        payDays: formData.payDays,
+        employeeBenefits: formData.employeeBenefits,
+        freeParking: formData.freeParking,
+        roleType: formData.roleType,
+        qualifications: formData.qualifications,
+        startDate: formData.startDate
+          ? new Date(formData.startDate)
+          : undefined,
+        additionalRequirements: formData.additionalRequirements,
       };
 
       await createJobMutation.mutateAsync(jobData);
-      toast.success("Job created successfully!");
+      toast.success("Licensed candidate job search created successfully!");
       router.push("/employer/jobs");
     } catch (error: any) {
       console.error("Error creating job:", error);
-      setError(error?.message || "Failed to create job");
+      setError(error?.message || "Failed to create job search");
     }
   };
 
@@ -213,10 +439,11 @@ export default function CreateJobPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Create New Job
+                Create Licensed Candidate Job Search
               </h1>
               <p className="mt-1 text-gray-600">
-                Post a new job opening to attract top talent
+                Post a comprehensive job search request for licensed insurance
+                professionals
               </p>
             </div>
             <button
@@ -235,12 +462,468 @@ export default function CreateJobPage() {
 
           <form
             onSubmit={handleSubmit}
-            className="bg-white rounded-lg shadow p-6 space-y-6"
+            className="bg-white rounded-lg shadow p-6 space-y-8"
           >
+            {/* Licensed Candidate Search Requirements - Priority Section */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold text-indigo-600 border-b pb-2">
+                Licensed Candidate Search Requirements
+              </h3>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>Please provide ALL the following details:</strong>
+                  <br />
+                  <span className="text-xs text-blue-600">
+                    **Please note: Service Provider aims to bring new, great
+                    talent into the insurance industry. As such, we will always
+                    aim to put forward licensed individuals to Agent Owners.
+                    Service Provider will assist with getting promising
+                    candidates licensed in Property & Casualty, however,
+                    training may be needed by Client.
+                  </span>
+                </p>
+              </div>
+
+              {/* Candidate Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  What candidates are you wanting to see: *
+                </label>
+                <div className="space-y-3">
+                  {[
+                    {
+                      value: "previous_sf_experience",
+                      label: "Previous experience with SF**",
+                    },
+                    {
+                      value: "previous_insurance_not_sf",
+                      label: "Previous insurance experience, but not with SF**",
+                    },
+                    {
+                      value: "licensed_basic_training",
+                      label: "Licensed, just completed basic SF training**",
+                    },
+                    {
+                      value: "licensed_no_insurance_banking",
+                      label:
+                        "Licensed, no insurance experience, but previous banking experience**",
+                    },
+                    {
+                      value: "licensed_no_experience",
+                      label: "Licensed but no insurance experience**",
+                    },
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        value={option.value}
+                        checked={formData.candidateType.includes(option.value)}
+                        onChange={(e) => {
+                          const newCandidateTypes = e.target.checked
+                            ? [...formData.candidateType, option.value]
+                            : formData.candidateType.filter(
+                                (type) => type !== option.value
+                              );
+                          setFormData((prev) => ({
+                            ...prev,
+                            candidateType: newCandidateTypes,
+                          }));
+                        }}
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Work Schedule */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-4">
+                  Work Schedule Requirements
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label
+                      htmlFor="workSchedule"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Is the role Full-Time (FT) or Part-Time (PT)? *
+                    </label>
+                    <select
+                      id="workSchedule"
+                      name="workSchedule"
+                      value={formData.workSchedule}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      required
+                    >
+                      <option value="">Select schedule type</option>
+                      <option value="full_time">Full-Time (FT)</option>
+                      <option value="part_time">Part-Time (PT)</option>
+                    </select>
+                  </div>
+
+                  {formData.workSchedule === "part_time" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        If PT, what days would you want the employee to work? *
+                      </label>
+                      <div className="space-y-2">
+                        {daysOfWeek.map((day) => (
+                          <label
+                            key={day.value}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.partTimeWorkDays.includes(
+                                day.value
+                              )}
+                              onChange={(e) =>
+                                handleDayToggle("partTimeWorkDays", day.value)
+                              }
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm text-gray-700">
+                              {day.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Office Requirements */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-4">
+                  Office & Remote Work Requirements
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="officeRequirement"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Is there a requirement to work in the office? *
+                    </label>
+                    <select
+                      id="officeRequirement"
+                      name="officeRequirement"
+                      value={formData.officeRequirement}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      required
+                    >
+                      <option value="">Select office requirement</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+
+                  {formData.officeRequirement === "yes" && (
+                    <div>
+                      <label
+                        htmlFor="officeDetails"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        If 'yes', please provide details to how often employee
+                        is required in the office: *
+                      </label>
+                      <textarea
+                        id="officeDetails"
+                        name="officeDetails"
+                        value={formData.officeDetails}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Describe office requirements..."
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="remoteWorkDays"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        If you are willing to have the employee work remotely or
+                        from home some days of the week, please advise:
+                        <br />
+                        How many days per week?
+                      </label>
+                      <input
+                        type="text"
+                        id="remoteWorkDays"
+                        name="remoteWorkDays"
+                        value={formData.remoteWorkDays}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., 2-3 days"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Which days would you prefer?
+                      </label>
+                      <div className="space-y-2">
+                        {daysOfWeek.map((day) => (
+                          <label
+                            key={day.value}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.remoteWorkPreferredDays.includes(
+                                day.value
+                              )}
+                              onChange={(e) =>
+                                handleDayToggle(
+                                  "remoteWorkPreferredDays",
+                                  day.value
+                                )
+                              }
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm text-gray-700">
+                              {day.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pay Structure */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-4">
+                  Pay Structure
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="payStructureType"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      What is the pay structure? For example, is the role paid
+                      hourly? *
+                    </label>
+                    <select
+                      id="payStructureType"
+                      name="payStructureType"
+                      value={formData.payStructureType}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      required
+                    >
+                      <option value="">Select pay structure</option>
+                      <option value="hourly">Hourly</option>
+                      <option value="salary">Salary</option>
+                      <option value="commission">Commission</option>
+                      <option value="base_plus_commission">
+                        Base + Commission
+                      </option>
+                    </select>
+                  </div>
+
+                  {formData.payStructureType === "hourly" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="hourlyPay"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          If so, what is the hourly pay? *
+                        </label>
+                        <input
+                          type="text"
+                          id="hourlyPay"
+                          name="hourlyPay"
+                          value={formData.hourlyPay}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="e.g., $18-22/hour"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="payDays"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          When are the pay days? *
+                        </label>
+                        <input
+                          type="text"
+                          id="payDays"
+                          name="payDays"
+                          value={formData.payDays}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="e.g., Bi-weekly, 1st and 15th"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Employee Benefits */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  What are the benefits the employee will receive? For example:
+                  *
+                </label>
+                <div className="bg-blue-50 p-3 rounded mb-3">
+                  <p className="text-sm text-gray-600 mb-1">• Paid time off</p>
+                  <p className="text-sm text-gray-600 mb-1">• 401k</p>
+                  <p className="text-sm text-gray-600 mb-1">
+                    • Medical insurance
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    • Please list anything else
+                  </p>
+                </div>
+                <textarea
+                  name="employeeBenefits"
+                  value={formData.employeeBenefits.join(", ")}
+                  onChange={(e) =>
+                    handleArrayInputChange("employeeBenefits", e.target.value)
+                  }
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="List all benefits (comma-separated)"
+                  required
+                />
+              </div>
+
+              {/* Additional Requirements */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="freeParking"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Is there free parking for employees? *
+                  </label>
+                  <select
+                    id="freeParking"
+                    name="freeParking"
+                    value={formData.freeParking}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    required
+                  >
+                    <option value="">Select parking availability</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="paid_parking">Paid parking available</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="roleType"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Will the role be a service-only role, sales-only role, or a
+                    mix of both? *
+                  </label>
+                  <select
+                    id="roleType"
+                    name="roleType"
+                    value={formData.roleType}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    required
+                  >
+                    <option value="">Select role type</option>
+                    <option value="service_only">Service-only role</option>
+                    <option value="sales_only">Sales-only role</option>
+                    <option value="mixed">Mix of both</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Qualifications */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  What qualifications are required by the employee? For example:
+                  *
+                </label>
+                <div className="bg-blue-50 p-3 rounded mb-3">
+                  <p className="text-sm text-gray-600 mb-1">• P&C</p>
+                  <p className="text-sm text-gray-600 mb-1">• L&H</p>
+                  <p className="text-sm text-gray-600">
+                    • Please list if anything else
+                  </p>
+                </div>
+                <textarea
+                  name="qualifications"
+                  value={formData.qualifications.join(", ")}
+                  onChange={(e) =>
+                    handleArrayInputChange("qualifications", e.target.value)
+                  }
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="List required qualifications (comma-separated)"
+                  required
+                />
+              </div>
+
+              {/* Start Date */}
+              <div>
+                <label
+                  htmlFor="startDate"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  What is the desired start date? *
+                </label>
+                <input
+                  type="date"
+                  id="startDate"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  min={new Date().toISOString().split("T")[0]}
+                  required
+                />
+              </div>
+
+              {/* Additional Requirements */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  If you have any additional recruitment requirements, please
+                  list them here:
+                </label>
+                <textarea
+                  name="additionalRequirements"
+                  value={formData.additionalRequirements}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Enter any additional requirements here..."
+                />
+              </div>
+            </div>
+
             {/* Basic Information */}
             <div className="space-y-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-                Basic Information
+                Basic Job Information
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -258,7 +941,7 @@ export default function CreateJobPage() {
                     value={formData.title}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="e.g., Senior Software Engineer"
+                    placeholder="e.g., Licensed Insurance Agent"
                     required
                   />
                 </div>
@@ -277,8 +960,31 @@ export default function CreateJobPage() {
                     value={formData.department}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="e.g., Engineering, Marketing"
+                    placeholder="e.g., Insurance, Sales"
                   />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="contactNumber"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Contact Number *
+                  </label>
+                  <input
+                    type="tel"
+                    id="contactNumber"
+                    name="contactNumber"
+                    value={formData.contactNumber}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="e.g., +1 (555) 123-4567"
+                    required
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Candidates will use this number to contact you directly
+                    about this job
+                  </p>
                 </div>
 
                 <div>
@@ -378,95 +1084,6 @@ export default function CreateJobPage() {
 
                 <div>
                   <label
-                    htmlFor="jobType"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Job Type *
-                  </label>
-                  <select
-                    id="jobType"
-                    name="jobType"
-                    value={formData.jobType}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    required
-                  >
-                    <option value="full_time">Full Time</option>
-                    <option value="part_time">Part Time</option>
-                    <option value="contract">Contract</option>
-                    <option value="freelance">Freelance</option>
-                    <option value="internship">Internship</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="workMode"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Work Mode *
-                  </label>
-                  <select
-                    id="workMode"
-                    name="workMode"
-                    value={formData.workMode}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    required
-                  >
-                    <option value="office">Office</option>
-                    <option value="remote">Remote</option>
-                    <option value="hybrid">Hybrid</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="experience"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Experience Required *
-                  </label>
-                  <select
-                    id="experience"
-                    name="experience"
-                    value={formData.experience}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    required
-                  >
-                    <option value="">Select experience level</option>
-                    <option value="0-1">0-1 years (Entry Level)</option>
-                    <option value="1-3">1-3 years (Junior)</option>
-                    <option value="3-5">3-5 years (Mid Level)</option>
-                    <option value="5-8">5-8 years (Senior)</option>
-                    <option value="8-12">8-12 years (Lead)</option>
-                    <option value="12+">12+ years (Principal/Director)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="urgency"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Urgency
-                  </label>
-                  <select
-                    id="urgency"
-                    name="urgency"
-                    value={formData.urgency}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  >
-                    <option value="normal">Normal</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="very_urgent">Very Urgent</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
                     htmlFor="expires"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
@@ -506,7 +1123,7 @@ export default function CreateJobPage() {
                     value={formData.salaryMin}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="50000"
+                    placeholder="40000"
                   />
                 </div>
 
@@ -524,7 +1141,7 @@ export default function CreateJobPage() {
                     value={formData.salaryMax}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="80000"
+                    placeholder="60000"
                   />
                 </div>
 
@@ -553,10 +1170,10 @@ export default function CreateJobPage() {
               </div>
             </div>
 
-            {/* Job Details */}
+            {/* Additional Job Details */}
             <div className="space-y-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-                Job Details
+                Additional Job Details
               </h3>
 
               <div>
@@ -573,7 +1190,7 @@ export default function CreateJobPage() {
                   onChange={handleInputChange}
                   rows={6}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Describe the role, responsibilities, and what you're looking for in a candidate..."
+                  placeholder="Describe the role, responsibilities, and what you're looking for in a licensed insurance professional..."
                   required
                 />
               </div>
@@ -583,7 +1200,7 @@ export default function CreateJobPage() {
                   htmlFor="requirements"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Requirements (comma-separated) *
+                  General Requirements (comma-separated)
                 </label>
                 <textarea
                   id="requirements"
@@ -594,8 +1211,7 @@ export default function CreateJobPage() {
                   }
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., Bachelor's degree in Computer Science, 3+ years experience, Strong problem-solving skills"
-                  required
+                  placeholder="e.g., Professional communication skills, Customer service experience, Computer proficiency"
                 />
               </div>
 
@@ -604,7 +1220,7 @@ export default function CreateJobPage() {
                   htmlFor="skills"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Required Skills (comma-separated) *
+                  Required Skills (comma-separated)
                 </label>
                 <input
                   type="text"
@@ -615,9 +1231,32 @@ export default function CreateJobPage() {
                     handleArrayInputChange("skills", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., JavaScript, React, Node.js, MongoDB"
-                  required
+                  placeholder="e.g., Insurance sales, Policy review, Claims processing, Customer retention"
                 />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="experience"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Years of Experience Required
+                </label>
+                <select
+                  id="experience"
+                  name="experience"
+                  value={formData.experience}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">No specific requirement</option>
+                  <option value="0-1">0-1 years</option>
+                  <option value="1-3">1-3 years</option>
+                  <option value="3-5">3-5 years</option>
+                  <option value="5-8">5-8 years</option>
+                  <option value="8-12">8-12 years</option>
+                  <option value="12+">12+ years</option>
+                </select>
               </div>
 
               <div>
@@ -625,7 +1264,7 @@ export default function CreateJobPage() {
                   htmlFor="benefits"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Benefits (comma-separated)
+                  Additional Benefits (comma-separated)
                 </label>
                 <input
                   type="text"
@@ -634,11 +1273,35 @@ export default function CreateJobPage() {
                   value={benefitsInput}
                   onChange={(e) => setBenefitsInput(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., Health insurance, 401k, Flexible hours, Remote work"
+                  placeholder="e.g., Performance bonuses, Professional development, Company car"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Separate multiple benefits with commas
                 </p>
+              </div>
+            </div>
+
+            {/* Application Instructions */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-4">
+                Application Instructions
+              </h4>
+              <div>
+                <label
+                  htmlFor="applicationInstructions"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Special Application Instructions
+                </label>
+                <textarea
+                  id="applicationInstructions"
+                  name="applicationInstructions"
+                  value={formData.applicationInstructions}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Any special instructions for applicants (e.g., portfolio requirements, cover letter topics, etc.)..."
+                />
               </div>
             </div>
 
@@ -655,7 +1318,9 @@ export default function CreateJobPage() {
                 disabled={createJobMutation.isPending}
                 className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
               >
-                {createJobMutation.isPending ? "Creating..." : "Create Job"}
+                {createJobMutation.isPending
+                  ? "Creating..."
+                  : "Create a New Job"}
               </button>
             </div>
           </form>

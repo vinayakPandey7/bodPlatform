@@ -39,6 +39,25 @@ interface Job {
   urgency: string;
   createdAt: string;
   distance?: number;
+  expires?: string;
+  startDate?: string;
+  contactNumber?: string;
+  // Enhanced Licensed Candidate Fields
+  candidateType?: string[];
+  workSchedule?: string;
+  partTimeWorkDays?: string[];
+  officeRequirement?: string;
+  officeDetails?: string;
+  remoteWorkDays?: string;
+  remoteWorkPreferredDays?: string[];
+  payStructureType?: string;
+  hourlyPay?: string;
+  payDays?: string;
+  employeeBenefits?: string[];
+  freeParking?: string;
+  roleType?: string;
+  qualifications?: string[];
+  additionalRequirements?: string[];
   employer: {
     companyName: string;
     city: string;
@@ -450,6 +469,65 @@ export default function CandidateJobsPage() {
                       {job.description}
                     </p>
                   </div>
+
+                  {/* Enhanced Licensed Candidate Preview */}
+                  {((job.candidateType && job.candidateType.length > 0) ||
+                    job.workSchedule ||
+                    job.payStructureType) && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="text-sm font-semibold text-blue-800 mb-2">
+                        🎯 Licensed Candidate Opportunity
+                      </h4>
+                      <div className="space-y-1 text-xs text-blue-700">
+                        {job.candidateType && job.candidateType.length > 0 && (
+                          <p>
+                            <span className="font-medium">Looking for:</span>{" "}
+                            {job.candidateType
+                              .slice(0, 2)
+                              .map((type: string) =>
+                                type
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())
+                              )
+                              .join(", ")}
+                            {job.candidateType.length > 2 &&
+                              ` +${job.candidateType.length - 2} more`}
+                          </p>
+                        )}
+                        {job.workSchedule && (
+                          <p>
+                            <span className="font-medium">Schedule:</span>{" "}
+                            {job.workSchedule.replace("_", " ")}
+                            {job.partTimeWorkDays &&
+                              job.partTimeWorkDays.length > 0 &&
+                              job.workSchedule === "part_time" &&
+                              ` (${job.partTimeWorkDays
+                                .slice(0, 3)
+                                .join(", ")}${
+                                job.partTimeWorkDays.length > 3 ? "..." : ""
+                              })`}
+                          </p>
+                        )}
+                        {job.payStructureType && (
+                          <p>
+                            <span className="font-medium">Pay:</span>{" "}
+                            {job.payStructureType.replace(/_/g, " ")}
+                            {job.hourlyPay && ` - ${job.hourlyPay}`}
+                          </p>
+                        )}
+                        {job.freeParking && (
+                          <p>
+                            <span className="font-medium">Parking:</span>{" "}
+                            {job.freeParking === "yes"
+                              ? "Free"
+                              : job.freeParking === "no"
+                              ? "Not available"
+                              : "Paid available"}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>

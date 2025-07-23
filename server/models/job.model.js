@@ -31,7 +31,8 @@ const jobSchema = new mongoose.Schema({
   },
   experience: {
     type: String,
-    enum: ["0-1", "1-3", "3-5", "5-8", "8-12", "12+"],
+    enum: ["", "0-1", "1-3", "3-5", "5-8", "8-12", "12+"],
+    default: "",
   },
   location: {
     type: String,
@@ -112,6 +113,19 @@ const jobSchema = new mongoose.Schema({
   department: {
     type: String,
     trim: true,
+  },
+  contactNumber: {
+    type: String,
+    required: true,
+    trim: true,
+    validate: {
+      validator: function (contactNumber) {
+        // Basic phone number validation (allows various formats)
+        const phoneRegex = /^[\+]?[\d\s\-\(\)\.]{10,}$/;
+        return phoneRegex.test(contactNumber);
+      },
+      message: "Please provide a valid contact number (minimum 10 digits)",
+    },
   },
   urgency: {
     type: String,
@@ -254,6 +268,93 @@ const jobSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
+  },
+
+  // Enhanced Licensed Candidate Search Requirements
+  candidateType: {
+    type: [String],
+    enum: [
+      "previous_sf_experience",
+      "previous_insurance_not_sf",
+      "licensed_basic_training",
+      "licensed_no_insurance_banking",
+      "licensed_no_experience",
+    ],
+    default: [],
+  },
+  workSchedule: {
+    type: String,
+    enum: ["full_time", "part_time"],
+  },
+  partTimeWorkDays: {
+    type: [String],
+    enum: [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ],
+    default: [],
+  },
+  officeRequirement: {
+    type: String,
+    enum: ["yes", "no"],
+  },
+  officeDetails: {
+    type: String,
+    trim: true,
+  },
+  remoteWorkDays: {
+    type: String,
+    trim: true,
+  },
+  remoteWorkPreferredDays: {
+    type: [String],
+    enum: [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ],
+    default: [],
+  },
+  payStructureType: {
+    type: String,
+    enum: ["hourly", "salary", "commission", "base_plus_commission"],
+  },
+  hourlyPay: {
+    type: String,
+    trim: true,
+  },
+  payDays: {
+    type: String,
+    trim: true,
+  },
+  employeeBenefits: {
+    type: [String],
+    default: [],
+  },
+  freeParking: {
+    type: String,
+    enum: ["yes", "no", "paid_parking"],
+  },
+  roleType: {
+    type: String,
+    enum: ["service_only", "sales_only", "mixed"],
+  },
+  qualifications: {
+    type: [String],
+    default: [],
+  },
+  additionalRequirements: {
+    type: [String],
+    default: [],
   },
 });
 

@@ -69,6 +69,28 @@ exports.createJob = async (req, res) => {
       },
     };
 
+    // Handle licensed candidate data if present
+    if (req.body.licensedCandidateData) {
+      const licensedData = req.body.licensedCandidateData;
+      jobData.candidateType = licensedData.candidateTypes || [];
+      jobData.workSchedule = licensedData.workSchedule;
+      jobData.partTimeWorkDays = licensedData.partTimeWorkDays || [];
+      jobData.officeRequirement = licensedData.officeRequirement;
+      jobData.officeDetails = licensedData.officeDetails;
+      jobData.remoteWorkDays = licensedData.remoteWorkDays;
+      jobData.remoteWorkPreferredDays =
+        licensedData.remoteWorkPreferredDays || [];
+      jobData.payStructureType = licensedData.payStructureType;
+      jobData.hourlyPay = licensedData.hourlyPay;
+      jobData.payDays = licensedData.payDays;
+      jobData.employeeBenefits = licensedData.employeeBenefits || [];
+      jobData.freeParking = licensedData.freeParking;
+      jobData.roleType = licensedData.roleType;
+      jobData.qualifications = licensedData.qualifications || [];
+      jobData.additionalRequirements =
+        licensedData.additionalRequirements || [];
+    }
+
     // Map frontend fields to legacy fields for backward compatibility
     if (jobData.jobType) {
       jobData.jobRole = jobData.jobType; // Map new jobType to legacy jobRole
@@ -492,8 +514,27 @@ exports.getJobsForCandidates = async (req, res) => {
             currency: 1,
             benefits: 1,
             department: 1,
+            contactNumber: 1,
             urgency: 1,
             createdAt: 1,
+            expires: 1,
+            // Enhanced Licensed Candidate Search fields
+            candidateType: 1,
+            workSchedule: 1,
+            partTimeWorkDays: 1,
+            officeRequirement: 1,
+            officeDetails: 1,
+            remoteWorkDays: 1,
+            remoteWorkPreferredDays: 1,
+            payStructureType: 1,
+            hourlyPay: 1,
+            payDays: 1,
+            employeeBenefits: 1,
+            freeParking: 1,
+            roleType: 1,
+            qualifications: 1,
+            additionalRequirements: 1,
+            startDate: 1,
             distance: { $round: [{ $divide: ["$distance", 1609.34] }, 2] }, // Convert to miles
             "employer.companyName": 1,
             "employer.city": 1,

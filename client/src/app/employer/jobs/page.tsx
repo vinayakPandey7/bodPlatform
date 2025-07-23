@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import JobDetailsModal from "@/components/JobDetailsModal";
 import api from "@/lib/api";
 import {
   Search,
@@ -42,6 +43,23 @@ interface Job {
   isApproved: boolean;
   isActive: boolean;
   createdAt: string;
+  contactNumber?: string;
+  // Enhanced Licensed Candidate Fields
+  candidateType?: string[];
+  workSchedule?: string;
+  partTimeWorkDays?: string[];
+  officeRequirement?: string;
+  officeDetails?: string;
+  remoteWorkDays?: string;
+  remoteWorkPreferredDays?: string[];
+  payStructureType?: string;
+  hourlyPay?: string;
+  payDays?: string;
+  employeeBenefits?: string[];
+  freeParking?: string;
+  roleType?: string;
+  qualifications?: string[];
+  additionalRequirements?: string[];
 }
 
 interface JobFilters {
@@ -59,6 +77,7 @@ export default function EmployerJobsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const router = useRouter();
 
   // Filter states
@@ -198,15 +217,30 @@ export default function EmployerJobsPage() {
     router.push("/employer/jobs/create");
   };
 
-  const handleEditJob = (jobId: string) => {
+  const handleJobClick = (jobId: string) => {
+    setSelectedJobId(jobId);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedJobId(null);
+  };
+
+  const handleEditJob = (e: React.MouseEvent, jobId: string) => {
+    e.stopPropagation(); // Prevent job card click
     router.push(`/employer/jobs/${jobId}/edit`);
   };
 
-  const handleViewApplications = (jobId: string) => {
+  const handleViewApplications = (e: React.MouseEvent, jobId: string) => {
+    e.stopPropagation(); // Prevent job card click
     router.push(`/employer/jobs/${jobId}/applications`);
   };
 
-  const toggleJobStatus = async (jobId: string, currentStatus: boolean) => {
+  const toggleJobStatus = async (
+    e: React.MouseEvent,
+    jobId: string,
+    currentStatus: boolean
+  ) => {
+    e.stopPropagation(); // Prevent job card click
     try {
       await api.patch(`/jobs/${jobId}/toggle-status`);
       fetchJobs(); // Refresh the list
@@ -277,14 +311,14 @@ export default function EmployerJobsPage() {
             <div className="flex items-center space-x-3">
               <button
                 onClick={fetchJobs}
-                className="inline-flex items-center px-4 py-2 bg-white/60 backdrop-blur-md border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 transition-all duration-200"
+                className="inline-flex items-center px-4 py-2 bg-white/60 backdrop-blur-md border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 transition-all duration-200 cursor-pointer"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
               </button>
               <button
                 onClick={handleCreateJob}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg cursor-pointer"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Post New Job
@@ -576,7 +610,8 @@ export default function EmployerJobsPage() {
               filteredJobs.map((job) => (
                 <div
                   key={job._id}
-                  className="group relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 hover:bg-white/80 hover:shadow-xl transition-all duration-300"
+                  className="group relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 hover:bg-white/80 hover:shadow-xl transition-all duration-300 cursor-pointer"
+                  onClick={() => handleJobClick(job._id)}
                 >
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                     <div className="flex-1">
@@ -585,18 +620,7 @@ export default function EmployerJobsPage() {
                         <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                           {job.title}
                         </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {job.isApproved ? (
-                            <span className="inline-flex items-center px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full border border-green-200">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Approved
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full border border-yellow-200">
-                              <AlertCircle className="h-3 w-3 mr-1" />
-                              Pending Approval
-                            </span>
-                          )}
+                        <div className="flex flex-wrap">
                           <span
                             className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full border ${
                               job.isActive
@@ -650,34 +674,41 @@ export default function EmployerJobsPage() {
                       </p>
 
                       {/* Posted Date */}
-                      <div className="flex items-center space-x-2 text-xs text-gray-500">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          Posted on{" "}
-                          {new Date(job.createdAt).toLocaleDateString()}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-xs text-gray-500">
+                          <Calendar className="h-3 w-3" />
+                          <span>
+                            Posted on{" "}
+                            {new Date(job.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="text-xs text-blue-600 font-medium opacity-70 group-hover:opacity-100 transition-opacity">
+                          Click to view details →
+                        </div>
                       </div>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex lg:flex-col space-x-3 lg:space-x-0 lg:space-y-3">
                       <button
-                        onClick={() => handleViewApplications(job._id)}
-                        className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-200 shadow-lg flex-1 lg:flex-none"
+                        onClick={(e) => handleViewApplications(e, job._id)}
+                        className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-200 shadow-lg flex-1 lg:flex-none cursor-pointer"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View Applications
                       </button>
                       <button
-                        onClick={() => handleEditJob(job._id)}
-                        className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-all duration-200 flex-1 lg:flex-none"
+                        onClick={(e) => handleEditJob(e, job._id)}
+                        className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-all duration-200 flex-1 lg:flex-none cursor-pointer"
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </button>
                       <button
-                        onClick={() => toggleJobStatus(job._id, job.isActive)}
-                        className={`flex items-center justify-center px-4 py-2 rounded-xl font-medium transition-all duration-200 flex-1 lg:flex-none ${
+                        onClick={(e) =>
+                          toggleJobStatus(e, job._id, job.isActive)
+                        }
+                        className={`flex items-center justify-center px-4 py-2 rounded-xl font-medium transition-all duration-200 flex-1 lg:flex-none cursor-pointer ${
                           job.isActive
                             ? "bg-red-600 text-white hover:bg-red-700"
                             : "bg-green-600 text-white hover:bg-green-700"
@@ -709,6 +740,15 @@ export default function EmployerJobsPage() {
             </div>
           )}
         </div>
+
+        {/* Job Details Modal */}
+        {selectedJobId && (
+          <JobDetailsModal
+            jobId={selectedJobId}
+            isOpen={!!selectedJobId}
+            onClose={handleCloseModal}
+          />
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );

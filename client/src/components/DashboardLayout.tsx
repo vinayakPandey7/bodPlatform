@@ -448,12 +448,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             current: pathname === "/employer/jobs",
             icon: Briefcase,
           },
-          {
-            name: "Applications",
-            href: "/employer/applications",
-            current: pathname === "/employer/applications",
-            icon: FileText,
-          },
+
           {
             name: "Saved Candidates",
             href: "/employer/saved-candidates",

@@ -114,13 +114,13 @@ export default function JobDetailsModal({
       <div
         className={`
         relative bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden
-        transform transition-all duration-200 ${
+        transform transition-all duration-200 flex flex-col ${
           isAnimating ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }
       `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-900">Job Details</h2>
           <button
             onClick={handleClose}
@@ -131,7 +131,7 @@ export default function JobDetailsModal({
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className="overflow-y-auto flex-1 min-h-0">
           {isLoading ? (
             <div className="flex items-center justify-center p-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -213,10 +213,27 @@ export default function JobDetailsModal({
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-green-600 mb-1">
-                      {formatSalary(
-                        jobData.salaryMin,
-                        jobData.salaryMax,
-                        jobData.currency
+                      {jobData.salaryType && jobData.salaryRange ? (
+                        <div>
+                          <div>
+                            {jobData.salaryType}: {jobData.salaryRange}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            (
+                            {formatSalary(
+                              jobData.salaryMin,
+                              jobData.salaryMax,
+                              jobData.currency
+                            )}
+                            )
+                          </div>
+                        </div>
+                      ) : (
+                        formatSalary(
+                          jobData.salaryMin,
+                          jobData.salaryMax,
+                          jobData.currency
+                        )
                       )}
                     </div>
                     <div className="text-sm text-gray-500">
@@ -246,8 +263,15 @@ export default function JobDetailsModal({
                     </h3>
                   </div>
                   <p className="text-gray-700 capitalize">
-                    {jobData.experience || "Not specified"}
+                    {jobData.experienceLevel ||
+                      jobData.experience ||
+                      "Not specified"}
                   </p>
+                  {jobData.specificExperience && (
+                    <p className="text-gray-600 text-sm mt-1">
+                      Details: {jobData.specificExperience}
+                    </p>
+                  )}
                 </div>
 
                 {jobData.department && (
@@ -305,37 +329,461 @@ export default function JobDetailsModal({
               )}
 
               {/* Skills */}
-              {jobData.skills && jobData.skills.length > 0 && (
+              {(jobData.skills?.length > 0 ||
+                jobData.requiredSkills ||
+                jobData.preferredSkills) && (
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                    Required Skills
+                    Skills Requirements
                   </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {jobData.skills.map((skill: string, index: number) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                      >
-                        {skill}
-                      </span>
-                    ))}
+
+                  {/* Required Skills */}
+                  {(jobData.requiredSkills || jobData.skills?.length > 0) && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-gray-800 mb-2">
+                        Required Skills:
+                      </h4>
+                      {jobData.requiredSkills ? (
+                        <p className="text-gray-700 mb-2">
+                          {jobData.requiredSkills}
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {jobData.skills?.map(
+                            (skill: string, index: number) => (
+                              <span
+                                key={index}
+                                className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium"
+                              >
+                                {skill}
+                              </span>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Preferred Skills */}
+                  {jobData.preferredSkills && (
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-2">
+                        Preferred Skills:
+                      </h4>
+                      <p className="text-gray-700">{jobData.preferredSkills}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Education & Certifications */}
+              {(jobData.educationLevel ||
+                jobData.preferredFieldOfStudy ||
+                jobData.requiredCertifications) && (
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                    Education & Certifications
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {jobData.educationLevel && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-800 mb-2">
+                          Education Level:
+                        </h4>
+                        <p className="text-gray-700 capitalize">
+                          {jobData.educationLevel}
+                        </p>
+                      </div>
+                    )}
+
+                    {jobData.preferredFieldOfStudy && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-800 mb-2">
+                          Preferred Field of Study:
+                        </h4>
+                        <p className="text-gray-700">
+                          {jobData.preferredFieldOfStudy}
+                        </p>
+                      </div>
+                    )}
                   </div>
+
+                  {jobData.requiredCertifications && (
+                    <div className="mt-4 bg-yellow-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-yellow-800 mb-2">
+                        Required Certifications:
+                      </h4>
+                      <p className="text-yellow-700">
+                        {jobData.requiredCertifications}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Benefits */}
-              {jobData.benefits && jobData.benefits.length > 0 && (
+              {(jobData.benefits?.length > 0 ||
+                jobData.employeeBenefits?.length > 0 ||
+                jobData.otherBenefits) && (
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">
                     Benefits & Perks
                   </h3>
-                  <ul className="list-disc list-inside space-y-2 text-gray-700">
-                    {jobData.benefits.map((benefit: string, index: number) => (
-                      <li key={index}>{benefit}</li>
-                    ))}
-                  </ul>
+
+                  {/* Standard Benefits */}
+                  {jobData.benefits?.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-gray-800 mb-2">
+                        Additional Benefits:
+                      </h4>
+                      <ul className="list-disc list-inside space-y-2 text-gray-700">
+                        {jobData.benefits.map(
+                          (benefit: string, index: number) => (
+                            <li key={index}>{benefit}</li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Employee Benefits */}
+                  {jobData.employeeBenefits?.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-gray-800 mb-2">
+                        Employee Benefits Package:
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {jobData.employeeBenefits.map(
+                          (benefit: string, index: number) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium"
+                            >
+                              {benefit
+                                .replace(/_/g, " ")
+                                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Other Benefits */}
+                  {jobData.otherBenefits && (
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-green-800 mb-2">
+                        Additional Benefits:
+                      </h4>
+                      <p className="text-green-700">{jobData.otherBenefits}</p>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Licensed Candidate Requirements */}
+              {(jobData.candidateType?.length > 0 ||
+                jobData.workSchedule ||
+                jobData.payStructureType ||
+                jobData.employeeBenefits?.length > 0 ||
+                jobData.qualifications?.length > 0) && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold text-blue-900 mb-4">
+                    🎯 Licensed Candidate Requirements
+                  </h3>
+
+                  {/* Candidate Types */}
+                  {jobData.candidateType?.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Preferred Candidate Experience:
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {jobData.candidateType.map(
+                          (type: string, index: number) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                            >
+                              {type
+                                .replace(/_/g, " ")
+                                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Work Schedule */}
+                  {jobData.workSchedule && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Work Schedule:
+                      </h4>
+                      <p className="text-blue-700 mb-2 capitalize">
+                        {jobData.workSchedule.replace("_", " ")}
+                      </p>
+                      {jobData.partTimeWorkDays?.length > 0 && (
+                        <div className="mb-2">
+                          <span className="text-sm text-blue-600">
+                            Part-time days:{" "}
+                          </span>
+                          <span className="text-blue-700">
+                            {jobData.partTimeWorkDays
+                              .map(
+                                (day: string) =>
+                                  day.charAt(0).toUpperCase() + day.slice(1)
+                              )
+                              .join(", ")}
+                          </span>
+                        </div>
+                      )}
+                      {jobData.hybridOfficeDays?.length > 0 && (
+                        <div>
+                          <span className="text-sm text-blue-600">
+                            Hybrid office days:{" "}
+                          </span>
+                          <span className="text-blue-700">
+                            {jobData.hybridOfficeDays
+                              .map(
+                                (day: string) =>
+                                  day.charAt(0).toUpperCase() + day.slice(1)
+                              )
+                              .join(", ")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Office Requirements */}
+                  {jobData.officeRequirement && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Office Requirements:
+                      </h4>
+                      <p className="text-blue-700 mb-1">
+                        Office attendance required:{" "}
+                        <span className="font-medium">
+                          {jobData.officeRequirement}
+                        </span>
+                      </p>
+                      {jobData.officeDetails && (
+                        <p className="text-blue-600 text-sm">
+                          {jobData.officeDetails}
+                        </p>
+                      )}
+                      {jobData.remoteWorkDays && (
+                        <p className="text-blue-600 text-sm mt-1">
+                          Remote work: {jobData.remoteWorkDays}
+                        </p>
+                      )}
+                      {jobData.remoteWorkPreferredDays?.length > 0 && (
+                        <p className="text-blue-600 text-sm">
+                          Preferred remote days:{" "}
+                          {jobData.remoteWorkPreferredDays.join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Pay Structure */}
+                  {(jobData.payStructureType ||
+                    jobData.salaryType ||
+                    jobData.salaryRange) && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Pay Structure:
+                      </h4>
+                      {jobData.payStructureType && (
+                        <p className="text-blue-700 mb-1 capitalize">
+                          Structure:{" "}
+                          {jobData.payStructureType.replace(/_/g, " ")}
+                        </p>
+                      )}
+                      {jobData.salaryType && (
+                        <p className="text-blue-700 mb-1">
+                          Type: {jobData.salaryType}
+                        </p>
+                      )}
+                      {jobData.salaryRange && (
+                        <p className="text-blue-700 mb-1">
+                          Range: {jobData.salaryRange}
+                        </p>
+                      )}
+                      {jobData.hourlyPay && (
+                        <p className="text-blue-600 text-sm">
+                          Hourly rate: {jobData.hourlyPay}
+                        </p>
+                      )}
+                      {jobData.payDays && (
+                        <p className="text-blue-600 text-sm">
+                          Pay schedule: {jobData.payDays}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Employee Benefits */}
+                  {jobData.employeeBenefits?.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Employee Benefits:
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {jobData.employeeBenefits.map(
+                          (benefit: string, index: number) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium"
+                            >
+                              {benefit
+                                .replace(/_/g, " ")
+                                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Travel & Background Requirements */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {jobData.travelRequirements && (
+                      <div>
+                        <h4 className="font-semibold text-blue-800 text-sm">
+                          Travel Requirements:
+                        </h4>
+                        <p className="text-blue-700 text-sm">
+                          {jobData.travelRequirements}
+                        </p>
+                      </div>
+                    )}
+                    {(jobData.backgroundCheckRequired !== undefined ||
+                      jobData.drugTestRequired !== undefined) && (
+                      <div>
+                        <h4 className="font-semibold text-blue-800 text-sm">
+                          Background Checks:
+                        </h4>
+                        <div className="text-blue-700 text-sm space-y-1">
+                          {jobData.backgroundCheckRequired && (
+                            <p>✓ Background check required</p>
+                          )}
+                          {jobData.drugTestRequired && (
+                            <p>✓ Drug test required</p>
+                          )}
+                          {!jobData.backgroundCheckRequired &&
+                            !jobData.drugTestRequired && (
+                              <p>No special checks required</p>
+                            )}
+                        </div>
+                      </div>
+                    )}
+                    {jobData.freeParking && (
+                      <div>
+                        <h4 className="font-semibold text-blue-800 text-sm">
+                          Parking:
+                        </h4>
+                        <p className="text-blue-700 text-sm capitalize">
+                          {jobData.freeParking.replace("_", " ")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Additional Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    {jobData.roleType && (
+                      <div>
+                        <h4 className="font-semibold text-blue-800 text-sm">
+                          Role Focus:
+                        </h4>
+                        <p className="text-blue-700 text-sm capitalize">
+                          {jobData.roleType.replace("_", " ")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Required Qualifications */}
+                  {jobData.qualifications?.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Required Qualifications:
+                      </h4>
+                      <ul className="list-disc list-inside space-y-1 text-blue-700 text-sm">
+                        {jobData.qualifications.map(
+                          (qual: string, index: number) => (
+                            <li key={index}>{qual}</li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Additional Requirements */}
+                  {jobData?.additionalRequirements && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Additional Requirements:
+                      </h4>
+                      <div className="bg-blue-100 p-3 rounded text-blue-700 text-sm whitespace-pre-wrap">
+                        {jobData?.additionalRequirements}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Start Date Information */}
+                  {(jobData.startDate ||
+                    jobData.startDateType ||
+                    jobData.specificStartDate) && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Start Date Information:
+                      </h4>
+                      <div className="text-blue-700 text-sm space-y-1">
+                        {jobData.startDateType && (
+                          <p>
+                            Start Date Type:{" "}
+                            <span className="capitalize">
+                              {jobData.startDateType.replace("_", " ")}
+                            </span>
+                          </p>
+                        )}
+                        {jobData.startDate && (
+                          <p>
+                            Preferred Start Date:{" "}
+                            {new Date(jobData.startDate).toLocaleDateString()}
+                          </p>
+                        )}
+                        {jobData.specificStartDate && (
+                          <p>
+                            Specific Start Date:{" "}
+                            {new Date(
+                              jobData.specificStartDate
+                            ).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Application Instructions */}
+              {jobData.applicationInstructions &&
+                jobData.applicationInstructions.trim() && (
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+                    <h3 className="text-xl font-semibold text-indigo-900 mb-3">
+                      📋 Application Instructions
+                    </h3>
+                    <div className="text-indigo-700 whitespace-pre-wrap">
+                      {jobData.applicationInstructions}
+                    </div>
+                  </div>
+                )}
 
               {/* Company Info */}
               <div className="bg-gray-50 p-6 rounded-lg">
@@ -353,7 +801,19 @@ export default function JobDetailsModal({
                   {jobData.employer?.ownerName && (
                     <p className="text-gray-600">
                       <Users className="h-4 w-4 inline mr-1" />
-                      Contact: {jobData.employer.ownerName}
+                      Contact Person: {jobData.employer.ownerName}
+                    </p>
+                  )}
+                  {jobData.contactNumber && (
+                    <p className="text-gray-600 font-medium">
+                      <span className="inline-block w-4 h-4 mr-1">📞</span>
+                      Direct Contact: {jobData.contactNumber}
+                    </p>
+                  )}
+
+                  {!jobData.contactNumber && (
+                    <p className="text-gray-400 text-sm italic">
+                      No direct contact number provided for this job
                     </p>
                   )}
                 </div>
@@ -364,7 +824,7 @@ export default function JobDetailsModal({
 
         {/* Footer Actions */}
         {jobData && (
-          <div className="border-t border-gray-200 p-6 bg-gray-50">
+          <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-500">Job ID: {jobData._id}</div>
               <div className="flex space-x-3">

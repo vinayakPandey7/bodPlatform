@@ -119,6 +119,78 @@ const jobSchema = Joi.object({
     .required(),
   assessmentLink: Joi.string(),
   expires: Joi.date().required(),
+
+  // Enhanced Licensed Candidate Search Requirements
+  candidateType: Joi.array().items(
+    Joi.string().valid(
+      "previous_sf_experience",
+      "previous_insurance_not_sf",
+      "licensed_basic_training",
+      "licensed_no_insurance_banking",
+      "licensed_no_experience"
+    )
+  ),
+  workSchedule: Joi.string().valid("full_time", "part_time"),
+  partTimeWorkDays: Joi.array().items(
+    Joi.string().valid(
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    )
+  ),
+  officeRequirement: Joi.string().valid("yes", "no"),
+  officeDetails: Joi.string(),
+  remoteWorkDays: Joi.string(),
+  remoteWorkPreferredDays: Joi.array().items(
+    Joi.string().valid(
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    )
+  ),
+  payStructureType: Joi.string().valid(
+    "hourly",
+    "salary",
+    "commission",
+    "base_plus_commission"
+  ),
+  hourlyPay: Joi.string(),
+  payDays: Joi.string(),
+  employeeBenefits: Joi.array().items(Joi.string()),
+  freeParking: Joi.string().valid("yes", "no", "paid_parking"),
+  roleType: Joi.string().valid("service_only", "sales_only", "mixed"),
+  qualifications: Joi.array().items(Joi.string()),
+  additionalRequirements: Joi.array().items(Joi.string()),
+
+  // New standard fields
+  requirements: Joi.array().items(Joi.string()),
+  skills: Joi.array().items(Joi.string()),
+  experience: Joi.string()
+    .valid("0-1", "1-3", "3-5", "5-8", "8-12", "12+")
+    .allow("")
+    .optional(),
+  zipCode: Joi.string(),
+  city: Joi.string(),
+  state: Joi.string(),
+  country: Joi.string(),
+  workMode: Joi.string().valid("office", "remote", "hybrid"),
+  salaryMin: Joi.number().min(0),
+  salaryMax: Joi.number().min(0),
+  currency: Joi.string(),
+  department: Joi.string(),
+  contactNumber: Joi.string()
+    .required()
+    .pattern(/^[\+]?[\d\s\-\(\)\.]{10,}$/)
+    .message("Please provide a valid contact number (minimum 10 digits)"),
+  urgency: Joi.string().valid("normal", "urgent", "very_urgent"),
 });
 
 // Candidate validation schema

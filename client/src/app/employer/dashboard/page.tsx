@@ -12,7 +12,7 @@ import {
   Plus,
   Eye,
   Settings,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -83,7 +83,10 @@ export default function EmployerDashboard() {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white/40 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 animate-pulse">
+                <div
+                  key={i}
+                  className="bg-white/40 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 animate-pulse"
+                >
                   <div className="h-4 bg-gray-200/50 rounded w-3/4 mb-2"></div>
                   <div className="h-8 bg-gray-200/50 rounded w-1/2"></div>
                 </div>
@@ -196,7 +199,9 @@ export default function EmployerDashboard() {
 
           {/* Quick Actions */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+              Quick Actions
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Post New Job */}
               <button
@@ -204,12 +209,14 @@ export default function EmployerDashboard() {
                 className="group relative bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-2xl p-8 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
               >
                 <div className="absolute inset-0 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10 text-center">
+                <div className="relative z-10 text-center cursor-pointer">
                   <div className="p-4 bg-white/20 rounded-xl w-fit mx-auto mb-4">
                     <Plus className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">Post New Job</h3>
-                  <p className="text-blue-100">Create and publish a new job posting</p>
+                  <p className="text-blue-100">
+                    Create and publish a new job posting
+                  </p>
                 </div>
               </button>
 
@@ -224,7 +231,9 @@ export default function EmployerDashboard() {
                     <Eye className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">View Applications</h3>
-                  <p className="text-green-100">Review candidate applications</p>
+                  <p className="text-green-100">
+                    Review candidate applications
+                  </p>
                 </div>
               </button>
 
@@ -239,7 +248,9 @@ export default function EmployerDashboard() {
                     <Settings className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">Manage Jobs</h3>
-                  <p className="text-orange-100">Edit and manage existing jobs</p>
+                  <p className="text-orange-100">
+                    Edit and manage existing jobs
+                  </p>
                 </div>
               </button>
             </div>
