@@ -273,8 +273,10 @@ export default function RegisterPage() {
 
         const data = await response.json();
         if (response.ok && data.city) {
-          setFieldValue(`${prefix}city`, data.city);
-          setFieldValue(`${prefix}state`, data.state || "");
+          const cityField = prefix ? `${prefix}City` : "city";
+          const stateField = prefix ? `${prefix}State` : "state";
+          setFieldValue(cityField, data.city);
+          setFieldValue(stateField, data.state || "");
           setError("");
         }
       } catch (err) {
@@ -292,11 +294,75 @@ export default function RegisterPage() {
         values.role === "employer"
           ? "/api/auth/register/employer"
           : "/api/auth/register";
-      const requestBody = {
-        ...values,
-        coordinates:
-          coordinates.lat && coordinates.lng ? coordinates : undefined,
-      };
+
+      let requestBody;
+
+      if (values.role === "employer") {
+        requestBody = {
+          email: values.email,
+          password: values.password,
+          role: values.role,
+          employerData: {
+            companyName: values.companyName,
+            ownerName: values.ownerName,
+            phoneNumber: values.phoneNumber,
+            website: values.website,
+            industry: values.industry,
+            companySize: values.companySize,
+            address: values.address,
+            city: values.city,
+            state: values.state,
+            zipCode: values.zipCode,
+            country: "United States", // Default to US for now
+          },
+          coordinates:
+            coordinates.lat && coordinates.lng ? coordinates : undefined,
+        };
+      } else if (values.role === "recruitment_partner") {
+        requestBody = {
+          email: values.email,
+          password: values.password,
+          role: values.role,
+          recruitmentPartnerData: {
+            companyName: values.partnerCompanyName,
+            ownerName: values.partnerContactPersonName,
+            phoneNumber: values.partnerPhone,
+            website: values.partnerWebsite,
+            address: values.partnerAddress,
+            city: values.partnerCity,
+            state: values.partnerState,
+            zipCode: values.partnerZipCode,
+            country: "United States", // Default to US for now
+            yearsOfExperience: values.yearsOfExperience,
+            specialization: values.specialization,
+          },
+          coordinates:
+            coordinates.lat && coordinates.lng ? coordinates : undefined,
+        };
+      } else if (values.role === "candidate") {
+        requestBody = {
+          email: values.email,
+          password: values.password,
+          role: values.role,
+          candidateData: {
+            firstName: values.candidateFirstName,
+            lastName: values.candidateLastName,
+            phone: values.candidatePhone,
+            address: values.candidateAddress,
+            city: values.candidateCity,
+            state: values.candidateState,
+            zipCode: values.candidateZipCode,
+          },
+          coordinates:
+            coordinates.lat && coordinates.lng ? coordinates : undefined,
+        };
+      } else {
+        requestBody = {
+          ...values,
+          coordinates:
+            coordinates.lat && coordinates.lng ? coordinates : undefined,
+        };
+      }
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -695,7 +761,7 @@ export default function RegisterPage() {
                     {/* Step 2: Account Details */}
                     {currentStep === 2 && (
                       <div className="space-y-6">
-                        <div className="flex flex ">
+                        <div className="flex flex-col">
                           <h2 className="text-2xl font-bold text-gray-900 mb-2">
                             Account details
                           </h2>

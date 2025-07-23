@@ -7,17 +7,22 @@ import api from "@/lib/api";
 
 interface Application {
   _id: string;
-  name: string;
-  email: string;
-  phone: string;
+  candidate: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
   status: string;
-  resume: string;
+  appliedAt: string;
+  appliedAtRaw: string;
+  coverLetter?: string;
   job: {
     _id: string;
     title: string;
     location: string;
   };
-  createdAt: string;
 }
 
 interface Job {
@@ -76,13 +81,24 @@ export default function JobApplicationsPage() {
   };
 
   const updateCandidateStatus = async (
-    candidateId: string,
+    applicationId: string,
     newStatus: string
   ) => {
     try {
-      await api.put(`/employer/candidates/${candidateId}/status`, {
-        status: newStatus,
-      });
+      // Get the application to find the candidate ID
+      const application = applications.find((app) => app._id === applicationId);
+      if (!application) {
+        console.error("Application not found");
+        return;
+      }
+
+      // Use the correct endpoint with both candidateId and applicationId
+      await api.put(
+        `/employer/candidates/${application.candidate._id}/applications/${applicationId}/status`,
+        {
+          status: newStatus,
+        }
+      );
       fetchJobAndApplications(); // Refresh the list
     } catch (error) {
       console.error("Error updating candidate status:", error);
@@ -100,6 +116,10 @@ export default function JobApplicationsPage() {
       rejected: "bg-red-100 text-red-800",
       stand_by: "bg-gray-100 text-gray-800",
       no_response: "bg-gray-100 text-gray-600",
+      hired: "bg-green-100 text-green-800",
+      pending: "bg-yellow-100 text-yellow-800",
+      reviewing: "bg-blue-100 text-blue-800",
+      shortlisted: "bg-blue-100 text-blue-800",
     };
     return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
   };
@@ -107,6 +127,8 @@ export default function JobApplicationsPage() {
   const filteredApplications = applications.filter(
     (app) => statusFilter === "all" || app.status === statusFilter
   );
+
+  console.log("Filtered Applications:", filteredApplications);
 
   if (loading) {
     return (
@@ -167,15 +189,16 @@ export default function JobApplicationsPage() {
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="all">All Statuses</option>
-                <option value="shortlist">Shortlisted</option>
+                <option value="pending">Pending</option>
+                <option value="reviewing">Reviewing</option>
+                <option value="shortlisted">Shortlisted</option>
                 <option value="assessment">Assessment</option>
                 <option value="phone_interview">Phone Interview</option>
                 <option value="in_person_interview">In-Person Interview</option>
                 <option value="background_check">Background Check</option>
-                <option value="selected">Selected</option>
+                <option value="hired">Hired</option>
                 <option value="rejected">Rejected</option>
-                <option value="stand_by">Stand By</option>
-                <option value="no_response">No Response</option>
+                <option value="withdrawn">Withdrawn</option>
               </select>
             </div>
           </div>
@@ -269,14 +292,14 @@ export default function JobApplicationsPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {application.name}
+                              {`${application?.candidate?.firstName} ${application?.candidate?.lastName}`}
+                            </div>
+                            {/* <div className="text-sm text-gray-500">
+                              {application?.candidate?.email}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {application.email}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {application.phone}
-                            </div>
+                              {application?.candidate?.phone}
+                            </div> */}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -289,7 +312,7 @@ export default function JobApplicationsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(application.createdAt).toLocaleDateString()}
+                          {application.appliedAt}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex space-x-2">
@@ -303,7 +326,9 @@ export default function JobApplicationsPage() {
                               }
                               className="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                             >
-                              <option value="shortlist">Shortlist</option>
+                              <option value="pending">Pending</option>
+                              <option value="reviewing">Reviewing</option>
+                              <option value="shortlisted">Shortlisted</option>
                               <option value="assessment">Assessment</option>
                               <option value="phone_interview">
                                 Phone Interview
@@ -314,27 +339,10 @@ export default function JobApplicationsPage() {
                               <option value="background_check">
                                 Background Check
                               </option>
-                              <option value="selected">Selected</option>
+                              <option value="hired">Hired</option>
                               <option value="rejected">Rejected</option>
-                              <option value="stand_by">Stand By</option>
-                              <option value="no_response">No Response</option>
+                              <option value="withdrawn">Withdrawn</option>
                             </select>
-                            {application.resume && (
-                              <a
-                                href={
-                                  application.resume.startsWith("http")
-                                    ? application.resume
-                                    : `https://docs.google.com/viewer?url=${encodeURIComponent(
-                                        application.resume
-                                      )}&embedded=true`
-                                }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-indigo-600 hover:text-indigo-900 text-xs"
-                              >
-                                View Resume
-                              </a>
-                            )}
                           </div>
                         </td>
                       </tr>

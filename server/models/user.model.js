@@ -135,7 +135,18 @@ const userSchema = new mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ["pending", "reviewing", "accepted", "rejected"],
+        enum: [
+          "pending",
+          "reviewing", 
+          "shortlisted",
+          "assessment",
+          "phone_interview",
+          "in_person_interview", 
+          "background_check",
+          "hired",
+          "rejected",
+          "withdrawn"
+        ],
         default: "pending",
       },
       coverLetter: String,

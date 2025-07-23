@@ -280,11 +280,15 @@ exports.updateCandidateStatus = async (req, res) => {
     // Validate status
     const validStatuses = [
       "pending",
-      "reviewed",
+      "reviewing", 
       "shortlisted",
-      "interviewed",
+      "assessment",
+      "phone_interview",
+      "in_person_interview", 
+      "background_check",
       "hired",
       "rejected",
+      "withdrawn"
     ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
