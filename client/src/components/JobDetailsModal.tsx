@@ -30,9 +30,24 @@ export default function JobDetailsModal({
   const { mutate: applyToJob, isPending: isApplying } = useApplyToJob();
 
   const [isAnimating, setIsAnimating] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Extract job data from response (backend returns { job: ... })
   const jobData = (jobResponse as any)?.job || jobResponse;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          setUserRole(user.role);
+        } catch (error) {
+          console.error("Failed to parse user from localStorage", error);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -124,7 +139,7 @@ export default function JobDetailsModal({
           <h2 className="text-2xl font-bold text-gray-900">Job Details</h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors"
           >
             <X className="h-6 w-6 text-gray-500" />
           </button>
@@ -827,24 +842,27 @@ export default function JobDetailsModal({
           <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-500">Job ID: {jobData._id}</div>
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleSaveJob}
-                  disabled={isSaving}
-                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-                >
-                  <Heart className="h-4 w-4" />
-                  <span>{isSaving ? "Saving..." : "Save Job"}</span>
-                </button>
-                <button
-                  onClick={handleApplyToJob}
-                  disabled={isApplying}
-                  className="flex items-center space-x-2 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                >
-                  <Send className="h-4 w-4" />
-                  <span>{isApplying ? "Applying..." : "Quick Apply"}</span>
-                </button>
-              </div>
+              {userRole !== "employer" && (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleSaveJob}
+                    disabled={isSaving}
+                    className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  >
+                    <Heart className="h-4 w-4" />
+                    <span>{isSaving ? "Saving..." : "Save Job"}</span>
+                  </button>
+
+                  <button
+                    onClick={handleApplyToJob}
+                    disabled={isApplying}
+                    className="flex items-center space-x-2 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  >
+                    <Send className="h-4 w-4" />
+                    <span>{isApplying ? "Applying..." : "Quick Apply"}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
