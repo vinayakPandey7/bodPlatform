@@ -28,6 +28,7 @@ import {
   ChevronDown,
   X,
 } from "lucide-react";
+import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 
 interface Job {
   _id: string;
@@ -435,118 +436,172 @@ export default function EmployerJobsPage() {
               <div className="mt-6 pt-6 border-t border-gray-200/50">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                   {/* Status Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Status
-                    </label>
-                    <select
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Status</InputLabel>
+                    <Select
                       value={filters.status}
                       onChange={(e) =>
-                        handleFilterChange("status", e.target.value)
+                        handleFilterChange("status", e.target.value as string)
                       }
-                      className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      label="Status"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                        },
+                      }}
                     >
-                      <option value="all">All Status</option>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
+                      <MenuItem value="all">All Status</MenuItem>
+                      <MenuItem value="active">Active</MenuItem>
+                      <MenuItem value="inactive">Inactive</MenuItem>
+                    </Select>
+                  </FormControl>
 
                   {/* Approval Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Approval
-                    </label>
-                    <select
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Approval</InputLabel>
+                    <Select
                       value={filters.approval}
                       onChange={(e) =>
-                        handleFilterChange("approval", e.target.value)
+                        handleFilterChange("approval", e.target.value as string)
                       }
-                      className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      label="Approval"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                        },
+                      }}
                     >
-                      <option value="all">All</option>
-                      <option value="approved">Approved</option>
-                      <option value="pending">Pending</option>
-                    </select>
-                  </div>
+                      <MenuItem value="all">All</MenuItem>
+                      <MenuItem value="approved">Approved</MenuItem>
+                      <MenuItem value="pending">Pending</MenuItem>
+                    </Select>
+                  </FormControl>
 
                   {/* Job Role Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Job Role
-                    </label>
-                    <select
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Job Role</InputLabel>
+                    <Select
                       value={filters.jobRole}
                       onChange={(e) =>
-                        handleFilterChange("jobRole", e.target.value)
+                        handleFilterChange("jobRole", e.target.value as string)
                       }
-                      className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      label="Job Role"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                        },
+                      }}
                     >
-                      <option value="all">All Roles</option>
-                      <option value="full_time">Full Time</option>
-                      <option value="part_time">Part Time</option>
-                      <option value="contract">Contract</option>
-                      <option value="freelance">Freelance</option>
-                    </select>
-                  </div>
+                      <MenuItem value="all">All Roles</MenuItem>
+                      <MenuItem value="full_time">Full Time</MenuItem>
+                      <MenuItem value="part_time">Part Time</MenuItem>
+                      <MenuItem value="contract">Contract</MenuItem>
+                      <MenuItem value="freelance">Freelance</MenuItem>
+                    </Select>
+                  </FormControl>
 
                   {/* Job Type Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Work Type
-                    </label>
-                    <select
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Work Type</InputLabel>
+                    <Select
                       value={filters.jobType}
                       onChange={(e) =>
-                        handleFilterChange("jobType", e.target.value)
+                        handleFilterChange("jobType", e.target.value as string)
                       }
-                      className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      label="Work Type"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                        },
+                      }}
                     >
-                      <option value="all">All Types</option>
-                      <option value="remote">Remote</option>
-                      <option value="onsite">On-site</option>
-                      <option value="hybrid">Hybrid</option>
-                    </select>
-                  </div>
+                      <MenuItem value="all">All Types</MenuItem>
+                      <MenuItem value="remote">Remote</MenuItem>
+                      <MenuItem value="onsite">On-site</MenuItem>
+                      <MenuItem value="hybrid">Hybrid</MenuItem>
+                    </Select>
+                  </FormControl>
 
                   {/* Date Range Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Posted
-                    </label>
-                    <select
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Posted</InputLabel>
+                    <Select
                       value={filters.dateRange}
                       onChange={(e) =>
-                        handleFilterChange("dateRange", e.target.value)
+                        handleFilterChange("dateRange", e.target.value as string)
                       }
-                      className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      label="Posted"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                        },
+                      }}
                     >
-                      <option value="all">All Time</option>
-                      <option value="week">Past Week</option>
-                      <option value="month">Past Month</option>
-                      <option value="quarter">Past 3 Months</option>
-                    </select>
-                  </div>
+                      <MenuItem value="all">All Time</MenuItem>
+                      <MenuItem value="week">Past Week</MenuItem>
+                      <MenuItem value="month">Past Month</MenuItem>
+                      <MenuItem value="quarter">Past 3 Months</MenuItem>
+                    </Select>
+                  </FormControl>
 
                   {/* Sort Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sort By
-                    </label>
-                    <select
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Sort By</InputLabel>
+                    <Select
                       value={filters.sortBy}
                       onChange={(e) =>
-                        handleFilterChange("sortBy", e.target.value)
+                        handleFilterChange("sortBy", e.target.value as string)
                       }
-                      className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      label="Sort By"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#3b82f6',
+                          },
+                        },
+                      }}
                     >
-                      <option value="newest">Newest First</option>
-                      <option value="oldest">Oldest First</option>
-                      <option value="title">Title A-Z</option>
-                      <option value="expires">Expires Soon</option>
-                      <option value="positions">Most Positions</option>
-                    </select>
-                  </div>
+                      <MenuItem value="newest">Newest First</MenuItem>
+                      <MenuItem value="oldest">Oldest First</MenuItem>
+                      <MenuItem value="title">Title A-Z</MenuItem>
+                      <MenuItem value="expires">Expires Soon</MenuItem>
+                      <MenuItem value="positions">Most Positions</MenuItem>
+                    </Select>
+                  </FormControl>
                 </div>
 
                 {/* Clear Filters */}

@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CandidateProfileModal from "@/components/CandidateProfileModal";
 import api from "@/lib/api";
+import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 
 interface Application {
   _id: string;
@@ -198,23 +199,37 @@ export default function JobApplicationsPage() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="reviewing">Reviewing</option>
-                <option value="shortlisted">Shortlisted</option>
-                <option value="assessment">Assessment</option>
-                <option value="phone_interview">Phone Interview</option>
-                <option value="in_person_interview">In-Person Interview</option>
-                <option value="background_check">Background Check</option>
-                <option value="hired">Hired</option>
-                <option value="rejected">Rejected</option>
-                <option value="withdrawn">Withdrawn</option>
-              </select>
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Filter by Status</InputLabel>
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as string)}
+                  label="Filter by Status"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#3b82f6',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#3b82f6',
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value="all">All Statuses</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="reviewing">Reviewing</MenuItem>
+                  <MenuItem value="shortlisted">Shortlisted</MenuItem>
+                  <MenuItem value="assessment">Assessment</MenuItem>
+                  <MenuItem value="phone_interview">Phone Interview</MenuItem>
+                  <MenuItem value="in_person_interview">In-Person Interview</MenuItem>
+                  <MenuItem value="background_check">Background Check</MenuItem>
+                  <MenuItem value="hired">Hired</MenuItem>
+                  <MenuItem value="rejected">Rejected</MenuItem>
+                  <MenuItem value="withdrawn">Withdrawn</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           </div>
 
