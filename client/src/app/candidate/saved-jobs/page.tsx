@@ -7,6 +7,14 @@ import { useCandidateSavedJobs, useUnsaveJob } from "@/lib/hooks/candidate.hooks
 import { useApplyToJob } from "@/lib/hooks/job.hooks";
 import { toast } from "sonner";
 import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  InputAdornment,
+} from "@mui/material";
+import {
   Heart,
   MapPin,
   Building,
@@ -264,45 +272,87 @@ export default function CandidateSavedJobsPage() {
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search Jobs</label>
-                <div className="relative">
-                  <Search className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search by title, company, or skills..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                <TextField
+                  fullWidth
+                  label="Search Jobs"
+                  placeholder="Search by title, company, or skills..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search className="h-5 w-5 text-gray-400" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#d1d5db',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#3b82f6',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#3b82f6',
+                      },
+                    },
+                  }}
+                />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                <select
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="all">All Priorities</option>
-                  <option value="high">High Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="low">Low Priority</option>
-                </select>
+                <FormControl fullWidth>
+                  <InputLabel>Priority</InputLabel>
+                  <Select
+                    value={priorityFilter}
+                    label="Priority"
+                    onChange={(e) => setPriorityFilter(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#d1d5db',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#3b82f6',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#3b82f6',
+                      },
+                    }}
+                  >
+                    <MenuItem value="all">All Priorities</MenuItem>
+                    <MenuItem value="high">High Priority</MenuItem>
+                    <MenuItem value="medium">Medium Priority</MenuItem>
+                    <MenuItem value="low">Low Priority</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="saved_date">Date Saved</option>
-                  <option value="match_score">Match Score</option>
-                  <option value="posted_date">Date Posted</option>
-                  <option value="salary">Salary</option>
-                </select>
+                <FormControl fullWidth>
+                  <InputLabel>Sort By</InputLabel>
+                  <Select
+                    value={sortBy}
+                    label="Sort By"
+                    onChange={(e) => setSortBy(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#d1d5db',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#3b82f6',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#3b82f6',
+                      },
+                    }}
+                  >
+                    <MenuItem value="saved_date">Date Saved</MenuItem>
+                    <MenuItem value="match_score">Match Score</MenuItem>
+                    <MenuItem value="posted_date">Date Posted</MenuItem>
+                    <MenuItem value="salary">Salary</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
           </div>

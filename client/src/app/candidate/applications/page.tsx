@@ -5,6 +5,13 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useCandidateApplications } from "@/lib/hooks/candidate.hooks";
 import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputAdornment,
+} from "@mui/material";
+import {
   FileText,
   Clock,
   CheckCircle,
@@ -26,20 +33,36 @@ import {
 } from "lucide-react";
 
 // Memoized Stats Card Component
-const StatsCard = memo(({ icon: Icon, title, value, color }: {
+const StatsCard = memo(({ icon: Icon, title, value, color, filterValue, onCardClick, isActive }: {
   icon: any;
   title: string;
   value: number;
   color: string;
+  filterValue: string;
+  onCardClick: (filterValue: string) => void;
+  isActive: boolean;
 }) => (
-  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+  <div 
+    className={`bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 shadow-sm border transition-all duration-300 ease-in-out group cursor-pointer ${
+      isActive 
+        ? 'border-blue-300 shadow-lg scale-105 bg-gradient-to-br from-blue-50 to-white' 
+        : 'border-gray-100 hover:shadow-lg hover:scale-105'
+    }`}
+    onClick={() => onCardClick(filterValue)}
+  >
     <div className="flex items-center">
-      <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
-        <Icon className={`h-6 w-6 ${color}`} />
+      <div className={`p-3 rounded-xl ${color} bg-opacity-15 group-hover:bg-opacity-25 transition-all duration-300 group-hover:scale-110 ${
+        isActive ? 'bg-opacity-25' : ''
+      }`}>
+        <Icon className={`h-6 w-6 ${color} group-hover:scale-110 transition-transform duration-300`} />
       </div>
       <div className="ml-4">
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className={`text-sm font-medium transition-colors duration-300 ${
+          isActive ? 'text-blue-700' : 'text-gray-600 group-hover:text-gray-700'
+        }`}>{title}</p>
+        <p className={`text-2xl font-bold transition-colors duration-300 ${
+          isActive ? 'text-blue-900' : 'text-gray-900 group-hover:text-gray-800'
+        }`}>{value}</p>
       </div>
     </div>
   </div>
@@ -267,8 +290,12 @@ function CandidateApplicationsPage() {
     setSearchTerm(e.target.value);
   }, []);
 
-  const handleStatusFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusFilterChange = useCallback((e: any) => {
     setStatusFilter(e.target.value);
+  }, []);
+
+  const handleCardClick = useCallback((filterValue: string) => {
+    setStatusFilter(filterValue);
   }, []);
 
   // Show stable loading layout that matches final content
@@ -345,66 +372,121 @@ function CandidateApplicationsPage() {
               title="Total"
               value={stats.totalApplications}
               color="text-blue-600"
+              filterValue="all"
+              onCardClick={handleCardClick}
+              isActive={statusFilter === "all"}
             />
             <StatsCard
               icon={Clock}
               title="Pending"
               value={stats.pendingCount}
               color="text-yellow-600"
+              filterValue="pending"
+              onCardClick={handleCardClick}
+              isActive={statusFilter === "pending"}
             />
             <StatsCard
               icon={Eye}
               title="Under Review"
               value={stats.underReviewCount}
               color="text-blue-600"
+              filterValue="under_review"
+              onCardClick={handleCardClick}
+              isActive={statusFilter === "under_review"}
             />
             <StatsCard
               icon={Calendar}
               title="Interview"
               value={stats.interviewCount}
               color="text-purple-600"
+              filterValue="interview_scheduled"
+              onCardClick={handleCardClick}
+              isActive={statusFilter === "interview_scheduled"}
             />
             <StatsCard
               icon={CheckCircle}
               title="Accepted"
               value={stats.acceptedCount}
               color="text-green-600"
+              filterValue="accepted"
+              onCardClick={handleCardClick}
+              isActive={statusFilter === "accepted"}
             />
             <StatsCard
               icon={XCircle}
               title="Rejected"
               value={stats.rejectedCount}
               color="text-red-600"
+              filterValue="rejected"
+              onCardClick={handleCardClick}
+              isActive={statusFilter === "rejected"}
             />
           </div>
 
           {/* Filter Bar */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl px-6 py-4 shadow-sm border border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
+              <div className="flex-1 max-w-md">
+                <TextField
+                  fullWidth
                   placeholder="Search by job title or company..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search className="h-4 w-4 text-gray-400" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#d1d5db',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#3b82f6',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#3b82f6',
+                      },
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      padding: '8px 12px',
+                    },
+                  }}
                 />
               </div>
               <div className="flex items-center space-x-2">
                 <Filter className="h-4 w-4 text-gray-400" />
-                <select
-                  value={statusFilter}
-                  onChange={handleStatusFilterChange}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="under_review">Under Review</option>
-                  <option value="interview_scheduled">Interview</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+                <FormControl sx={{ minWidth: 150 }}>
+                  <Select
+                    value={statusFilter}
+                    onChange={handleStatusFilterChange}
+                    displayEmpty
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#d1d5db',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#3b82f6',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#3b82f6',
+                      },
+                      '& .MuiSelect-select': {
+                        padding: '8px 12px',
+                      },
+                    }}
+                  >
+                    <MenuItem value="all">All Status</MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="under_review">Under Review</MenuItem>
+                    <MenuItem value="interview_scheduled">Interview</MenuItem>
+                    <MenuItem value="accepted">Accepted</MenuItem>
+                    <MenuItem value="rejected">Rejected</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
           </div>
