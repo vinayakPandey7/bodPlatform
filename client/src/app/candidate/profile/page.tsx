@@ -104,12 +104,12 @@ export default function CandidateProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
-  const [privacySettings, setPrivacySettings] = useState({
-    profileVisibility: "public",
-    contactVisibility: "authenticated",
-    emailNotifications: true,
-    smsNotifications: false,
-  });
+  // const [privacySettings, setPrivacySettings] = useState({
+  //   profileVisibility: "public",
+  //   contactVisibility: "authenticated",
+  //   emailNotifications: true,
+  //   smsNotifications: false,
+  // });
 
   // Initialize form data when profile loads
   useEffect(() => {
@@ -128,7 +128,7 @@ export default function CandidateProfilePage() {
       const tabParam = urlParams.get("tab");
       if (
         tabParam &&
-        ["profile", "security", "privacy", "help"].includes(tabParam)
+        ["profile", "security", "help"].includes(tabParam)
       ) {
         setActiveTab(tabParam);
       }
@@ -813,16 +813,16 @@ export default function CandidateProfilePage() {
     setExpandedFAQ(expandedFAQ === index ? null : index);
   };
 
-  const handlePrivacyUpdate = async () => {
-    try {
-      // This would be an API call to update privacy settings
-      // await updateProfile({ privacySettings });
-      alert("Privacy settings updated successfully");
-    } catch (error) {
-      console.error("Error updating privacy settings:", error);
-      alert("Failed to update privacy settings");
-    }
-  };
+  // const handlePrivacyUpdate = async () => {
+  //   try {
+  //     // This would be an API call to update privacy settings
+  //     // await updateProfile({ privacySettings });
+  //     alert("Privacy settings updated successfully");
+  //   } catch (error) {
+  //     console.error("Error updating privacy settings:", error);
+  //     alert("Failed to update privacy settings");
+  //   }
+  // };
 
   console.log("profileprofile", profile);
 
@@ -885,11 +885,11 @@ export default function CandidateProfilePage() {
 
           {/* Tab Navigation */}
           <div className="relative">
-            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex space-x-1   rounded-lg p-1">
               {[
                 { id: "profile", label: "Profile", icon: User },
                 { id: "security", label: "Security", icon: Shield },
-                { id: "privacy", label: "Privacy", icon: Lock },
+                // { id: "privacy", label: "Privacy", icon: Lock },
                 { id: "help", label: "Help & FAQ", icon: HelpCircle },
               ].map((tab) => {
                 const IconComponent = tab.icon;
@@ -1420,8 +1420,8 @@ export default function CandidateProfilePage() {
                 </div>
               )}
 
-              {/* Privacy Tab */}
-              {activeTab === "privacy" && (
+              {/* Privacy Tab - Commented out for now */}
+              {/* {activeTab === "privacy" && (
                 <div className="space-y-6">
                   <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                     <div className="flex items-center space-x-3 mb-6">
@@ -1562,7 +1562,7 @@ export default function CandidateProfilePage() {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Help & FAQ Tab */}
               {activeTab === "help" && (

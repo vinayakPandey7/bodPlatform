@@ -420,7 +420,7 @@ export default function CandidateDashboard() {
               </div>
 
               {/* Popular Job Categories */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              {/* <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-900 mb-6">
                   Popular Job Categories
                 </h2>
@@ -446,7 +446,7 @@ export default function CandidateDashboard() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Sidebar */}

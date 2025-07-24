@@ -22,7 +22,7 @@ import {
   Users,
   Building2,
   RefreshCw,
-  Settings
+  Settings,
 } from "lucide-react";
 
 interface EmployerProfile {
@@ -38,7 +38,11 @@ interface EmployerProfile {
 }
 
 export default function EmployerProfilePage() {
-  const { data: user, isLoading: userLoading, error: userError } = useCurrentUser();
+  const {
+    data: user,
+    isLoading: userLoading,
+    error: userError,
+  } = useCurrentUser();
   const [profile, setProfile] = useState<EmployerProfile>({
     ownerName: "",
     companyName: "",
@@ -60,7 +64,7 @@ export default function EmployerProfilePage() {
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -70,15 +74,34 @@ export default function EmployerProfilePage() {
     companyVisibility: "public",
     contactVisibility: "authenticated",
     emailNotifications: true,
-    smsNotifications: false
+    smsNotifications: false,
   });
+
+  // Function to get user data from localStorage
+  const getUserDataFromStorage = () => {
+    try {
+      if (typeof window !== "undefined") {
+        const storedUserData = localStorage.getItem("user"); // Using 'uer' as specified
+        if (storedUserData) {
+          return JSON.parse(storedUserData);
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error parsing user data from localStorage:", error);
+      return null;
+    }
+  };
 
   // Handle URL parameters for tab navigation
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
-      const tabParam = urlParams.get('tab');
-      if (tabParam && ['profile', 'security', 'privacy', 'help'].includes(tabParam)) {
+      const tabParam = urlParams.get("tab");
+      if (
+        tabParam &&
+        ["profile", "security", "privacy", "help"].includes(tabParam)
+      ) {
         setActiveTab(tabParam);
       }
     }
@@ -95,11 +118,61 @@ export default function EmployerProfilePage() {
     fetchProfile();
   }, []);
 
+  // Prefill form with localStorage data
+  useEffect(() => {
+    const localStorageUserData = getUserDataFromStorage();
+
+    if (localStorageUserData) {
+      console.log("localStorage user data:", localStorageUserData);
+
+      // Prefill the profile with available data from localStorage
+      setProfile((prevProfile) => ({
+        ...prevProfile,
+        ownerName:
+          localStorageUserData.ownerName ||
+          localStorageUserData.name ||
+          localStorageUserData.firstName +
+            " " +
+            localStorageUserData.lastName ||
+          prevProfile.ownerName,
+        companyName:
+          localStorageUserData.companyName ||
+          localStorageUserData.company ||
+          prevProfile.companyName,
+        phoneNumber:
+          localStorageUserData.phoneNumber ||
+          localStorageUserData.phone ||
+          prevProfile.phoneNumber,
+        address: localStorageUserData.address || prevProfile.address,
+        city: localStorageUserData.city || prevProfile.city,
+        state:
+          localStorageUserData.state ||
+          localStorageUserData.province ||
+          prevProfile.state,
+        country: localStorageUserData.country || prevProfile.country,
+        jobPosting: localStorageUserData.jobPosting || prevProfile.jobPosting,
+        isApproved: localStorageUserData.isApproved || prevProfile.isApproved,
+      }));
+    }
+  }, []);
+
   const fetchProfile = async () => {
     try {
       const response = await api.get("/employer/profile");
       if (response.data.profile) {
-        setProfile(response.data.profile);
+        setProfile((prevProfile) => ({
+          ...response.data.profile,
+          // Keep localStorage data if API data is empty
+          ownerName: response.data.profile.ownerName || prevProfile.ownerName,
+          companyName:
+            response.data.profile.companyName || prevProfile.companyName,
+          phoneNumber:
+            response.data.profile.phoneNumber || prevProfile.phoneNumber,
+          address: response.data.profile.address || prevProfile.address,
+          city: response.data.profile.city || prevProfile.city,
+          state: response.data.profile.state || prevProfile.state,
+          country: response.data.profile.country || prevProfile.country,
+        }));
       }
     } catch (error: any) {
       console.error("Error fetching profile:", error);
@@ -153,7 +226,7 @@ export default function EmployerProfilePage() {
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
       });
       setShowPasswordForm(false);
     } catch (error) {
@@ -180,28 +253,35 @@ export default function EmployerProfilePage() {
   const faqData = [
     {
       question: "How do I post a job?",
-      answer: "Navigate to the 'Jobs' section and click 'Create New Job'. Fill out all required fields including job title, description, requirements, and compensation details. Your job will be reviewed before going live if you have manual approval enabled."
+      answer:
+        "Navigate to the 'Jobs' section and click 'Create New Job'. Fill out all required fields including job title, description, requirements, and compensation details. Your job will be reviewed before going live if you have manual approval enabled.",
     },
     {
-      question: "What's the difference between manual and automatic job posting?",
-      answer: "Manual posting requires admin approval before your jobs go live, ensuring quality control. Automatic posting publishes jobs immediately after you submit them. You can change this preference in your profile settings."
+      question:
+        "What's the difference between manual and automatic job posting?",
+      answer:
+        "Manual posting requires admin approval before your jobs go live, ensuring quality control. Automatic posting publishes jobs immediately after you submit them. You can change this preference in your profile settings.",
     },
     {
       question: "How can I view and manage applications?",
-      answer: "Go to the 'Applications' section to see all candidates who have applied to your jobs. You can filter by job, review candidate profiles, and manage application status."
+      answer:
+        "Go to the 'Applications' section to see all candidates who have applied to your jobs. You can filter by job, review candidate profiles, and manage application status.",
     },
     {
       question: "How do I get my company approved?",
-      answer: "After completing your profile, our team will review your company information. This typically takes 24-48 hours. You'll receive an email notification once approved."
+      answer:
+        "After completing your profile, our team will review your company information. This typically takes 24-48 hours. You'll receive an email notification once approved.",
     },
     {
       question: "Can I edit job postings after they're published?",
-      answer: "Yes, you can edit job postings anytime from the 'Jobs' section. Click on any job to view details and select 'Edit'. Changes will be reflected immediately for approved employers."
+      answer:
+        "Yes, you can edit job postings anytime from the 'Jobs' section. Click on any job to view details and select 'Edit'. Changes will be reflected immediately for approved employers.",
     },
     {
       question: "How do I contact candidates directly?",
-      answer: "You can contact candidates through our messaging system or view their contact information (if they've made it public) on their profile pages accessed through the applications section."
-    }
+      answer:
+        "You can contact candidates through our messaging system or view their contact information (if they've made it public) on their profile pages accessed through the applications section.",
+    },
   ];
 
   if (loading || userLoading) {
@@ -222,7 +302,9 @@ export default function EmployerProfilePage() {
         <DashboardLayout>
           <div className="flex items-center justify-center min-h-96">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to load user data</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Unable to load user data
+              </h2>
               <p className="text-gray-600">Please try refreshing the page</p>
             </div>
           </div>
@@ -231,10 +313,13 @@ export default function EmployerProfilePage() {
     );
   }
 
-  // Extract user data safely
+  // Extract user data safely - prioritize localStorage data
+  const localStorageUserData = getUserDataFromStorage();
   const userData = user?.user || user;
-  const userEmail = userData?.email || "No email available";
-  const userRole = userData?.role || "No role available";
+  const userEmail =
+    localStorageUserData?.email || userData?.email || "No email available";
+  const userRole =
+    localStorageUserData?.role || userData?.role || "No role available";
 
   return (
     <ProtectedRoute allowedRoles={["employer"]}>
@@ -243,7 +328,9 @@ export default function EmployerProfilePage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Company Profile</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Company Profile
+              </h1>
               <p className="mt-1 text-gray-600">
                 Manage your company profile and account settings
               </p>
@@ -265,8 +352,8 @@ export default function EmployerProfilePage() {
               {[
                 { id: "profile", label: "Profile", icon: Building2 },
                 { id: "security", label: "Security", icon: Shield },
-                { id: "privacy", label: "Privacy", icon: Lock },
-                { id: "help", label: "Help & FAQ", icon: HelpCircle }
+                // { id: "privacy", label: "Privacy", icon: Lock },
+                { id: "help", label: "Help & FAQ", icon: HelpCircle },
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 return (
@@ -298,22 +385,34 @@ export default function EmployerProfilePage() {
                         <User className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Account Information</h2>
-                        <p className="text-sm text-gray-600">Your account details and status</p>
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          Account Information
+                        </h2>
+                        <p className="text-sm text-gray-600">
+                          Your account details and status
+                        </p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-500">Email</p>
+                        <p className="text-sm font-medium text-gray-500">
+                          Email
+                        </p>
                         <p className="text-gray-900 mt-1">{userEmail}</p>
                       </div>
                       <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-500">Role</p>
-                        <p className="text-gray-900 mt-1 capitalize">{userRole?.replace("_", " ")}</p>
+                        <p className="text-sm font-medium text-gray-500">
+                          Role
+                        </p>
+                        <p className="text-gray-900 mt-1 capitalize">
+                          {userRole?.replace("_", " ")}
+                        </p>
                       </div>
                       <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-500">Status</p>
+                        <p className="text-sm font-medium text-gray-500">
+                          Status
+                        </p>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full mt-1 ${
                             profile.isApproved
@@ -335,7 +434,10 @@ export default function EmployerProfilePage() {
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label htmlFor="ownerName" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label
+                            htmlFor="ownerName"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
                             Owner Name *
                           </label>
                           <input
@@ -350,7 +452,10 @@ export default function EmployerProfilePage() {
                         </div>
 
                         <div>
-                          <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label
+                            htmlFor="companyName"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
                             Company Name *
                           </label>
                           <input
@@ -365,7 +470,10 @@ export default function EmployerProfilePage() {
                         </div>
 
                         <div>
-                          <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label
+                            htmlFor="phoneNumber"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
                             Phone Number *
                           </label>
                           <input
@@ -380,7 +488,10 @@ export default function EmployerProfilePage() {
                         </div>
 
                         <div>
-                          <label htmlFor="jobPosting" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label
+                            htmlFor="jobPosting"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
                             Job Posting Preference
                           </label>
                           <select
@@ -396,7 +507,10 @@ export default function EmployerProfilePage() {
                         </div>
 
                         <div className="md:col-span-2">
-                          <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label
+                            htmlFor="address"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
                             Address *
                           </label>
                           <input
@@ -411,7 +525,10 @@ export default function EmployerProfilePage() {
                         </div>
 
                         <div>
-                          <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label
+                            htmlFor="city"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
                             City *
                           </label>
                           <input
@@ -426,7 +543,10 @@ export default function EmployerProfilePage() {
                         </div>
 
                         <div>
-                          <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label
+                            htmlFor="state"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
                             State/Province *
                           </label>
                           <input
@@ -441,7 +561,10 @@ export default function EmployerProfilePage() {
                         </div>
 
                         <div>
-                          <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label
+                            htmlFor="country"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
                             Country *
                           </label>
                           <input
@@ -480,8 +603,12 @@ export default function EmployerProfilePage() {
                           <Key className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <h2 className="text-lg font-semibold text-gray-900">Password & Security</h2>
-                          <p className="text-sm text-gray-600">Manage your account security settings</p>
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            Password & Security
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            Manage your account security settings
+                          </p>
                         </div>
                       </div>
                       <button
@@ -503,16 +630,27 @@ export default function EmployerProfilePage() {
                             <input
                               type={showCurrentPassword ? "text" : "password"}
                               value={passwordForm.currentPassword}
-                              onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                              onChange={(e) =>
+                                setPasswordForm({
+                                  ...passwordForm,
+                                  currentPassword: e.target.value,
+                                })
+                              }
                               className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Enter current password"
                             />
                             <button
                               type="button"
-                              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                              onClick={() =>
+                                setShowCurrentPassword(!showCurrentPassword)
+                              }
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
-                              {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showCurrentPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </div>
@@ -525,16 +663,27 @@ export default function EmployerProfilePage() {
                             <input
                               type={showNewPassword ? "text" : "password"}
                               value={passwordForm.newPassword}
-                              onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                              onChange={(e) =>
+                                setPasswordForm({
+                                  ...passwordForm,
+                                  newPassword: e.target.value,
+                                })
+                              }
                               className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Enter new password (min 8 characters)"
                             />
                             <button
                               type="button"
-                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              onClick={() =>
+                                setShowNewPassword(!showNewPassword)
+                              }
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
-                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showNewPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </div>
@@ -547,16 +696,27 @@ export default function EmployerProfilePage() {
                             <input
                               type={showConfirmPassword ? "text" : "password"}
                               value={passwordForm.confirmPassword}
-                              onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                              onChange={(e) =>
+                                setPasswordForm({
+                                  ...passwordForm,
+                                  confirmPassword: e.target.value,
+                                })
+                              }
                               className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Confirm new password"
                             />
                             <button
                               type="button"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
-                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showConfirmPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </div>
@@ -585,20 +745,32 @@ export default function EmployerProfilePage() {
                           <div className="flex items-center space-x-3">
                             <Shield className="h-5 w-5 text-green-600" />
                             <div>
-                              <p className="font-medium text-green-800">Account Security</p>
-                              <p className="text-sm text-green-600">Your account is secure</p>
+                              <p className="font-medium text-green-800">
+                                Account Security
+                              </p>
+                              <p className="text-sm text-green-600">
+                                Your account is secure
+                              </p>
                             </div>
                           </div>
-                          <span className="text-green-600 font-medium">✓ Protected</span>
+                          <span className="text-green-600 font-medium">
+                            ✓ Protected
+                          </span>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="p-4 bg-gray-50 rounded-lg">
-                            <h4 className="font-medium text-gray-900 mb-2">Password Strength</h4>
-                            <p className="text-sm text-gray-600">Last changed: Never</p>
+                            <h4 className="font-medium text-gray-900 mb-2">
+                              Password Strength
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Last changed: Never
+                            </p>
                           </div>
                           <div className="p-4 bg-gray-50 rounded-lg">
-                            <h4 className="font-medium text-gray-900 mb-2">Two-Factor Authentication</h4>
+                            <h4 className="font-medium text-gray-900 mb-2">
+                              Two-Factor Authentication
+                            </h4>
                             <p className="text-sm text-gray-600">Not enabled</p>
                           </div>
                         </div>
@@ -608,7 +780,7 @@ export default function EmployerProfilePage() {
                 </div>
               )}
 
-              {/* Privacy Tab */}
+              {/* Privacy Tab
               {activeTab === "privacy" && (
                 <div className="space-y-6">
                   <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
@@ -617,8 +789,12 @@ export default function EmployerProfilePage() {
                         <Globe className="h-5 w-5 text-purple-600" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Privacy Settings</h2>
-                        <p className="text-sm text-gray-600">Control how your company information is shared</p>
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          Privacy Settings
+                        </h2>
+                        <p className="text-sm text-gray-600">
+                          Control how your company information is shared
+                        </p>
                       </div>
                     </div>
 
@@ -629,22 +805,49 @@ export default function EmployerProfilePage() {
                         </label>
                         <div className="space-y-2">
                           {[
-                            { value: "public", label: "Public", desc: "Anyone can view your company profile" },
-                            { value: "authenticated", label: "Authenticated Users Only", desc: "Only verified candidates can view" },
-                            { value: "private", label: "Private", desc: "Only you can view your profile" }
+                            {
+                              value: "public",
+                              label: "Public",
+                              desc: "Anyone can view your company profile",
+                            },
+                            {
+                              value: "authenticated",
+                              label: "Authenticated Users Only",
+                              desc: "Only verified candidates can view",
+                            },
+                            {
+                              value: "private",
+                              label: "Private",
+                              desc: "Only you can view your profile",
+                            },
                           ].map((option) => (
-                            <label key={option.value} className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <label
+                              key={option.value}
+                              className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                            >
                               <input
                                 type="radio"
                                 name="companyVisibility"
                                 value={option.value}
-                                checked={privacySettings.companyVisibility === option.value}
-                                onChange={(e) => setPrivacySettings({...privacySettings, companyVisibility: e.target.value})}
+                                checked={
+                                  privacySettings.companyVisibility ===
+                                  option.value
+                                }
+                                onChange={(e) =>
+                                  setPrivacySettings({
+                                    ...privacySettings,
+                                    companyVisibility: e.target.value,
+                                  })
+                                }
                                 className="mt-1"
                               />
                               <div>
-                                <p className="font-medium text-gray-900">{option.label}</p>
-                                <p className="text-sm text-gray-600">{option.desc}</p>
+                                <p className="font-medium text-gray-900">
+                                  {option.label}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {option.desc}
+                                </p>
                               </div>
                             </label>
                           ))}
@@ -660,14 +863,23 @@ export default function EmployerProfilePage() {
                             <div className="flex items-center space-x-3">
                               <Bell className="h-5 w-5 text-gray-400" />
                               <div>
-                                <p className="font-medium text-gray-900">Email Notifications</p>
-                                <p className="text-sm text-gray-600">Get application alerts and platform updates</p>
+                                <p className="font-medium text-gray-900">
+                                  Email Notifications
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Get application alerts and platform updates
+                                </p>
                               </div>
                             </div>
                             <input
                               type="checkbox"
                               checked={privacySettings.emailNotifications}
-                              onChange={(e) => setPrivacySettings({...privacySettings, emailNotifications: e.target.checked})}
+                              onChange={(e) =>
+                                setPrivacySettings({
+                                  ...privacySettings,
+                                  emailNotifications: e.target.checked,
+                                })
+                              }
                               className="toggle"
                             />
                           </label>
@@ -675,14 +887,23 @@ export default function EmployerProfilePage() {
                             <div className="flex items-center space-x-3">
                               <Phone className="h-5 w-5 text-gray-400" />
                               <div>
-                                <p className="font-medium text-gray-900">SMS Notifications</p>
-                                <p className="text-sm text-gray-600">Get urgent updates via text message</p>
+                                <p className="font-medium text-gray-900">
+                                  SMS Notifications
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Get urgent updates via text message
+                                </p>
                               </div>
                             </div>
                             <input
                               type="checkbox"
                               checked={privacySettings.smsNotifications}
-                              onChange={(e) => setPrivacySettings({...privacySettings, smsNotifications: e.target.checked})}
+                              onChange={(e) =>
+                                setPrivacySettings({
+                                  ...privacySettings,
+                                  smsNotifications: e.target.checked,
+                                })
+                              }
                               className="toggle"
                             />
                           </label>
@@ -701,7 +922,7 @@ export default function EmployerProfilePage() {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Help & FAQ Tab */}
               {activeTab === "help" && (
@@ -715,26 +936,36 @@ export default function EmployerProfilePage() {
                           <HelpCircle className="h-8 w-8 text-white" />
                         </div>
                         <div>
-                          <h2 className="text-3xl font-bold text-white">Help Center</h2>
-                          <p className="text-white/90 text-lg">Everything you need to succeed as an employer</p>
+                          <h2 className="text-3xl font-bold text-white">
+                            Help Center
+                          </h2>
+                          <p className="text-white/90 text-lg">
+                            Everything you need to succeed as an employer
+                          </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                           <div className="text-2xl font-bold">24/7</div>
-                          <div className="text-sm text-white/80">Support Available</div>
+                          <div className="text-sm text-white/80">
+                            Support Available
+                          </div>
                         </div>
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                           <div className="text-2xl font-bold">50K+</div>
-                          <div className="text-sm text-white/80">Active Candidates</div>
+                          <div className="text-sm text-white/80">
+                            Active Candidates
+                          </div>
                         </div>
                         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                           <div className="text-2xl font-bold">95%</div>
-                          <div className="text-sm text-white/80">Success Rate</div>
+                          <div className="text-sm text-white/80">
+                            Success Rate
+                          </div>
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Decorative Elements */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-lg"></div>
@@ -746,17 +977,25 @@ export default function EmployerProfilePage() {
                       <div className="absolute inset-0 bg-black/10 rounded-2xl"></div>
                       <div className="relative z-10">
                         <Users className="h-8 w-8 mb-3" />
-                        <h3 className="text-xl font-bold mb-2">Contact Support</h3>
-                        <p className="text-white/90">Get instant help from our expert team</p>
+                        <h3 className="text-xl font-bold mb-2">
+                          Contact Support
+                        </h3>
+                        <p className="text-white/90">
+                          Get instant help from our expert team
+                        </p>
                       </div>
                     </div>
-                    
+
                     <div className="group relative bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl p-6 text-white hover:scale-105 transition-all duration-300 cursor-pointer">
                       <div className="absolute inset-0 bg-black/10 rounded-2xl"></div>
                       <div className="relative z-10">
                         <Building2 className="h-8 w-8 mb-3" />
-                        <h3 className="text-xl font-bold mb-2">Schedule Demo</h3>
-                        <p className="text-white/90">See how top companies use our platform</p>
+                        <h3 className="text-xl font-bold mb-2">
+                          Schedule Demo
+                        </h3>
+                        <p className="text-white/90">
+                          See how top companies use our platform
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -764,8 +1003,12 @@ export default function EmployerProfilePage() {
                   {/* Enhanced FAQ Section */}
                   <div className="relative ">
                     <div className="text-center mb-8">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h3>
-                      <p className="text-gray-600">Find instant answers to common questions</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                        Frequently Asked Questions
+                      </h3>
+                      <p className="text-gray-600">
+                        Find instant answers to common questions
+                      </p>
                     </div>
 
                     <div className="space-y-4">
@@ -777,33 +1020,39 @@ export default function EmployerProfilePage() {
                               className="w-full px-6 py-5 text-left flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white/50 hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-300"
                             >
                               <div className="flex items-center space-x-4">
-                                <div className={`p-2 rounded-xl transition-all duration-300 ${
-                                  expandedFAQ === index 
-                                    ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg' 
-                                    : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
-                                }`}>
+                                <div
+                                  className={`p-2 rounded-xl transition-all duration-300 ${
+                                    expandedFAQ === index
+                                      ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg"
+                                      : "bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600"
+                                  }`}
+                                >
                                   <HelpCircle className="h-5 w-5" />
                                 </div>
                                 <span className="font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
                                   {faq.question}
                                 </span>
                               </div>
-                              <div className={`p-2 rounded-xl transition-all duration-300 ${
-                                expandedFAQ === index 
-                                  ? 'bg-blue-100 text-blue-600 rotate-180' 
-                                  : 'bg-gray-100 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500'
-                              }`}>
+                              <div
+                                className={`p-2 rounded-xl transition-all duration-300 ${
+                                  expandedFAQ === index
+                                    ? "bg-blue-100 text-blue-600 rotate-180"
+                                    : "bg-gray-100 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500"
+                                }`}
+                              >
                                 <ChevronDown className="h-5 w-5" />
                               </div>
                             </button>
-                            
+
                             {expandedFAQ === index && (
                               <div className="px-6 py-5 bg-gradient-to-r from-blue-50/30 to-purple-50/30 border-t border-gray-200/30 animate-in slide-in-from-top-2 duration-300">
                                 <div className="flex items-start space-x-4">
                                   <div className="p-2 bg-green-100 rounded-xl">
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                   </div>
-                                  <p className="text-gray-700 leading-relaxed flex-1">{faq.answer}</p>
+                                  <p className="text-gray-700 leading-relaxed flex-1">
+                                    {faq.answer}
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -822,8 +1071,13 @@ export default function EmployerProfilePage() {
                               <Users className="h-8 w-8 text-white" />
                             </div>
                             <div>
-                              <h4 className="text-xl font-bold text-white mb-1">Still Need Help?</h4>
-                              <p className="text-white/90">Our dedicated employer success team is here for you</p>
+                              <h4 className="text-xl font-bold text-white mb-1">
+                                Still Need Help?
+                              </h4>
+                              <p className="text-white/90">
+                                Our dedicated employer success team is here for
+                                you
+                              </p>
                             </div>
                           </div>
                           <div className="flex space-x-3">
@@ -835,7 +1089,7 @@ export default function EmployerProfilePage() {
                             </button>
                           </div>
                         </div>
-                        
+
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
                         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-lg"></div>

@@ -92,6 +92,8 @@ export default function LocationDetector({
                 JSON.stringify(locationInfo)
               );
               onLocationChange?.(locationInfo);
+              // Dispatch custom event for same-tab updates
+              window.dispatchEvent(new Event("locationUpdated"));
             } else {
               toast.success(data?.message);
             }
@@ -160,6 +162,8 @@ export default function LocationDetector({
         setCurrentLocation(locationInfo);
         localStorage.setItem("userLocation", JSON.stringify(locationInfo));
         onLocationChange?.(locationInfo);
+        // Dispatch custom event for same-tab updates
+        window.dispatchEvent(new Event("locationUpdated"));
         setShowSearch(false);
         setZipCodeInput("");
       } else {
@@ -183,6 +187,8 @@ export default function LocationDetector({
     setCurrentLocation(null);
     localStorage.removeItem("userLocation");
     onLocationChange?.(null);
+    // Dispatch custom event for same-tab updates
+    window.dispatchEvent(new Event("locationUpdated"));
   };
 
   return (

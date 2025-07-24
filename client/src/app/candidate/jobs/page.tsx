@@ -8,6 +8,7 @@ import { useJobsForCandidates, useApplyToJob } from "@/lib/hooks/job.hooks";
 import { useSaveJob, useUnsaveJob } from "@/lib/hooks/candidate.hooks";
 import { useCurrentUser } from "@/lib/hooks/auth.hooks";
 import { toast } from "sonner";
+import { TextField, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 
 interface JobSearchFilters {
   zipCode: string;
@@ -170,9 +171,9 @@ export default function CandidateJobsPage() {
   const searchCriteria = jobsData?.searchCriteria;
 
   const handleFilterChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target as { name: string; value: string };
 
     if (name === "zipCode") {
       // Validate zip code format
@@ -311,104 +312,67 @@ export default function CandidateJobsPage() {
           {/* Search Filters */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div>
-                <label
-                  htmlFor="zipCode"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Your Zip Code *
-                </label>
-                <input
-                  type="text"
-                  id="zipCode"
-                  name="zipCode"
-                  value={filters.zipCode}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., 90210"
-                  maxLength={5}
-                />
-                {zipCodeError && (
-                  <p className="text-red-600 text-sm mt-1">{zipCodeError}</p>
-                )}
-              </div>
+              <TextField
+                label="Your Zip Code *"
+                name="zipCode"
+                value={filters.zipCode}
+                onChange={handleFilterChange}
+                placeholder="e.g., 90210"
+                inputProps={{ maxLength: 5 }}
+                error={!!zipCodeError}
+                helperText={zipCodeError}
+                fullWidth
+                size="small"
+              />
 
-              <div>
-                <label
-                  htmlFor="search"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Search Keywords
-                </label>
-                <input
-                  type="text"
-                  id="search"
-                  name="search"
-                  value={filters.search}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Job title, skills, company..."
-                />
-              </div>
+              <TextField
+                label="Search Keywords"
+                name="search"
+                value={filters.search}
+                onChange={handleFilterChange}
+                placeholder="Job title, skills, company..."
+                fullWidth
+                size="small"
+              />
 
-              <div>
-                <label
-                  htmlFor="jobType"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Job Type
-                </label>
-                <select
-                  id="jobType"
+              <FormControl fullWidth size="small">
+                <InputLabel>Job Type</InputLabel>
+                <Select
                   name="jobType"
                   value={filters.jobType}
                   onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  label="Job Type"
                 >
-                  <option value="">All Types</option>
-                  <option value="full_time">Full Time</option>
-                  <option value="part_time">Part Time</option>
-                  <option value="contract">Contract</option>
-                  <option value="freelance">Freelance</option>
-                  <option value="internship">Internship</option>
-                </select>
-              </div>
+                  <MenuItem value="">All Types</MenuItem>
+                  <MenuItem value="full_time">Full Time</MenuItem>
+                  <MenuItem value="part_time">Part Time</MenuItem>
+                  <MenuItem value="contract">Contract</MenuItem>
+                  <MenuItem value="freelance">Freelance</MenuItem>
+                  <MenuItem value="internship">Internship</MenuItem>
+                </Select>
+              </FormControl>
 
-              <div>
-                <label
-                  htmlFor="experience"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Experience Level
-                </label>
-                <select
-                  id="experience"
+              <FormControl fullWidth size="small">
+                <InputLabel>Experience Level</InputLabel>
+                <Select
                   name="experience"
                   value={filters.experience}
                   onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  label="Experience Level"
                 >
-                  <option value="">All Levels</option>
-                  <option value="0-1">0-1 years (Entry Level)</option>
-                  <option value="1-3">1-3 years (Junior)</option>
-                  <option value="3-5">3-5 years (Mid Level)</option>
-                  <option value="5-8">5-8 years (Senior)</option>
-                  <option value="8-12">8-12 years (Lead)</option>
-                  <option value="12+">12+ years (Principal/Director)</option>
-                </select>
-              </div>
+                  <MenuItem value="">All Levels</MenuItem>
+                  <MenuItem value="0-1">0-1 years (Entry Level)</MenuItem>
+                  <MenuItem value="1-3">1-3 years (Junior)</MenuItem>
+                  <MenuItem value="3-5">3-5 years (Mid Level)</MenuItem>
+                  <MenuItem value="5-8">5-8 years (Senior)</MenuItem>
+                  <MenuItem value="8-12">8-12 years (Lead)</MenuItem>
+                  <MenuItem value="12+">12+ years (Principal/Director)</MenuItem>
+                </Select>
+              </FormControl>
             </div>
 
             <div className="flex justify-between items-center">
-              <button
-                onClick={handleSearch}
-                disabled={!filters.zipCode || isLoading}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "Searching..." : "Search Jobs"}
-              </button>
-
-              {searchCriteria && (
+            {searchCriteria && (
                 <div className="text-sm text-gray-600">
                   {searchCriteria.searchRadius && (
                     <span>
@@ -418,6 +382,15 @@ export default function CandidateJobsPage() {
                   )}
                 </div>
               )}
+              <button
+                onClick={handleSearch}
+                disabled={!filters.zipCode || isLoading}
+                className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Searching..." : "Search Jobs"}
+              </button>
+
+             
             </div>
           </div>
 

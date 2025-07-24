@@ -682,9 +682,6 @@ export default function EmployerJobsPage() {
                             {new Date(job.createdAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <div className="text-xs text-blue-600 font-medium opacity-70 group-hover:opacity-100 transition-opacity">
-                          Click to view details →
-                        </div>
                       </div>
                     </div>
 

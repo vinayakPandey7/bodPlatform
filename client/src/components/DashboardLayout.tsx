@@ -360,6 +360,47 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   const [shouldHighlightLocation, setShouldHighlightLocation] = useState(false);
   const [shouldPulse, setShouldPulse] = useState(false);
 
+  // Load saved location from localStorage on mount and listen for changes
+  useEffect(() => {
+    const loadSavedLocation = () => {
+      const savedLocation = localStorage.getItem("userLocation");
+      if (savedLocation) {
+        try {
+          const location = JSON.parse(savedLocation);
+          setUserLocation(location);
+        } catch (e) {
+          console.error("Error parsing saved location:", e);
+        }
+      } else {
+        setUserLocation(null);
+      }
+    };
+
+    // Load location on mount
+    loadSavedLocation();
+
+    // Listen for storage changes (from other tabs/components)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "userLocation") {
+        loadSavedLocation();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also listen for custom events for same-tab updates
+    const handleLocationUpdate = () => {
+      loadSavedLocation();
+    };
+
+    window.addEventListener("locationUpdated", handleLocationUpdate);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("locationUpdated", handleLocationUpdate);
+    };
+  }, []);
+
   useEffect(() => {
     if (shouldHighlightLocation) {
       setShouldPulse(true);
@@ -788,6 +829,8 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             if (location) {
               setShouldHighlightLocation(false);
             }
+            // Dispatch custom event for same-tab updates
+            window.dispatchEvent(new Event("locationUpdated"));
           }}
           userDefaultZipCode={user?.zipCode}
         />

@@ -113,6 +113,8 @@ export default function LocationModal({
           setCurrentLocation(locationInfo);
           localStorage.setItem("userLocation", JSON.stringify(locationInfo));
           onLocationChange?.(locationInfo);
+          // Dispatch custom event for same-tab updates
+          window.dispatchEvent(new Event("locationUpdated"));
           toast.success(`Using your default location: ${data.fullLocation}`);
         } else {
           // Final fallback to 10001
@@ -151,6 +153,8 @@ export default function LocationModal({
         setCurrentLocation(locationInfo);
         localStorage.setItem("userLocation", JSON.stringify(locationInfo));
         onLocationChange?.(locationInfo);
+        // Dispatch custom event for same-tab updates
+        window.dispatchEvent(new Event("locationUpdated"));
         toast.info(`Using default location: ${data.fullLocation}`);
       }
     } catch (error) {
@@ -202,6 +206,8 @@ export default function LocationModal({
                 JSON.stringify(locationInfo)
               );
               onLocationChange?.(locationInfo);
+              // Dispatch custom event for same-tab updates
+              window.dispatchEvent(new Event("locationUpdated"));
               toast.success(`Location detected: ${data.fullLocation}`);
               onClose();
             } else {
@@ -269,12 +275,14 @@ export default function LocationModal({
           coordinates: data.coordinates,
         };
 
-        setCurrentLocation(locationInfo);
-        localStorage.setItem("userLocation", JSON.stringify(locationInfo));
-        onLocationChange?.(locationInfo);
-        setZipCodeInput("");
-        toast.success(`Location set: ${data.fullLocation}`);
-        onClose();
+                  setCurrentLocation(locationInfo);
+          localStorage.setItem("userLocation", JSON.stringify(locationInfo));
+          onLocationChange?.(locationInfo);
+          // Dispatch custom event for same-tab updates
+          window.dispatchEvent(new Event("locationUpdated"));
+          setZipCodeInput("");
+          toast.success(`Location set: ${data.fullLocation}`);
+          onClose();
       } else {
         setError(data.message || "Invalid zip code");
       }
