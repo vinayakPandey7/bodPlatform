@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
       setError("Please enter a valid email address");
       return;
     }
-    debugger;
+
     forgotPassword(email.toLowerCase(), {
       onSuccess: () => {
         setIsSubmitted(true);

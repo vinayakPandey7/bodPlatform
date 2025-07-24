@@ -39,6 +39,7 @@ import {
   Settings,
   Bell,
   Globe,
+  GraduationCap,
   Users,
   Key,
 } from "lucide-react";
@@ -1229,6 +1230,999 @@ export default function CandidateProfilePage() {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Experience Section */}
+                  <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <Briefcase className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            Work Experience
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            Add your professional experience
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleAddExperience}
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Experience
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {profile.experience?.map((exp: any) => (
+                        <div
+                          key={exp.id}
+                          className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                        >
+                          {editingExperience === exp.id ? (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Job Title
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={experienceForm.title || ""}
+                                    onChange={(e) =>
+                                      setExperienceForm({
+                                        ...experienceForm,
+                                        title: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Company
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={experienceForm.company || ""}
+                                    onChange={(e) =>
+                                      setExperienceForm({
+                                        ...experienceForm,
+                                        company: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Location
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={experienceForm.location || ""}
+                                    onChange={(e) =>
+                                      setExperienceForm({
+                                        ...experienceForm,
+                                        location: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Start Date
+                                  </label>
+                                  <input
+                                    type="month"
+                                    value={experienceForm.startDate || ""}
+                                    onChange={(e) =>
+                                      setExperienceForm({
+                                        ...experienceForm,
+                                        startDate: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                {!experienceForm.current && (
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      End Date
+                                    </label>
+                                    <input
+                                      type="month"
+                                      value={experienceForm.endDate || ""}
+                                      onChange={(e) =>
+                                        setExperienceForm({
+                                          ...experienceForm,
+                                          endDate: e.target.value,
+                                        })
+                                      }
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                  </div>
+                                )}
+                                <div>
+                                  <label className="flex items-center space-x-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={experienceForm.current || false}
+                                      onChange={(e) =>
+                                        setExperienceForm({
+                                          ...experienceForm,
+                                          current: e.target.checked,
+                                          endDate: e.target.checked ? "" : experienceForm.endDate,
+                                        })
+                                      }
+                                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700">
+                                      I currently work here
+                                    </span>
+                                  </label>
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Description
+                                </label>
+                                <textarea
+                                  rows={4}
+                                  value={experienceForm.description || ""}
+                                  onChange={(e) =>
+                                    setExperienceForm({
+                                      ...experienceForm,
+                                      description: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Describe your role and achievements..."
+                                />
+                              </div>
+                              <div className="flex space-x-3">
+                                <button
+                                  onClick={handleSaveExperience}
+                                  disabled={isUpdating}
+                                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                >
+                                  {isUpdating ? (
+                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Save className="h-4 w-4 mr-2" />
+                                  )}
+                                  Save Experience
+                                </button>
+                                <button
+                                  onClick={() => setEditingExperience(null)}
+                                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="flex items-start justify-between mb-3">
+                                <div>
+                                  <h3 className="font-semibold text-gray-900">
+                                    {exp.title}
+                                  </h3>
+                                  <p className="text-blue-600 font-medium">
+                                    {exp.company}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {exp.location} • {formatDate(exp.startDate)} -{" "}
+                                    {exp.current ? "Present" : formatDate(exp.endDate)}
+                                  </p>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => {
+                                      setExperienceForm(exp);
+                                      setEditingExperience(exp.id);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-700"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteExperience(exp.id)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              {exp.description && (
+                                <p className="text-gray-700 text-sm leading-relaxed">
+                                  {exp.description}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {editingExperience === "new" && (
+                        <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Job Title
+                                </label>
+                                <input
+                                  type="text"
+                                  value={experienceForm.title || ""}
+                                  onChange={(e) =>
+                                    setExperienceForm({
+                                      ...experienceForm,
+                                      title: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Company
+                                </label>
+                                <input
+                                  type="text"
+                                  value={experienceForm.company || ""}
+                                  onChange={(e) =>
+                                    setExperienceForm({
+                                      ...experienceForm,
+                                      company: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Location
+                                </label>
+                                <input
+                                  type="text"
+                                  value={experienceForm.location || ""}
+                                  onChange={(e) =>
+                                    setExperienceForm({
+                                      ...experienceForm,
+                                      location: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Start Date
+                                </label>
+                                <input
+                                  type="month"
+                                  value={experienceForm.startDate || ""}
+                                  onChange={(e) =>
+                                    setExperienceForm({
+                                      ...experienceForm,
+                                      startDate: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              {!experienceForm.current && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    End Date
+                                  </label>
+                                  <input
+                                    type="month"
+                                    value={experienceForm.endDate || ""}
+                                    onChange={(e) =>
+                                      setExperienceForm({
+                                        ...experienceForm,
+                                        endDate: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                              )}
+                              <div>
+                                <label className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={experienceForm.current || false}
+                                    onChange={(e) =>
+                                      setExperienceForm({
+                                        ...experienceForm,
+                                        current: e.target.checked,
+                                        endDate: e.target.checked ? "" : experienceForm.endDate,
+                                      })
+                                    }
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="text-sm text-gray-700">
+                                    I currently work here
+                                  </span>
+                                </label>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Description
+                              </label>
+                              <textarea
+                                rows={4}
+                                value={experienceForm.description || ""}
+                                onChange={(e) =>
+                                  setExperienceForm({
+                                    ...experienceForm,
+                                    description: e.target.value,
+                                  })
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Describe your role and achievements..."
+                              />
+                            </div>
+                            <div className="flex space-x-3">
+                              <button
+                                onClick={handleSaveExperience}
+                                disabled={isUpdating}
+                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                              >
+                                {isUpdating ? (
+                                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Save className="h-4 w-4 mr-2" />
+                                )}
+                                Save Experience
+                              </button>
+                              <button
+                                onClick={() => setEditingExperience(null)}
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {(!profile.experience || profile.experience.length === 0) && editingExperience !== "new" && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <p className="text-lg font-medium mb-2">No work experience added yet</p>
+                          <p className="text-sm">Add your professional experience to showcase your career journey</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Education Section */}
+                  <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                          <GraduationCap className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            Education
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            Add your educational background
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleAddEducation}
+                        className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Education
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {profile.education?.map((edu: any) => (
+                        <div
+                          key={edu.id}
+                          className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                        >
+                          {editingEducation === edu.id ? (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Degree
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={educationForm.degree || ""}
+                                    onChange={(e) =>
+                                      setEducationForm({
+                                        ...educationForm,
+                                        degree: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    School/University
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={educationForm.school || ""}
+                                    onChange={(e) =>
+                                      setEducationForm({
+                                        ...educationForm,
+                                        school: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Location
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={educationForm.location || ""}
+                                    onChange={(e) =>
+                                      setEducationForm({
+                                        ...educationForm,
+                                        location: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    GPA (Optional)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={educationForm.gpa || ""}
+                                    onChange={(e) =>
+                                      setEducationForm({
+                                        ...educationForm,
+                                        gpa: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Start Date
+                                  </label>
+                                  <input
+                                    type="month"
+                                    value={educationForm.startDate || ""}
+                                    onChange={(e) =>
+                                      setEducationForm({
+                                        ...educationForm,
+                                        startDate: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    End Date
+                                  </label>
+                                  <input
+                                    type="month"
+                                    value={educationForm.endDate || ""}
+                                    onChange={(e) =>
+                                      setEducationForm({
+                                        ...educationForm,
+                                        endDate: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Description (Optional)
+                                </label>
+                                <textarea
+                                  rows={3}
+                                  value={educationForm.description || ""}
+                                  onChange={(e) =>
+                                    setEducationForm({
+                                      ...educationForm,
+                                      description: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Relevant coursework, projects, or achievements..."
+                                />
+                              </div>
+                              <div className="flex space-x-3">
+                                <button
+                                  onClick={handleSaveEducation}
+                                  disabled={isUpdating}
+                                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                >
+                                  {isUpdating ? (
+                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Save className="h-4 w-4 mr-2" />
+                                  )}
+                                  Save Education
+                                </button>
+                                <button
+                                  onClick={() => setEditingEducation(null)}
+                                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="flex items-start justify-between mb-3">
+                                <div>
+                                  <h3 className="font-semibold text-gray-900">
+                                    {edu.degree}
+                                  </h3>
+                                  <p className="text-purple-600 font-medium">
+                                    {edu.school}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {edu.location} • {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
+                                    {edu.gpa && (
+                                      <span className="ml-2 font-medium">• GPA: {edu.gpa}</span>
+                                    )}
+                                  </p>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => {
+                                      setEducationForm(edu);
+                                      setEditingEducation(edu.id);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-700"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteEducation(edu.id)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              {edu.description && (
+                                <p className="text-gray-700 text-sm leading-relaxed">
+                                  {edu.description}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {editingEducation === "new" && (
+                        <div className="border border-gray-200 rounded-lg p-4 bg-purple-50">
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Degree
+                                </label>
+                                <input
+                                  type="text"
+                                  value={educationForm.degree || ""}
+                                  onChange={(e) =>
+                                    setEducationForm({
+                                      ...educationForm,
+                                      degree: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  School/University
+                                </label>
+                                <input
+                                  type="text"
+                                  value={educationForm.school || ""}
+                                  onChange={(e) =>
+                                    setEducationForm({
+                                      ...educationForm,
+                                      school: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Location
+                                </label>
+                                <input
+                                  type="text"
+                                  value={educationForm.location || ""}
+                                  onChange={(e) =>
+                                    setEducationForm({
+                                      ...educationForm,
+                                      location: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  GPA (Optional)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={educationForm.gpa || ""}
+                                  onChange={(e) =>
+                                    setEducationForm({
+                                      ...educationForm,
+                                      gpa: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Start Date
+                                </label>
+                                <input
+                                  type="month"
+                                  value={educationForm.startDate || ""}
+                                  onChange={(e) =>
+                                    setEducationForm({
+                                      ...educationForm,
+                                      startDate: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  End Date
+                                </label>
+                                <input
+                                  type="month"
+                                  value={educationForm.endDate || ""}
+                                  onChange={(e) =>
+                                    setEducationForm({
+                                      ...educationForm,
+                                      endDate: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Description (Optional)
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={educationForm.description || ""}
+                                onChange={(e) =>
+                                  setEducationForm({
+                                    ...educationForm,
+                                    description: e.target.value,
+                                  })
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Relevant coursework, projects, or achievements..."
+                              />
+                            </div>
+                            <div className="flex space-x-3">
+                              <button
+                                onClick={handleSaveEducation}
+                                disabled={isUpdating}
+                                className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                              >
+                                {isUpdating ? (
+                                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Save className="h-4 w-4 mr-2" />
+                                )}
+                                Save Education
+                              </button>
+                              <button
+                                onClick={() => setEditingEducation(null)}
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {(!profile.education || profile.education.length === 0) && editingEducation !== "new" && (
+                        <div className="text-center py-8 text-gray-500">
+                          <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <p className="text-lg font-medium mb-2">No education added yet</p>
+                          <p className="text-sm">Add your educational background to strengthen your profile</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Skills Section */}
+                  <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <Star className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            Skills
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            Add your technical and professional skills
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleAddSkill}
+                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Skill
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {profile.skills?.map((skill: any) => (
+                        <div
+                          key={skill.id}
+                          className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                        >
+                          {editingSkill === skill.id ? (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Skill Name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={skillForm.name || ""}
+                                    onChange={(e) =>
+                                      setSkillForm({
+                                        ...skillForm,
+                                        name: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Proficiency Level
+                                  </label>
+                                  <select
+                                    value={skillForm.level || "beginner"}
+                                    onChange={(e) =>
+                                      setSkillForm({
+                                        ...skillForm,
+                                        level: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  >
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                    <option value="expert">Expert</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Years of Experience
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={skillForm.years || 0}
+                                    onChange={(e) =>
+                                      setSkillForm({
+                                        ...skillForm,
+                                        years: parseInt(e.target.value) || 0,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex space-x-3">
+                                <button
+                                  onClick={handleSaveSkill}
+                                  disabled={isUpdating}
+                                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                                >
+                                  {isUpdating ? (
+                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Save className="h-4 w-4 mr-2" />
+                                  )}
+                                  Save Skill
+                                </button>
+                                <button
+                                  onClick={() => setEditingSkill(null)}
+                                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h3 className="font-semibold text-gray-900">
+                                      {skill.name}
+                                    </h3>
+                                    <div className="flex space-x-2">
+                                      <button
+                                        onClick={() => {
+                                          setSkillForm(skill);
+                                          setEditingSkill(skill.id);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-700"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteSkill(skill.id)}
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-3 mb-2">
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs font-medium ${getSkillLevelColor(
+                                        skill.level
+                                      )}`}
+                                    >
+                                      {skill.level.charAt(0).toUpperCase() + skill.level.slice(1)}
+                                    </span>
+                                    <span className="text-sm text-gray-600">
+                                      {skill.years} year{skill.years !== 1 ? 's' : ''} of experience
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className={`bg-green-500 h-2 rounded-full transition-all duration-300 ${getSkillLevelWidth(
+                                        skill.level
+                                      )}`}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {editingSkill === "new" && (
+                        <div className="border border-gray-200 rounded-lg p-4 bg-green-50">
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Skill Name
+                                </label>
+                                <input
+                                  type="text"
+                                  value={skillForm.name || ""}
+                                  onChange={(e) =>
+                                    setSkillForm({
+                                      ...skillForm,
+                                      name: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Proficiency Level
+                                </label>
+                                <select
+                                  value={skillForm.level || "beginner"}
+                                  onChange={(e) =>
+                                    setSkillForm({
+                                      ...skillForm,
+                                      level: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                  <option value="beginner">Beginner</option>
+                                  <option value="intermediate">Intermediate</option>
+                                  <option value="advanced">Advanced</option>
+                                  <option value="expert">Expert</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Years of Experience
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={skillForm.years || 0}
+                                  onChange={(e) =>
+                                    setSkillForm({
+                                      ...skillForm,
+                                      years: parseInt(e.target.value) || 0,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex space-x-3">
+                              <button
+                                onClick={handleSaveSkill}
+                                disabled={isUpdating}
+                                className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                              >
+                                {isUpdating ? (
+                                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Save className="h-4 w-4 mr-2" />
+                                )}
+                                Save Skill
+                              </button>
+                              <button
+                                onClick={() => setEditingSkill(null)}
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {(!profile.skills || profile.skills.length === 0) && editingSkill !== "new" && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <p className="text-lg font-medium mb-2">No skills added yet</p>
+                          <p className="text-sm">Add your skills to showcase your expertise</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

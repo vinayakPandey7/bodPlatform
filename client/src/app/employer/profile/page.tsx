@@ -93,6 +93,8 @@ export default function EmployerProfilePage() {
     }
   };
 
+  console.log("xcmbcvvmbn", profile);
+
   // Handle URL parameters for tab navigation
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -159,19 +161,20 @@ export default function EmployerProfilePage() {
   const fetchProfile = async () => {
     try {
       const response = await api.get("/employer/profile");
-      if (response.data.profile) {
+
+      if (response.data?.employer) {
         setProfile((prevProfile) => ({
           ...response.data.profile,
           // Keep localStorage data if API data is empty
-          ownerName: response.data.profile.ownerName || prevProfile.ownerName,
+          ownerName: response.data.employer.ownerName || prevProfile.ownerName,
           companyName:
-            response.data.profile.companyName || prevProfile.companyName,
+            response.data.employer.companyName || prevProfile.companyName,
           phoneNumber:
-            response.data.profile.phoneNumber || prevProfile.phoneNumber,
-          address: response.data.profile.address || prevProfile.address,
-          city: response.data.profile.city || prevProfile.city,
-          state: response.data.profile.state || prevProfile.state,
-          country: response.data.profile.country || prevProfile.country,
+            response.data.employer.phoneNumber || prevProfile.phoneNumber,
+          address: response.data.employer.address || prevProfile.address,
+          city: response.data.employer.city || prevProfile.city,
+          state: response.data.employer.state || prevProfile.state,
+          country: response.data.employer.country || prevProfile.country,
         }));
       }
     } catch (error: any) {

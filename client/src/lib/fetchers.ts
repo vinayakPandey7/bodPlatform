@@ -151,7 +151,6 @@ export const authFetchers = {
   },
 
   forgotPassword: async (email: string) => {
-    debugger;
     const response = await Client.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
       email,
     });

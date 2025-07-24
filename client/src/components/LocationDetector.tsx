@@ -72,8 +72,7 @@ export default function LocationDetector({
               longitude: longitude,
             }),
           });
-          console.log("cvbcvb", response);
-          debugger;
+
           if (response.ok) {
             const data = await response.json();
             console.log("cvbcvb", data);
