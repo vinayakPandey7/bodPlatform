@@ -4,6 +4,16 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  Chip,
+  InputAdornment,
+} from "@mui/material";
+import {
   Award,
   DollarSign,
   Calendar,
@@ -71,6 +81,8 @@ export default function PlacementsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
+  const [dateRangeFilter, setDateRangeFilter] = useState("all");
+  const [commissionFilter, setCommissionFilter] = useState("all");
 
   useEffect(() => {
     fetchPlacements();
@@ -180,32 +192,104 @@ export default function PlacementsPage() {
     
     const matchesStatus = statusFilter === "all" || placement.status === statusFilter;
     const matchesPayment = paymentFilter === "all" || placement.paymentStatus === paymentFilter;
+    
+    let matchesDateRange = true;
+    if (dateRangeFilter !== "all") {
+      const placementDate = new Date(placement.placementDate);
+      const now = new Date();
+      const daysDiff = Math.floor((now.getTime() - placementDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      switch (dateRangeFilter) {
+        case "last_7_days":
+          matchesDateRange = daysDiff <= 7;
+          break;
+        case "last_30_days":
+          matchesDateRange = daysDiff <= 30;
+          break;
+        case "last_90_days":
+          matchesDateRange = daysDiff <= 90;
+          break;
+        case "this_year":
+          matchesDateRange = placementDate.getFullYear() === now.getFullYear();
+          break;
+      }
+    }
+    
+    let matchesCommission = true;
+    if (commissionFilter !== "all") {
+      switch (commissionFilter) {
+        case "0-5k":
+          matchesCommission = placement.commission <= 5000;
+          break;
+        case "5k-10k":
+          matchesCommission = placement.commission > 5000 && placement.commission <= 10000;
+          break;
+        case "10k-20k":
+          matchesCommission = placement.commission > 10000 && placement.commission <= 20000;
+          break;
+        case "20k+":
+          matchesCommission = placement.commission > 20000;
+          break;
+      }
+    }
 
-    return matchesSearch && matchesStatus && matchesPayment;
+    return matchesSearch && matchesStatus && matchesPayment && matchesDateRange && matchesCommission;
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Active
-        </span>;
+        return <Chip 
+          icon={<CheckCircle className="w-3 h-3" />}
+          label="Active" 
+          size="small"
+          sx={{
+            backgroundColor: '#dcfce7',
+            color: '#166534',
+            '& .MuiChip-icon': {
+              color: '#166534',
+            }
+          }}
+        />;
       case 'completed':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          <Award className="w-3 h-3 mr-1" />
-          Completed
-        </span>;
+        return <Chip 
+          icon={<Award className="w-3 h-3" />}
+          label="Completed" 
+          size="small"
+          sx={{
+            backgroundColor: '#dbeafe',
+            color: '#1e40af',
+            '& .MuiChip-icon': {
+              color: '#1e40af',
+            }
+          }}
+        />;
       case 'terminated':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-          <AlertCircle className="w-3 h-3 mr-1" />
-          Terminated
-        </span>;
+        return <Chip 
+          icon={<AlertCircle className="w-3 h-3" />}
+          label="Terminated" 
+          size="small"
+          sx={{
+            backgroundColor: '#fee2e2',
+            color: '#dc2626',
+            '& .MuiChip-icon': {
+              color: '#dc2626',
+            }
+          }}
+        />;
       case 'pending':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          <Clock className="w-3 h-3 mr-1" />
-          Pending
-        </span>;
+        return <Chip 
+          icon={<Clock className="w-3 h-3" />}
+          label="Pending" 
+          size="small"
+          sx={{
+            backgroundColor: '#fef3c7',
+            color: '#92400e',
+            '& .MuiChip-icon': {
+              color: '#92400e',
+            }
+          }}
+        />;
       default:
         return null;
     }
@@ -214,17 +298,32 @@ export default function PlacementsPage() {
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          Paid
-        </span>;
+        return <Chip 
+          label="Paid" 
+          size="small"
+          sx={{
+            backgroundColor: '#dcfce7',
+            color: '#166534',
+          }}
+        />;
       case 'pending':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          Pending
-        </span>;
+        return <Chip 
+          label="Pending" 
+          size="small"
+          sx={{
+            backgroundColor: '#fef3c7',
+            color: '#92400e',
+          }}
+        />;
       case 'overdue':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-          Overdue
-        </span>;
+        return <Chip 
+          label="Overdue" 
+          size="small"
+          sx={{
+            backgroundColor: '#fee2e2',
+            color: '#dc2626',
+          }}
+        />;
       default:
         return null;
     }
@@ -272,14 +371,38 @@ export default function PlacementsPage() {
               <p className="text-gray-600">Track your successful placements and revenue</p>
             </div>
             <div className="flex space-x-3">
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
-                <Download className="w-4 h-4 mr-2" />
+              <Button
+                variant="outlined"
+                startIcon={<Download className="w-4 h-4" />}
+                sx={{
+                  borderRadius: "8px",
+                  backgroundColor: "#f8fafc",
+                  borderColor: "#e2e8f0",
+                  color: "#374151",
+                  "&:hover": {
+                    backgroundColor: "#e2e8f0",
+                    borderColor: "#cbd5e1",
+                  },
+                }}
+              >
                 Export
-              </button>
-              <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center">
-                <BarChart3 className="w-4 h-4 mr-2" />
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<BarChart3 className="w-4 h-4" />}
+                sx={{
+                  borderRadius: "8px",
+                  backgroundColor: "#eff6ff",
+                  borderColor: "#3b82f6",
+                  color: "#1d4ed8",
+                  "&:hover": {
+                    backgroundColor: "#dbeafe",
+                    borderColor: "#2563eb",
+                  },
+                }}
+              >
                 Analytics
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -340,42 +463,136 @@ export default function PlacementsPage() {
 
           {/* Filters */}
           <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search placements..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="terminated">Terminated</option>
-                <option value="pending">Pending</option>
-              </select>
-              <select
-                value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Payment Status</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
-                <option value="overdue">Overdue</option>
-              </select>
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center">
-                <Filter className="w-4 h-4 mr-2" />
-                More Filters
-              </button>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <TextField
+                placeholder="Search placements..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                fullWidth
+                variant="outlined"
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search className="w-5 h-5 text-gray-400" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                }}
+              />
+
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                  Status
+                </InputLabel>
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  label="Status"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
+                >
+                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="completed">Completed</MenuItem>
+                  <MenuItem value="terminated">Terminated</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                  Payment Status
+                </InputLabel>
+                <Select
+                  value={paymentFilter}
+                  onChange={(e) => setPaymentFilter(e.target.value)}
+                  label="Payment Status"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
+                >
+                  <MenuItem value="all">All Payment Status</MenuItem>
+                  <MenuItem value="paid">Paid</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="overdue">Overdue</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                  Date Range
+                </InputLabel>
+                <Select
+                  value={dateRangeFilter}
+                  onChange={(e) => setDateRangeFilter(e.target.value)}
+                  label="Date Range"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
+                >
+                  <MenuItem value="all">All Time</MenuItem>
+                  <MenuItem value="last_7_days">Last 7 Days</MenuItem>
+                  <MenuItem value="last_30_days">Last 30 Days</MenuItem>
+                  <MenuItem value="last_90_days">Last 90 Days</MenuItem>
+                  <MenuItem value="this_year">This Year</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                  Commission Range
+                </InputLabel>
+                <Select
+                  value={commissionFilter}
+                  onChange={(e) => setCommissionFilter(e.target.value)}
+                  label="Commission Range"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
+                >
+                  <MenuItem value="all">All Commissions</MenuItem>
+                  <MenuItem value="0-5k">$0 - $5k</MenuItem>
+                  <MenuItem value="5k-10k">$5k - $10k</MenuItem>
+                  <MenuItem value="10k-20k">$10k - $20k</MenuItem>
+                  <MenuItem value="20k+">$20k+</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           </div>
 
@@ -452,15 +669,48 @@ export default function PlacementsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
-                          <button className="text-blue-600 hover:text-blue-900 p-1">
+                          <Button
+                            size="small"
+                            sx={{
+                              minWidth: 'auto',
+                              padding: '4px',
+                              color: '#2563eb',
+                              '&:hover': {
+                                color: '#1d4ed8',
+                                backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                              },
+                            }}
+                          >
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="text-green-600 hover:text-green-900 p-1">
+                          </Button>
+                          <Button
+                            size="small"
+                            sx={{
+                              minWidth: 'auto',
+                              padding: '4px',
+                              color: '#059669',
+                              '&:hover': {
+                                color: '#047857',
+                                backgroundColor: 'rgba(5, 150, 105, 0.04)',
+                              },
+                            }}
+                          >
                             <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="text-red-600 hover:text-red-900 p-1">
+                          </Button>
+                          <Button
+                            size="small"
+                            sx={{
+                              minWidth: 'auto',
+                              padding: '4px',
+                              color: '#dc2626',
+                              '&:hover': {
+                                color: '#b91c1c',
+                                backgroundColor: 'rgba(220, 38, 38, 0.04)',
+                              },
+                            }}
+                          >
                             <Trash2 className="w-4 h-4" />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -476,7 +726,7 @@ export default function PlacementsPage() {
               <Award className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">No placements found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm || statusFilter !== "all" || paymentFilter !== "all"
+                {searchTerm || statusFilter !== "all" || paymentFilter !== "all" || dateRangeFilter !== "all" || commissionFilter !== "all"
                   ? "Try adjusting your search or filters."
                   : "Start tracking your successful placements."}
               </p>

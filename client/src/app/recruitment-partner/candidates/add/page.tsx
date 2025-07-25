@@ -4,6 +4,15 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import api from "@/lib/api";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  Alert,
+} from "@mui/material";
 
 interface CandidateFormData {
   name: string;
@@ -44,10 +53,16 @@ export default function AddCandidatePage() {
   const router = useRouter();
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectChange = (e: any) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -95,18 +110,19 @@ export default function AddCandidatePage() {
                 Add a new candidate to your talent pool
               </p>
             </div>
-            <button
+            <Button
               onClick={() => router.back()}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+              variant="outlined"
+              className="bg-gray-300 text-gray-700 hover:bg-gray-400"
             >
               Back
-            </button>
+            </Button>
           </div>
 
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <Alert severity="error" className="rounded">
               {error}
-            </div>
+            </Alert>
           )}
 
           <form
@@ -114,288 +130,491 @@ export default function AddCandidatePage() {
             className="bg-white rounded-lg shadow p-6 space-y-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
+              <TextField
+                label="Full Name *"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
 
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
+              <TextField
+                label="Email *"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
 
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Phone *
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
+              <TextField
+                label="Phone *"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
 
-              <div>
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Location *
-                </label>
-                <input
-                  type="text"
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="City, State/Country"
-                  required
-                />
-              </div>
+              <TextField
+                label="Location *"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                placeholder="City, State/Country"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
 
-              <div>
-                <label
-                  htmlFor="experience"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+              <FormControl fullWidth size="medium">
+                <InputLabel
+                  required
+                  sx={{ fontSize: "16px", fontWeight: 500, color: "#64748b" }}
                 >
                   Years of Experience *
-                </label>
-                <select
-                  id="experience"
+                </InputLabel>
+                <Select
                   name="experience"
                   value={formData.experience}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
+                  onChange={handleSelectChange}
+                  label="Years of Experience *"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
                 >
-                  <option value="">Select experience</option>
-                  <option value="0-1">0-1 years</option>
-                  <option value="1-3">1-3 years</option>
-                  <option value="3-5">3-5 years</option>
-                  <option value="5-8">5-8 years</option>
-                  <option value="8-12">8-12 years</option>
-                  <option value="12+">12+ years</option>
-                </select>
-              </div>
+                  <MenuItem value="">Select experience</MenuItem>
+                  <MenuItem value="0-1">0-1 years</MenuItem>
+                  <MenuItem value="1-3">1-3 years</MenuItem>
+                  <MenuItem value="3-5">3-5 years</MenuItem>
+                  <MenuItem value="5-8">5-8 years</MenuItem>
+                  <MenuItem value="8-12">8-12 years</MenuItem>
+                  <MenuItem value="12+">12+ years</MenuItem>
+                </Select>
+              </FormControl>
 
-              <div>
-                <label
-                  htmlFor="expectedSalary"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Expected Salary
-                </label>
-                <input
-                  type="text"
-                  id="expectedSalary"
-                  name="expectedSalary"
-                  value={formData.expectedSalary}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., $50,000 - $70,000"
-                />
-              </div>
+              <TextField
+                label="Expected Salary"
+                name="expectedSalary"
+                value={formData.expectedSalary}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                size="medium"
+                placeholder="e.g., $50,000 - $70,000"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
 
-              <div>
-                <label
-                  htmlFor="currentCompany"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Current Company
-                </label>
-                <input
-                  type="text"
-                  id="currentCompany"
-                  name="currentCompany"
-                  value={formData.currentCompany}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+              <TextField
+                label="Current Company"
+                name="currentCompany"
+                value={formData.currentCompany}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
 
-              <div>
-                <label
-                  htmlFor="currentPosition"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Current Position
-                </label>
-                <input
-                  type="text"
-                  id="currentPosition"
-                  name="currentPosition"
-                  value={formData.currentPosition}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+              <TextField
+                label="Current Position"
+                name="currentPosition"
+                value={formData.currentPosition}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
 
-              <div>
-                <label
-                  htmlFor="noticePeriod"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+              <FormControl fullWidth size="medium">
+                <InputLabel
+                  sx={{ fontSize: "16px", fontWeight: 500, color: "#64748b" }}
                 >
                   Notice Period
-                </label>
-                <select
-                  id="noticePeriod"
+                </InputLabel>
+                <Select
                   name="noticePeriod"
                   value={formData.noticePeriod}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={handleSelectChange}
+                  label="Notice Period"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
                 >
-                  <option value="">Select notice period</option>
-                  <option value="Immediate">Immediate</option>
-                  <option value="15 days">15 days</option>
-                  <option value="1 month">1 month</option>
-                  <option value="2 months">2 months</option>
-                  <option value="3 months">3 months</option>
-                  <option value="More than 3 months">More than 3 months</option>
-                </select>
-              </div>
+                  <MenuItem value="">Select notice period</MenuItem>
+                  <MenuItem value="Immediate">Immediate</MenuItem>
+                  <MenuItem value="15 days">15 days</MenuItem>
+                  <MenuItem value="1 month">1 month</MenuItem>
+                  <MenuItem value="2 months">2 months</MenuItem>
+                  <MenuItem value="3 months">3 months</MenuItem>
+                  <MenuItem value="More than 3 months">More than 3 months</MenuItem>
+                </Select>
+              </FormControl>
 
-              <div>
-                <label
-                  htmlFor="linkedIn"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  LinkedIn Profile
-                </label>
-                <input
-                  type="url"
-                  id="linkedIn"
-                  name="linkedIn"
-                  value={formData.linkedIn}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="portfolio"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Portfolio/Website
-                </label>
-                <input
-                  type="url"
-                  id="portfolio"
-                  name="portfolio"
-                  value={formData.portfolio}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="https://portfolio.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="skills"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Skills (comma-separated) *
-              </label>
-              <input
-                type="text"
-                id="skills"
-                name="skills"
-                value={formData.skills.join(", ")}
-                onChange={handleSkillsChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., JavaScript, React, Node.js, Python"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="education"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Education *
-              </label>
-              <textarea
-                id="education"
-                name="education"
-                value={formData.education}
+              <TextField
+                label="LinkedIn Profile"
+                name="linkedIn"
+                type="url"
+                value={formData.linkedIn}
                 onChange={handleInputChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., Bachelor's in Computer Science from XYZ University (2020)"
-                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                placeholder="https://linkedin.com/in/username"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
               />
-            </div>
 
-            <div>
-              <label
-                htmlFor="notes"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Additional Notes
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
+              <TextField
+                label="Portfolio/Website"
+                name="portfolio"
+                type="url"
+                value={formData.portfolio}
                 onChange={handleInputChange}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Any additional information about the candidate..."
+                fullWidth
+                variant="outlined"
+                size="medium"
+                placeholder="https://portfolio.com"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
               />
             </div>
+<div className="flex flex-col gap-4">
+            <TextField
+              label="Skills (comma-separated) *"
+              name="skills"
+              value={formData.skills.join(", ")}
+              onChange={handleSkillsChange}
+              required
+              fullWidth
+              variant="outlined"
+              size="medium"
+              placeholder="e.g., JavaScript, React, Node.js, Python"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  backgroundColor: "white",
+                  fontSize: "16px",
+                  "& fieldset": {
+                    borderColor: "#e2e8f0",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#cbd5e1",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#3b82f6",
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  color: "#64748b",
+                },
+              }}
+            />
 
-            <div className="flex justify-end space-x-4">
-              <button
+            <TextField
+              label="Education *"
+              name="education"
+              value={formData.education}
+              onChange={handleInputChange}
+              required
+              fullWidth
+              variant="outlined"
+              size="medium"
+              multiline
+              rows={3}
+              placeholder="e.g., Bachelor's in Computer Science from XYZ University (2020)"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  backgroundColor: "white",
+                  fontSize: "16px",
+                  "& fieldset": {
+                    borderColor: "#e2e8f0",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#cbd5e1",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#3b82f6",
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  color: "#64748b",
+                },
+              }}
+            />
+
+            <TextField
+              label="Additional Notes"
+              name="notes"
+              value={formData.notes}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              size="medium"
+              multiline
+              rows={4}
+              placeholder="Any additional information about the candidate..."
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  backgroundColor: "white",
+                  fontSize: "16px",
+                  "& fieldset": {
+                    borderColor: "#e2e8f0",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#cbd5e1",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#3b82f6",
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  color: "#64748b",
+                },
+              }}
+            />
+
+</div>
+
+            <div className="flex justify-end gap-4">
+              <Button
                 type="button"
                 onClick={() => router.back()}
-                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                variant="outlined"
+                className="bg-gray-300 text-gray-700 hover:bg-gray-400"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="contained"
                 disabled={loading}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="bg-indigo-600 hover:bg-indigo-700"
+                sx={{
+                  backgroundColor: "#4f46e5",
+                  "&:hover": {
+                    backgroundColor: "#4338ca",
+                  },
+                  "&:disabled": {
+                    opacity: 0.5,
+                  },
+                }}
               >
                 {loading ? "Adding..." : "Add Candidate"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

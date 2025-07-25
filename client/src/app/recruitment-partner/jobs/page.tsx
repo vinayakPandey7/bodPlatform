@@ -3,6 +3,16 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import api from "@/lib/api";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  Chip,
+  Alert,
+} from "@mui/material";
 
 interface Job {
   _id: string;
@@ -31,6 +41,8 @@ export default function RecruitmentPartnerJobsPage() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [jobTypeFilter, setJobTypeFilter] = useState("all");
+  const [payStructureFilter, setPayStructureFilter] = useState("all");
 
   useEffect(() => {
     fetchJobs();
@@ -55,8 +67,10 @@ export default function RecruitmentPartnerJobsPage() {
     const matchesLocation =
       locationFilter === "" ||
       job.location.toLowerCase().includes(locationFilter.toLowerCase());
+    const matchesJobType = jobTypeFilter === "all" || job.jobType === jobTypeFilter;
+    const matchesPayStructure = payStructureFilter === "all" || job.payStructure === payStructureFilter;
 
-    return matchesSearch && matchesLocation;
+    return matchesSearch && matchesLocation && matchesJobType && matchesPayStructure;
   });
 
   const handleApplyToJob = (jobId: string) => {
@@ -96,46 +110,122 @@ export default function RecruitmentPartnerJobsPage() {
 
           {/* Filters */}
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="search"
-                  className="block text-sm font-medium text-gray-700"
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <TextField
+                label="Search Jobs"
+                placeholder="Search by job title or company..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "14px",
+                    color: "#64748b",
+                  },
+                }}
+              />
+
+              <TextField
+                label="Location"
+                placeholder="Filter by location..."
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "14px",
+                    color: "#64748b",
+                  },
+                }}
+              />
+
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                  Job Type
+                </InputLabel>
+                <Select
+                  value={jobTypeFilter}
+                  onChange={(e) => setJobTypeFilter(e.target.value)}
+                  label="Job Type"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
                 >
-                  Search Jobs
-                </label>
-                <input
-                  type="text"
-                  id="search"
-                  placeholder="Search by job title or company..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-gray-700"
+                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="full_time">Full Time</MenuItem>
+                  <MenuItem value="part_time">Part Time</MenuItem>
+                  <MenuItem value="contract">Contract</MenuItem>
+                  <MenuItem value="freelance">Freelance</MenuItem>
+                  <MenuItem value="internship">Internship</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                  Pay Structure
+                </InputLabel>
+                <Select
+                  value={payStructureFilter}
+                  onChange={(e) => setPayStructureFilter(e.target.value)}
+                  label="Pay Structure"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
                 >
-                  Location
-                </label>
-                <input
-                  type="text"
-                  id="location"
-                  placeholder="Filter by location..."
-                  value={locationFilter}
-                  onChange={(e) => setLocationFilter(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+                  <MenuItem value="all">All Structures</MenuItem>
+                  <MenuItem value="hourly">Hourly</MenuItem>
+                  <MenuItem value="salary">Salary</MenuItem>
+                  <MenuItem value="commission">Commission</MenuItem>
+                  <MenuItem value="piece_rate">Piece Rate</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <Alert severity="error" className="rounded">
               {error}
-            </div>
+            </Alert>
           )}
 
           <div className="grid gap-6">
@@ -160,7 +250,7 @@ export default function RecruitmentPartnerJobsPage() {
                   No jobs found
                 </h3>
                 <p className="text-gray-600">
-                  {searchTerm || locationFilter
+                  {searchTerm || locationFilter || jobTypeFilter !== "all" || payStructureFilter !== "all"
                     ? "Try adjusting your search filters."
                     : "No active job postings available at the moment."}
                 </p>
@@ -177,13 +267,22 @@ export default function RecruitmentPartnerJobsPage() {
                         <h3 className="text-xl font-semibold text-gray-900">
                           {job.title}
                         </h3>
-                        <span className="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
-                          Active
-                        </span>
-                        <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
-                          {job.numberOfPositions} Position
-                          {job.numberOfPositions > 1 ? "s" : ""}
-                        </span>
+                        <Chip 
+                          label="Active" 
+                          size="small"
+                          sx={{
+                            backgroundColor: '#dcfce7',
+                            color: '#166534',
+                          }}
+                        />
+                        <Chip 
+                          label={`${job.numberOfPositions} Position${job.numberOfPositions > 1 ? "s" : ""}`}
+                          size="small"
+                          sx={{
+                            backgroundColor: '#dbeafe',
+                            color: '#1e40af',
+                          }}
+                        />
                       </div>
 
                       <div className="mb-4">
@@ -222,12 +321,21 @@ export default function RecruitmentPartnerJobsPage() {
                     </div>
 
                     <div className="ml-6">
-                      <button
+                      <Button
                         onClick={() => handleApplyToJob(job._id)}
-                        className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors font-medium"
+                        variant="contained"
+                        sx={{
+                          backgroundColor: '#4f46e5',
+                          '&:hover': {
+                            backgroundColor: '#4338ca',
+                          },
+                          borderRadius: '6px',
+                          padding: '12px 24px',
+                          fontWeight: 500,
+                        }}
                       >
                         Submit Candidates
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

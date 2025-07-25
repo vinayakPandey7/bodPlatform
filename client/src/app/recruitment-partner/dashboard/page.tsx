@@ -251,7 +251,7 @@ export default function RecruitmentPartnerDashboard() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
             {/* Total Candidates */}
             <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -299,7 +299,7 @@ export default function RecruitmentPartnerDashboard() {
             </div>
 
             {/* Total Revenue */}
-            <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+            {/* <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
@@ -319,7 +319,7 @@ export default function RecruitmentPartnerDashboard() {
                   <p className="text-xs text-gray-500 mt-1">This year</p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Success Rate */}
             <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
@@ -469,9 +469,9 @@ export default function RecruitmentPartnerDashboard() {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="">
             {/* Recent Activity */}
-            <div className="lg:col-span-2">
+            {/* <div className="lg:col-span-2">
               <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-900">Recent Activity</h3>
@@ -494,10 +494,10 @@ export default function RecruitmentPartnerDashboard() {
                   ))}
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Top Performers */}
-            <div className="lg:col-span-1">
+            {/* <div className="lg:col-span-1">
               <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-900">Top Placements</h3>
@@ -526,7 +526,7 @@ export default function RecruitmentPartnerDashboard() {
                   ))}
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </DashboardLayout>

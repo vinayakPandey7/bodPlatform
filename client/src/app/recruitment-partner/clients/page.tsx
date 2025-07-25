@@ -5,6 +5,17 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import api from "@/lib/api";
 import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  Chip,
+  Collapse,
+  InputAdornment,
+} from "@mui/material";
+import {
   Building2,
   Users,
   DollarSign,
@@ -24,6 +35,8 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 interface Client {
@@ -73,6 +86,10 @@ export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [industryFilter, setIndustryFilter] = useState("all");
+  const [companySizeFilter, setCompanySizeFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [contractValueFilter, setContractValueFilter] = useState("all");
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
@@ -192,8 +209,31 @@ export default function ClientsPage() {
     
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
     const matchesIndustry = industryFilter === "all" || client.industry === industryFilter;
+    const matchesCompanySize = companySizeFilter === "all" || client.companySize === companySizeFilter;
+    const matchesLocation = !locationFilter || 
+      client.city.toLowerCase().includes(locationFilter.toLowerCase()) ||
+      client.state.toLowerCase().includes(locationFilter.toLowerCase());
+    
+    let matchesContractValue = true;
+    if (contractValueFilter !== "all") {
+      const value = client.contractValue;
+      switch (contractValueFilter) {
+        case "0-25k":
+          matchesContractValue = value <= 25000;
+          break;
+        case "25k-50k":
+          matchesContractValue = value > 25000 && value <= 50000;
+          break;
+        case "50k-100k":
+          matchesContractValue = value > 50000 && value <= 100000;
+          break;
+        case "100k+":
+          matchesContractValue = value > 100000;
+          break;
+      }
+    }
 
-    return matchesSearch && matchesStatus && matchesIndustry;
+    return matchesSearch && matchesStatus && matchesIndustry && matchesCompanySize && matchesLocation && matchesContractValue;
   });
 
   const handleAddClient = () => {
@@ -218,20 +258,44 @@ export default function ClientsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Active
-        </span>;
+        return <Chip 
+          icon={<CheckCircle className="w-3 h-3" />}
+          label="Active" 
+          size="small"
+          sx={{
+            backgroundColor: '#dcfce7',
+            color: '#166534',
+            '& .MuiChip-icon': {
+              color: '#166534',
+            }
+          }}
+        />;
       case 'inactive':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          <Clock className="w-3 h-3 mr-1" />
-          Inactive
-        </span>;
+        return <Chip 
+          icon={<Clock className="w-3 h-3" />}
+          label="Inactive" 
+          size="small"
+          sx={{
+            backgroundColor: '#f3f4f6',
+            color: '#374151',
+            '& .MuiChip-icon': {
+              color: '#374151',
+            }
+          }}
+        />;
       case 'prospect':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          <AlertCircle className="w-3 h-3 mr-1" />
-          Prospect
-        </span>;
+        return <Chip 
+          icon={<AlertCircle className="w-3 h-3" />}
+          label="Prospect" 
+          size="small"
+          sx={{
+            backgroundColor: '#fef3c7',
+            color: '#92400e',
+            '& .MuiChip-icon': {
+              color: '#92400e',
+            }
+          }}
+        />;
       default:
         return null;
     }
@@ -269,13 +333,25 @@ export default function ClientsPage() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Management</h1>
               <p className="text-gray-600">Manage your client relationships and contracts</p>
             </div>
-            <button
+            <Button
               onClick={handleAddClient}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center"
+              variant="contained"
+              startIcon={<Plus className="w-5 h-5" />}
+                              sx={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  borderRadius: '12px',
+                  padding: '12px 24px',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                    transform: 'scale(1.05)',
+                  },
+                }}
             >
-              <Plus className="w-5 h-5 mr-2" />
               Add New Client
-            </button>
+            </Button>
           </div>
 
           {/* Stats Cards */}
@@ -362,43 +438,188 @@ export default function ClientsPage() {
           {/* Filters */}
           <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search clients..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              <TextField
+                placeholder="Search clients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                fullWidth
+                variant="outlined"
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search className="w-5 h-5 text-gray-400" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                }}
+              />
+
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                  Status
+                </InputLabel>
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  label="Status"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
+                >
+                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
+                  <MenuItem value="prospect">Prospect</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                  Industry
+                </InputLabel>
+                <Select
+                  value={industryFilter}
+                  onChange={(e) => setIndustryFilter(e.target.value)}
+                  label="Industry"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
+                >
+                  <MenuItem value="all">All Industries</MenuItem>
+                  <MenuItem value="Technology">Technology</MenuItem>
+                  <MenuItem value="Healthcare">Healthcare</MenuItem>
+                  <MenuItem value="Finance">Finance</MenuItem>
+                  <MenuItem value="Manufacturing">Manufacturing</MenuItem>
+                  <MenuItem value="Retail">Retail</MenuItem>
+                </Select>
+              </FormControl>
+
+              <Button
+                onClick={() => setShowMoreFilters(!showMoreFilters)}
+                variant="outlined"
+                startIcon={<Filter className="w-4 h-4" />}
+                endIcon={showMoreFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                sx={{
+                  borderRadius: "8px",
+                  backgroundColor: "#f8fafc",
+                  borderColor: "#e2e8f0",
+                  color: "#374151",
+                  "&:hover": {
+                    backgroundColor: "#e2e8f0",
+                    borderColor: "#cbd5e1",
+                  },
+                }}
               >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="prospect">Prospect</option>
-              </select>
-              <select
-                value={industryFilter}
-                onChange={(e) => setIndustryFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Industries</option>
-                <option value="Technology">Technology</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Finance">Finance</option>
-                <option value="Manufacturing">Manufacturing</option>
-                <option value="Retail">Retail</option>
-              </select>
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center">
-                <Filter className="w-4 h-4 mr-2" />
                 More Filters
-              </button>
+              </Button>
             </div>
+
+            {/* More Filters Section */}
+            <Collapse in={showMoreFilters}>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormControl fullWidth size="small">
+                    <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                      Company Size
+                    </InputLabel>
+                    <Select
+                      value={companySizeFilter}
+                      onChange={(e) => setCompanySizeFilter(e.target.value)}
+                      label="Company Size"
+                      variant="outlined"
+                      sx={{
+                        borderRadius: "8px",
+                        backgroundColor: "white",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#e2e8f0",
+                        },
+                      }}
+                    >
+                      <MenuItem value="all">All Sizes</MenuItem>
+                      <MenuItem value="1-10">1-10 employees</MenuItem>
+                      <MenuItem value="10-50">10-50 employees</MenuItem>
+                      <MenuItem value="50-100">50-100 employees</MenuItem>
+                      <MenuItem value="100-500">100-500 employees</MenuItem>
+                      <MenuItem value="500+">500+ employees</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    placeholder="Location (City/State)"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "8px",
+                        backgroundColor: "white",
+                        "& fieldset": {
+                          borderColor: "#e2e8f0",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#cbd5e1",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#3b82f6",
+                        },
+                      },
+                    }}
+                  />
+
+                  <FormControl fullWidth size="small">
+                    <InputLabel sx={{ fontSize: "14px", color: "#64748b" }}>
+                      Contract Value
+                    </InputLabel>
+                    <Select
+                      value={contractValueFilter}
+                      onChange={(e) => setContractValueFilter(e.target.value)}
+                      label="Contract Value"
+                      variant="outlined"
+                      sx={{
+                        borderRadius: "8px",
+                        backgroundColor: "white",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#e2e8f0",
+                        },
+                      }}
+                    >
+                      <MenuItem value="all">All Values</MenuItem>
+                      <MenuItem value="0-25k">$0 - $25k</MenuItem>
+                      <MenuItem value="25k-50k">$25k - $50k</MenuItem>
+                      <MenuItem value="50k-100k">$50k - $100k</MenuItem>
+                      <MenuItem value="100k+">$100k+</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+            </Collapse>
           </div>
 
           {/* Clients Table */}
@@ -477,24 +698,51 @@ export default function ClientsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
-                          <button
+                          <Button
                             onClick={() => handleViewClient(client)}
-                            className="text-blue-600 hover:text-blue-900 p-1"
+                            size="small"
+                            sx={{
+                              minWidth: 'auto',
+                              padding: '4px',
+                              color: '#2563eb',
+                              '&:hover': {
+                                color: '#1d4ed8',
+                                backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                              },
+                            }}
                           >
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handleEditClient(client)}
-                            className="text-green-600 hover:text-green-900 p-1"
+                            size="small"
+                            sx={{
+                              minWidth: 'auto',
+                              padding: '4px',
+                              color: '#059669',
+                              '&:hover': {
+                                color: '#047857',
+                                backgroundColor: 'rgba(5, 150, 105, 0.04)',
+                              },
+                            }}
                           >
                             <Edit className="w-4 h-4" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handleDeleteClient(client._id)}
-                            className="text-red-600 hover:text-red-900 p-1"
+                            size="small"
+                            sx={{
+                              minWidth: 'auto',
+                              padding: '4px',
+                              color: '#dc2626',
+                              '&:hover': {
+                                color: '#b91c1c',
+                                backgroundColor: 'rgba(220, 38, 38, 0.04)',
+                              },
+                            }}
                           >
                             <Trash2 className="w-4 h-4" />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -516,13 +764,19 @@ export default function ClientsPage() {
               </p>
               {!searchTerm && statusFilter === "all" && industryFilter === "all" && (
                 <div className="mt-6">
-                  <button
+                  <Button
                     onClick={handleAddClient}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    variant="contained"
+                    startIcon={<Plus className="w-4 h-4" />}
+                    sx={{
+                      backgroundColor: '#3b82f6',
+                      '&:hover': {
+                        backgroundColor: '#2563eb',
+                      },
+                    }}
                   >
-                    <Plus className="w-4 h-4 mr-2" />
                     Add Client
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
