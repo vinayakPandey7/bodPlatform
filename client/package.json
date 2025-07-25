@@ -4,10 +4,10 @@
   "private": true,
   "author": "CIERO",
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "dev": "next dev --turbopack"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

@@ -27,6 +27,8 @@ import {
   X,
   MapPin,
   ChevronDown,
+  Award,
+  Calendar,
 } from "lucide-react";
 import LocationDetector from "./LocationDetector";
 import LocationBanner from "./LocationBanner";
@@ -519,28 +521,53 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             icon: LayoutDashboard,
           },
           {
-            name: "Browse Jobs",
-            href: "/recruitment-partner/jobs",
-            current: pathname === "/recruitment-partner/jobs",
-            icon: Search,
-          },
-          {
-            name: "My Applications",
-            href: "/recruitment-partner/applications",
-            current: pathname === "/recruitment-partner/applications",
-            icon: FileText,
-          },
-          {
             name: "Candidates",
             href: "/recruitment-partner/candidates",
             current: pathname === "/recruitment-partner/candidates",
             icon: Users,
           },
           {
+            name: "Clients",
+            href: "/recruitment-partner/clients",
+            current: pathname === "/recruitment-partner/clients",
+            icon: Building2,
+          },
+          {
+            name: "Jobs",
+            href: "/recruitment-partner/jobs",
+            current: pathname === "/recruitment-partner/jobs",
+            icon: Briefcase,
+          },
+          {
+            name: "Placements",
+            href: "/recruitment-partner/placements",
+            current: pathname === "/recruitment-partner/placements",
+            icon: Award,
+          },
+          {
+            name: "Applications",
+            href: "/recruitment-partner/applications",
+            current: pathname === "/recruitment-partner/applications",
+            icon: FileText,
+          },
+          {
+            name: "Interviews",
+            href: "/recruitment-partner/interviews",
+            current: pathname === "/recruitment-partner/interviews",
+            icon: Calendar,
+          },
+          {
+            name: "Reports",
+            href: "/recruitment-partner/reports",
+            current: pathname === "/recruitment-partner/reports",
+            icon: BarChart3,
+          },
+          {
             name: "Notifications",
             href: "/recruitment-partner/notifications",
             current: pathname === "/recruitment-partner/notifications",
             icon: Bell,
+            badge: "3",
           },
           {
             name: "Profile",
