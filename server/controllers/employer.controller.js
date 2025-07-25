@@ -212,10 +212,16 @@ exports.getJobApplications = async (req, res) => {
     const users = await User.find({
       role: "candidate",
       "applications.job": jobId,
-    }).populate({
-      path: "applications.job",
-      select: "title location description status",
-    });
+    }).populate([
+      {
+        path: "applications.job",
+        select: "title location description status",
+      },
+      {
+        path: "applications.employerNotes.addedBy",
+        select: "firstName lastName email",
+      },
+    ]);
 
     // Extract applications for this job
     const applications = [];
@@ -245,6 +251,8 @@ exports.getJobApplications = async (req, res) => {
               : "Not Available",
             appliedAtRaw: app.appliedAt,
             coverLetter: app.coverLetter,
+            employerNotes: app.employerNotes,
+            notesCount: app.employerNotes.length,
           });
         }
       });
@@ -280,15 +288,15 @@ exports.updateCandidateStatus = async (req, res) => {
     // Validate status
     const validStatuses = [
       "pending",
-      "reviewing", 
+      "reviewing",
       "shortlisted",
       "assessment",
       "phone_interview",
-      "in_person_interview", 
+      "in_person_interview",
       "background_check",
       "hired",
       "rejected",
-      "withdrawn"
+      "withdrawn",
     ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -495,6 +503,328 @@ exports.getSavedCandidatesForEmployer = async (req, res) => {
     });
   } catch (error) {
     console.error("Get saved candidates error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Add note to application
+exports.addNoteToApplication = async (req, res) => {
+  try {
+    const { candidateId, applicationId } = req.params;
+    const { noteText, interviewRound, rating } = req.body;
+
+    // Validate input
+    if (!noteText || noteText.trim().length === 0) {
+      return res.status(400).json({ message: "Note text is required" });
+    }
+
+    // Validate rating if provided
+    if (rating && (rating < 1 || rating > 5)) {
+      return res
+        .status(400)
+        .json({ message: "Rating must be between 1 and 5" });
+    }
+
+    // Validate interview round if provided
+    const validRounds = [
+      "initial_review",
+      "phone_screening",
+      "phone_interview",
+      "technical_assessment",
+      "in_person_interview",
+      "final_interview",
+      "background_check",
+      "reference_check",
+      "general",
+      "other",
+    ];
+    if (interviewRound && !validRounds.includes(interviewRound)) {
+      return res.status(400).json({
+        message:
+          "Invalid interview round. Valid rounds are: " +
+          validRounds.join(", "),
+      });
+    }
+
+    // Find employer to verify permissions
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Get all jobs for this employer
+    const jobs = await Job.find({ employer: employer._id });
+    const jobIds = jobs.map((job) => job._id.toString());
+
+    // Find the user and application
+    const User = require("../models/user.model");
+    const user = await User.findById(candidateId);
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    // Find the specific application
+    const application = user.applications.id(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    // Verify the application is for this employer's job
+    if (!jobIds.includes(application.job.toString())) {
+      return res.status(403).json({
+        message: "Unauthorized: Application is not for your job",
+      });
+    }
+
+    // Get the current user's name for the note
+    const currentUser = await User.findById(req.user.id);
+    const addedByName =
+      `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim() ||
+      currentUser.email;
+
+    // Add the note
+    const newNote = {
+      note: noteText.trim(),
+      addedBy: req.user.id,
+      addedByName: addedByName,
+      interviewRound: interviewRound || "general",
+      rating: rating || null,
+    };
+
+    application.employerNotes.push(newNote);
+    await user.save();
+
+    // Populate the addedBy field for response
+    await user.populate({
+      path: "applications.employerNotes.addedBy",
+      select: "firstName lastName email",
+    });
+
+    const addedNote =
+      application.employerNotes[application.employerNotes.length - 1];
+
+    res.status(201).json({
+      message: "Note added successfully",
+      note: addedNote,
+    });
+  } catch (error) {
+    console.error("Add note to application error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get notes for application
+exports.getApplicationNotes = async (req, res) => {
+  try {
+    const { candidateId, applicationId } = req.params;
+
+    // Find employer to verify permissions
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Get all jobs for this employer
+    const jobs = await Job.find({ employer: employer._id });
+    const jobIds = jobs.map((job) => job._id.toString());
+
+    // Find the user and application
+    const User = require("../models/user.model");
+    const user = await User.findById(candidateId).populate({
+      path: "applications.employerNotes.addedBy",
+      select: "firstName lastName email",
+    });
+
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    // Find the specific application
+    const application = user.applications.id(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    // Verify the application is for this employer's job
+    if (!jobIds.includes(application.job.toString())) {
+      return res.status(403).json({
+        message: "Unauthorized: Application is not for your job",
+      });
+    }
+
+    res.json({
+      notes: application.employerNotes,
+      totalNotes: application.employerNotes.length,
+    });
+  } catch (error) {
+    console.error("Get application notes error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Update note in application
+exports.updateApplicationNote = async (req, res) => {
+  try {
+    const { candidateId, applicationId, noteId } = req.params;
+    const { noteText, interviewRound, rating } = req.body;
+
+    // Validate input
+    if (!noteText || noteText.trim().length === 0) {
+      return res.status(400).json({ message: "Note text is required" });
+    }
+
+    // Validate rating if provided
+    if (rating && (rating < 1 || rating > 5)) {
+      return res
+        .status(400)
+        .json({ message: "Rating must be between 1 and 5" });
+    }
+
+    // Validate interview round if provided
+    const validRounds = [
+      "initial_review",
+      "phone_screening",
+      "phone_interview",
+      "technical_assessment",
+      "in_person_interview",
+      "final_interview",
+      "background_check",
+      "reference_check",
+      "general",
+      "other",
+    ];
+    if (interviewRound && !validRounds.includes(interviewRound)) {
+      return res.status(400).json({
+        message:
+          "Invalid interview round. Valid rounds are: " +
+          validRounds.join(", "),
+      });
+    }
+
+    // Find employer to verify permissions
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Get all jobs for this employer
+    const jobs = await Job.find({ employer: employer._id });
+    const jobIds = jobs.map((job) => job._id.toString());
+
+    // Find the user and application
+    const User = require("../models/user.model");
+    const user = await User.findById(candidateId);
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    // Find the specific application
+    const application = user.applications.id(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    // Verify the application is for this employer's job
+    if (!jobIds.includes(application.job.toString())) {
+      return res.status(403).json({
+        message: "Unauthorized: Application is not for your job",
+      });
+    }
+
+    // Find the specific note
+    const note = application.employerNotes.id(noteId);
+    if (!note) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    // Verify the note was added by the current user
+    if (note.addedBy.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Unauthorized: You can only edit your own notes",
+      });
+    }
+
+    // Update the note
+    note.note = noteText.trim();
+    if (interviewRound !== undefined) note.interviewRound = interviewRound;
+    if (rating !== undefined) note.rating = rating;
+    note.updatedAt = new Date();
+
+    await user.save();
+
+    // Populate the addedBy field for response
+    await user.populate({
+      path: "applications.employerNotes.addedBy",
+      select: "firstName lastName email",
+    });
+
+    res.json({
+      message: "Note updated successfully",
+      note: note,
+    });
+  } catch (error) {
+    console.error("Update application note error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Delete note from application
+exports.deleteApplicationNote = async (req, res) => {
+  try {
+    const { candidateId, applicationId, noteId } = req.params;
+
+    // Find employer to verify permissions
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Get all jobs for this employer
+    const jobs = await Job.find({ employer: employer._id });
+    const jobIds = jobs.map((job) => job._id.toString());
+
+    // Find the user and application
+    const User = require("../models/user.model");
+    const user = await User.findById(candidateId);
+    if (!user || user.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    // Find the specific application
+    const application = user.applications.id(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    // Verify the application is for this employer's job
+    if (!jobIds.includes(application.job.toString())) {
+      return res.status(403).json({
+        message: "Unauthorized: Application is not for your job",
+      });
+    }
+
+    // Find the specific note
+    const note = application.employerNotes.id(noteId);
+    if (!note) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    // Verify the note was added by the current user
+    if (note.addedBy.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Unauthorized: You can only delete your own notes",
+      });
+    }
+
+    // Remove the note
+    application.employerNotes.pull(noteId);
+    await user.save();
+
+    res.json({
+      message: "Note deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete application note error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

@@ -4,7 +4,7 @@ const nodemailer = require("nodemailer");
 const createTransporter = () => {
   // For development, we'll use Gmail SMTP
   // In production, you might want to use services like SendGrid, Mailgun, etc.
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: "gmail",
     auth: {
       user: process.env.EMAIL_USER,
@@ -31,7 +31,7 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background-color: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
             .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-            .button { display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .button { display: inline-block; background-color: green; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
             .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
             .warning { background-color: #fef3cd; border: 1px solid #fde68a; padding: 15px; border-radius: 6px; margin: 20px 0; }
           </style>
@@ -46,8 +46,8 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
               
               <p>You recently requested to reset your password for your CIERO account. Click the button below to reset it:</p>
               
-              <div style="text-align: center;">
-                <a href="${resetUrl}" class="button">Reset Your Password</a>
+              <div style="text-align: center; color: white" >
+                <a href="${resetUrl}" class="button" style="background-color: green; color: white !important;">Reset Your Password</a>
               </div>
               
               <p>If the button doesn't work, you can copy and paste this link into your browser:</p>

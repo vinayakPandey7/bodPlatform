@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CandidateProfileModal from "@/components/CandidateProfileModal";
+import NotesModal from "@/components/NotesModal";
 import api from "@/lib/api";
 import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 
@@ -25,6 +26,23 @@ interface Application {
     title: string;
     location: string;
   };
+  employerNotes?: Note[];
+  notesCount?: number;
+}
+
+interface Note {
+  _id: string;
+  noteText: string;
+  addedBy: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  interviewRound: string;
+  rating?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Job {
@@ -45,6 +63,12 @@ export default function JobApplicationsPage() {
     null
   );
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<
+    string | null
+  >(null);
+  const [selectedCandidateName, setSelectedCandidateName] =
+    useState<string>("");
   const params = useParams();
   const router = useRouter();
   const jobId = params.id as string;
@@ -119,6 +143,24 @@ export default function JobApplicationsPage() {
   const closeCandidateProfile = () => {
     setSelectedCandidateId(null);
     setIsProfileModalOpen(false);
+  };
+
+  const openNotesModal = (
+    candidateId: string,
+    applicationId: string,
+    candidateName: string
+  ) => {
+    setSelectedCandidateId(candidateId);
+    setSelectedApplicationId(applicationId);
+    setSelectedCandidateName(candidateName);
+    setIsNotesModalOpen(true);
+  };
+
+  const closeNotesModal = () => {
+    setSelectedCandidateId(null);
+    setSelectedApplicationId(null);
+    setSelectedCandidateName("");
+    setIsNotesModalOpen(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -206,13 +248,13 @@ export default function JobApplicationsPage() {
                   onChange={(e) => setStatusFilter(e.target.value as string)}
                   label="Filter by Status"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#3b82f6',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#3b82f6",
                       },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#3b82f6',
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#3b82f6",
                       },
                     },
                   }}
@@ -223,7 +265,9 @@ export default function JobApplicationsPage() {
                   <MenuItem value="shortlisted">Shortlisted</MenuItem>
                   <MenuItem value="assessment">Assessment</MenuItem>
                   <MenuItem value="phone_interview">Phone Interview</MenuItem>
-                  <MenuItem value="in_person_interview">In-Person Interview</MenuItem>
+                  <MenuItem value="in_person_interview">
+                    In-Person Interview
+                  </MenuItem>
                   <MenuItem value="background_check">Background Check</MenuItem>
                   <MenuItem value="hired">Hired</MenuItem>
                   <MenuItem value="rejected">Rejected</MenuItem>
@@ -311,7 +355,9 @@ export default function JobApplicationsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Applied Date
                       </th>
-
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Notes
+                      </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
@@ -344,6 +390,22 @@ export default function JobApplicationsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {application.appliedAt}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <button
+                            onClick={() =>
+                              openNotesModal(
+                                application.candidate._id,
+                                application._id,
+                                `${application.candidate.firstName} ${application.candidate.lastName}`
+                              )
+                            }
+                            className="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
+                          >
+                            {(application.notesCount || 0) > 0
+                              ? `View Notes (${application.notesCount})`
+                              : "Add Note"}
+                          </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex space-x-2">
@@ -399,6 +461,18 @@ export default function JobApplicationsPage() {
             candidateId={selectedCandidateId}
             isOpen={isProfileModalOpen}
             onClose={closeCandidateProfile}
+          />
+        )}
+
+        {/* Notes Modal */}
+        {selectedCandidateId && selectedApplicationId && (
+          <NotesModal
+            candidateId={selectedCandidateId}
+            applicationId={selectedApplicationId}
+            candidateName={selectedCandidateName}
+            isOpen={isNotesModalOpen}
+            onClose={closeNotesModal}
+            onNotesUpdate={fetchJobAndApplications}
           />
         )}
       </DashboardLayout>

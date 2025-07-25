@@ -53,4 +53,30 @@ router.get(
   employerController.getSavedCandidatesForEmployer
 );
 
+// Notes management routes
+router.post(
+  "/candidates/:candidateId/applications/:applicationId/notes",
+  auth,
+  authorizeRoles("employer"),
+  employerController.addNoteToApplication
+);
+router.get(
+  "/candidates/:candidateId/applications/:applicationId/notes",
+  auth,
+  authorizeRoles("employer"),
+  employerController.getApplicationNotes
+);
+router.put(
+  "/candidates/:candidateId/applications/:applicationId/notes/:noteId",
+  auth,
+  authorizeRoles("employer"),
+  employerController.updateApplicationNote
+);
+router.delete(
+  "/candidates/:candidateId/applications/:applicationId/notes/:noteId",
+  auth,
+  authorizeRoles("employer"),
+  employerController.deleteApplicationNote
+);
+
 module.exports = router;

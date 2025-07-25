@@ -137,15 +137,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: [
           "pending",
-          "reviewing", 
+          "reviewing",
           "shortlisted",
           "assessment",
           "phone_interview",
-          "in_person_interview", 
+          "in_person_interview",
           "background_check",
           "hired",
           "rejected",
-          "withdrawn"
+          "withdrawn",
         ],
         default: "pending",
       },
@@ -154,6 +154,53 @@ const userSchema = new mongoose.Schema({
         {
           question: String,
           answer: String,
+        },
+      ],
+      // Employer notes/remarks for this specific application
+      employerNotes: [
+        {
+          note: {
+            type: String,
+            required: true,
+          },
+          addedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          addedByName: {
+            type: String,
+            required: true,
+          },
+          interviewRound: {
+            type: String,
+            enum: [
+              "initial_review",
+              "phone_screening",
+              "phone_interview",
+              "technical_assessment",
+              "in_person_interview",
+              "final_interview",
+              "background_check",
+              "reference_check",
+              "general",
+              "other",
+            ],
+            default: "general",
+          },
+          rating: {
+            type: Number,
+            min: 1,
+            max: 5,
+          },
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+          updatedAt: {
+            type: Date,
+            default: Date.now,
+          },
         },
       ],
     },
