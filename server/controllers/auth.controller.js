@@ -254,6 +254,7 @@ exports.getMe = async (req, res) => {
       lastName: user.lastName,
       zipCode: user.zipCode,
       profile,
+      profilePicture: user.personalInfo?.profilePicture || null,
     };
 
     // Add applications for candidates

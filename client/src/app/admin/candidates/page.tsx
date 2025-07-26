@@ -74,80 +74,139 @@ const ProfileModal = ({ candidate, isOpen, onClose }: ProfileModalProps) => {
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
-          
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Full Name
+                </label>
                 <p className="mt-1 text-sm text-gray-900">{candidate.name}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
                 <p className="mt-1 text-sm text-gray-900">{candidate.email}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Phone
+                </label>
                 <p className="mt-1 text-sm text-gray-900">{candidate.phone}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Gender</label>
-                <p className="mt-1 text-sm text-gray-900 capitalize">{candidate.gender}</p>
+                <label className="block text-sm font-medium text-gray-700">
+                  Gender
+                </label>
+                <p className="mt-1 text-sm text-gray-900 capitalize">
+                  {candidate.gender}
+                </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
-                <p className="mt-1 text-sm text-gray-900">{new Date(candidate.dateOfBirth).toLocaleDateString()}</p>
+                <label className="block text-sm font-medium text-gray-700">
+                  Date of Birth
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {new Date(candidate.dateOfBirth).toLocaleDateString()}
+                </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Current Status</label>
-                <p className="mt-1 text-sm text-gray-900 capitalize">{candidate.status.replace('_', ' ')}</p>
+                <label className="block text-sm font-medium text-gray-700">
+                  Current Status
+                </label>
+                <p className="mt-1 text-sm text-gray-900 capitalize">
+                  {candidate.status.replace("_", " ")}
+                </p>
               </div>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Address
+              </label>
               <p className="mt-1 text-sm text-gray-900">{candidate.address}</p>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Job Application</label>
-              <p className="mt-1 text-sm text-gray-900">{candidate.job?.title} at {candidate.job?.employer?.companyName}</p>
+              <label className="block text-sm font-medium text-gray-700">
+                Job Application
+              </label>
+              <p className="mt-1 text-sm text-gray-900">
+                {candidate.job?.title} at {candidate.job?.employer?.companyName}
+              </p>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Recruitment Partner</label>
-              <p className="mt-1 text-sm text-gray-900">{candidate.recruitmentPartner?.name}</p>
+              <label className="block text-sm font-medium text-gray-700">
+                Recruitment Partner
+              </label>
+              <p className="mt-1 text-sm text-gray-900">
+                {candidate.recruitmentPartner?.name}
+              </p>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Languages</label>
-              <p className="mt-1 text-sm text-gray-900">{candidate.languages?.join(', ')}</p>
+              <label className="block text-sm font-medium text-gray-700">
+                Languages
+              </label>
+              <p className="mt-1 text-sm text-gray-900">
+                {candidate.languages?.join(", ")}
+              </p>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Experience</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Experience
+              </label>
               <div className="mt-1 text-sm text-gray-900">
-                <p>State Farm: {candidate.hasPreviousExperienceWithStateFarm ? 'Yes' : 'No'}</p>
-                <p>Insurance: {candidate.hasPreviousInsuranceExperience ? 'Yes' : 'No'}</p>
-                <p>Banking: {candidate.isLicensedWithBankingExperience ? 'Yes' : 'No'}</p>
+                <p>
+                  State Farm:{" "}
+                  {candidate.hasPreviousExperienceWithStateFarm ? "Yes" : "No"}
+                </p>
+                <p>
+                  Insurance:{" "}
+                  {candidate.hasPreviousInsuranceExperience ? "Yes" : "No"}
+                </p>
+                <p>
+                  Banking:{" "}
+                  {candidate.isLicensedWithBankingExperience ? "Yes" : "No"}
+                </p>
               </div>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Application Date</label>
-              <p className="mt-1 text-sm text-gray-900">{new Date(candidate.createdAt).toLocaleDateString()}</p>
+              <label className="block text-sm font-medium text-gray-700">
+                Application Date
+              </label>
+              <p className="mt-1 text-sm text-gray-900">
+                {new Date(candidate.createdAt).toLocaleDateString()}
+              </p>
             </div>
-            
+
             {candidate.resume && (
               <div>
-                <label className="block text-sm font-medium text-gray-700">Resume</label>
-                <a 
-                  href={candidate.resume} 
-                  target="_blank" 
+                <label className="block text-sm font-medium text-gray-700">
+                  Resume
+                </label>
+                <a
+                  href={candidate.resume}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="mt-1 text-sm text-blue-600 hover:text-blue-500"
                 >
@@ -156,7 +215,7 @@ const ProfileModal = ({ candidate, isOpen, onClose }: ProfileModalProps) => {
               </div>
             )}
           </div>
-          
+
           <div className="mt-6 flex justify-end space-x-3">
             <button
               onClick={onClose}
@@ -175,10 +234,14 @@ export default function AdminCandidatesPage() {
   const [filter, setFilter] = useState<
     "all" | "approved" | "pending" | "active"
   >("all");
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
+    null
+  );
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
+  const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(
+    null
+  );
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Use TanStack Query hooks
@@ -354,17 +417,19 @@ export default function AdminCandidatesPage() {
     const handleClickOutside = (event: MouseEvent) => {
       if (activeDropdown) {
         const target = event.target as Element;
-        const dropdownElement = document.querySelector(`[data-dropdown-id="${activeDropdown}"]`);
-        
+        const dropdownElement = document.querySelector(
+          `[data-dropdown-id="${activeDropdown}"]`
+        );
+
         if (dropdownElement && !dropdownElement.contains(target)) {
           setActiveDropdown(null);
         }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [activeDropdown]);
 
@@ -445,7 +510,11 @@ export default function AdminCandidatesPage() {
                   }`}
                 >
                   Selected (
-                  {candidates.filter((c: Candidate) => c.status === "selected").length})
+                  {
+                    candidates.filter((c: Candidate) => c.status === "selected")
+                      .length
+                  }
+                  )
                 </button>
                 <button
                   onClick={() => setFilter("active")}
@@ -539,7 +608,7 @@ export default function AdminCandidatesPage() {
                     </p>
                     <p className="text-4xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
                       {
-                        candidates.filter((c) =>
+                        candidates.filter((c: Candidate) =>
                           [
                             "shortlist",
                             "assessment",
@@ -579,7 +648,11 @@ export default function AdminCandidatesPage() {
                       Selected
                     </p>
                     <p className="text-4xl font-bold bg-gradient-to-r from-emerald-500 to-green-600 bg-clip-text text-transparent">
-                      {candidates.filter((c) => c.status === "selected").length}
+                      {
+                        candidates.filter(
+                          (c: Candidate) => c.status === "selected"
+                        ).length
+                      }
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Hired candidates
@@ -612,7 +685,7 @@ export default function AdminCandidatesPage() {
                     <p className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-cyan-600 bg-clip-text text-transparent">
                       {
                         candidates.filter(
-                          (c) =>
+                          (c: Candidate) =>
                             c.status === "selected" ||
                             c.status === "background_check"
                         ).length
@@ -691,200 +764,41 @@ export default function AdminCandidatesPage() {
                     </p>
                   </div>
                 ) : (
-                                            filteredCandidates.map((candidate: Candidate, index: number) => (
-                    <div
-                      key={candidate._id}
-                      className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:border-purple-200 transition-all duration-300 transform hover:-translate-y-1"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          {/* Header Section */}
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-md">
-                                <span className="text-lg font-bold text-white">
-                                  {candidate.name.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div>
-                                <h3 className="text-xl font-bold text-gray-900">
-                                  {candidate.name}
-                                </h3>
-                                <p className="text-gray-600 text-sm">
-                                  {candidate.email} • {candidate.phone}
-                                </p>
-                              </div>
-                            </div>
-                            {getStatusBadge(candidate)}
-                          </div>
-
-                          {/* Compact Information Grid */}
-                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-                            {/* Personal Info */}
-                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-                              <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center">
-                                <svg
-                                  className="w-4 h-4 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                  />
-                                </svg>
-                                Personal
-                              </h4>
-                              <div className="space-y-1 text-xs">
-                                <div>
-                                  <span className="font-medium">DOB:</span>{" "}
-                                  {new Date(
-                                    candidate.dateOfBirth
-                                  ).toLocaleDateString()}
+                  filteredCandidates.map(
+                    (candidate: Candidate, index: number) => (
+                      <div
+                        key={candidate._id}
+                        className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:border-purple-200 transition-all duration-300 transform hover:-translate-y-1"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            {/* Header Section */}
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-md">
+                                  <span className="text-lg font-bold text-white">
+                                    {candidate.name.charAt(0).toUpperCase()}
+                                  </span>
                                 </div>
                                 <div>
-                                  <span className="font-medium">Gender:</span>{" "}
-                                  {candidate.gender?.charAt(0).toUpperCase() +
-                                    candidate.gender?.slice(1)}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Address:</span>{" "}
-                                  {candidate.address}
+                                  <h3 className="text-xl font-bold text-gray-900">
+                                    {candidate.name}
+                                  </h3>
+                                  <p className="text-gray-600 text-sm">
+                                    {candidate.email} • {candidate.phone}
+                                  </p>
                                 </div>
                               </div>
+                              {getStatusBadge(candidate)}
                             </div>
 
-                            {/* Job Info */}
-                            <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100">
-                              <h4 className="text-sm font-semibold text-emerald-800 mb-2 flex items-center">
-                                <svg
-                                  className="w-4 h-4 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 00-2 2H10a2 2 0 00-2-2V6m8 0h2a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h2"
-                                  />
-                                </svg>
-                                Application
-                              </h4>
-                              <div className="space-y-1 text-xs">
-                                <div>
-                                  <span className="font-medium">Position:</span>{" "}
-                                  {candidate.job?.title}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Company:</span>{" "}
-                                  {candidate.job?.employer?.companyName}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Partner:</span>{" "}
-                                  {candidate.recruitmentPartner?.name}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Experience */}
-                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
-                              <h4 className="text-sm font-semibold text-purple-800 mb-2 flex items-center">
-                                <svg
-                                  className="w-4 h-4 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                                  />
-                                </svg>
-                                Experience
-                              </h4>
-                              <div className="grid grid-cols-2 gap-1 text-xs">
-                                <div className="flex items-center">
-                                  <div
-                                    className={`w-2 h-2 rounded-full mr-1 ${
-                                      candidate.hasPreviousExperienceWithStateFarm
-                                        ? "bg-green-500"
-                                        : "bg-gray-300"
-                                    }`}
-                                  ></div>
-                                  <span>State Farm</span>
-                                </div>
-                                <div className="flex items-center">
-                                  <div
-                                    className={`w-2 h-2 rounded-full mr-1 ${
-                                      candidate.hasPreviousInsuranceExperience
-                                        ? "bg-green-500"
-                                        : "bg-gray-300"
-                                    }`}
-                                  ></div>
-                                  <span>Insurance</span>
-                                </div>
-                                <div className="flex items-center">
-                                  <div
-                                    className={`w-2 h-2 rounded-full mr-1 ${
-                                      candidate.isLicensedWithStateFarmTraining
-                                        ? "bg-green-500"
-                                        : "bg-gray-300"
-                                    }`}
-                                  ></div>
-                                  <span>SF Training</span>
-                                </div>
-                                <div className="flex items-center">
-                                  <div
-                                    className={`w-2 h-2 rounded-full mr-1 ${
-                                      candidate.isLicensedWithBankingExperience
-                                        ? "bg-green-500"
-                                        : "bg-gray-300"
-                                    }`}
-                                  ></div>
-                                  <span>Banking</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Languages & Resume Row */}
-                          <div className="flex flex-wrap justify-between items-center">
-                            <div className="flex flex-wrap gap-2 items-center">
-                              <span className="text-sm font-medium text-gray-700">
-                                Languages:
-                              </span>
-                              {candidate.languages?.map((language, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm"
-                                >
-                                  {language}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="flex items-center space-x-3 mt-2 lg:mt-0">
-                              <span className="text-xs text-gray-500">
-                                Applied:{" "}
-                                {new Date(
-                                  candidate.createdAt
-                                ).toLocaleDateString()}
-                              </span>
-                              {candidate.resume && (
-                                <a
-                                  href={candidate.resume}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-xs font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                                >
+                            {/* Compact Information Grid */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                              {/* Personal Info */}
+                              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+                                <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center">
                                   <svg
-                                    className="w-3 h-3 mr-1"
+                                    className="w-4 h-4 mr-1"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -893,125 +807,358 @@ export default function AdminCandidatesPage() {
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
                                       strokeWidth={2}
-                                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                                     />
                                   </svg>
-                                  Resume
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Compact Action Buttons */}
-                        <div className="ml-6 flex flex-col space-y-2">
-                          <div className="relative" data-dropdown-id={candidate._id}>
-                            <button
-                              onClick={() => setActiveDropdown(activeDropdown === candidate._id ? null : candidate._id)}
-                              className="text-gray-400 hover:text-gray-600 p-2 rounded hover:bg-gray-50 transition-colors"
-                              title="Actions"
-                            >
-                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                              </svg>
-                            </button>
-                            
-                            {activeDropdown === candidate._id && (
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                                <div className="py-1">
-                                  <button
-                                    onClick={() => {
-                                      handleViewProfile(candidate);
-                                      setActiveDropdown(null);
-                                    }}
-                                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                  >
-                                    <svg className="w-4 h-4 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    View Profile
-                                  </button>
-                                  
-                                  <button
-                                    onClick={() => {
-                                      handleEditCandidate(candidate);
-                                      setActiveDropdown(null);
-                                    }}
-                                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                  >
-                                    <svg className="w-4 h-4 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                    Edit Profile
-                                  </button>
-                                  
-                                  {candidate.status !== "selected" && candidate.status !== "rejected" && (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          handleSelectCandidate(candidate._id);
-                                          setActiveDropdown(null);
-                                        }}
-                                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                      >
-                                        <svg className="w-4 h-4 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Select
-                                      </button>
-                                      
-                                      <button
-                                        onClick={() => {
-                                          handleRejectCandidate(candidate._id);
-                                          setActiveDropdown(null);
-                                        }}
-                                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                      >
-                                        <svg className="w-4 h-4 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        Reject
-                                      </button>
-                                    </>
-                                  )}
+                                  Personal
+                                </h4>
+                                <div className="space-y-1 text-xs">
+                                  <div>
+                                    <span className="font-medium">DOB:</span>{" "}
+                                    {new Date(
+                                      candidate.dateOfBirth
+                                    ).toLocaleDateString()}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Gender:</span>{" "}
+                                    {candidate.gender?.charAt(0).toUpperCase() +
+                                      candidate.gender?.slice(1)}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">
+                                      Address:
+                                    </span>{" "}
+                                    {candidate.address}
+                                  </div>
                                 </div>
                               </div>
+
+                              {/* Job Info */}
+                              <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100">
+                                <h4 className="text-sm font-semibold text-emerald-800 mb-2 flex items-center">
+                                  <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 00-2 2H10a2 2 0 00-2-2V6m8 0h2a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h2"
+                                    />
+                                  </svg>
+                                  Application
+                                </h4>
+                                <div className="space-y-1 text-xs">
+                                  <div>
+                                    <span className="font-medium">
+                                      Position:
+                                    </span>{" "}
+                                    {candidate.job?.title}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">
+                                      Company:
+                                    </span>{" "}
+                                    {candidate.job?.employer?.companyName}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">
+                                      Partner:
+                                    </span>{" "}
+                                    {candidate.recruitmentPartner?.name}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Experience */}
+                              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+                                <h4 className="text-sm font-semibold text-purple-800 mb-2 flex items-center">
+                                  <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                                    />
+                                  </svg>
+                                  Experience
+                                </h4>
+                                <div className="grid grid-cols-2 gap-1 text-xs">
+                                  <div className="flex items-center">
+                                    <div
+                                      className={`w-2 h-2 rounded-full mr-1 ${
+                                        candidate.hasPreviousExperienceWithStateFarm
+                                          ? "bg-green-500"
+                                          : "bg-gray-300"
+                                      }`}
+                                    ></div>
+                                    <span>State Farm</span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div
+                                      className={`w-2 h-2 rounded-full mr-1 ${
+                                        candidate.hasPreviousInsuranceExperience
+                                          ? "bg-green-500"
+                                          : "bg-gray-300"
+                                      }`}
+                                    ></div>
+                                    <span>Insurance</span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div
+                                      className={`w-2 h-2 rounded-full mr-1 ${
+                                        candidate.isLicensedWithStateFarmTraining
+                                          ? "bg-green-500"
+                                          : "bg-gray-300"
+                                      }`}
+                                    ></div>
+                                    <span>SF Training</span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div
+                                      className={`w-2 h-2 rounded-full mr-1 ${
+                                        candidate.isLicensedWithBankingExperience
+                                          ? "bg-green-500"
+                                          : "bg-gray-300"
+                                      }`}
+                                    ></div>
+                                    <span>Banking</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Languages & Resume Row */}
+                            <div className="flex flex-wrap justify-between items-center">
+                              <div className="flex flex-wrap gap-2 items-center">
+                                <span className="text-sm font-medium text-gray-700">
+                                  Languages:
+                                </span>
+                                {candidate.languages?.map((language, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm"
+                                  >
+                                    {language}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="flex items-center space-x-3 mt-2 lg:mt-0">
+                                <span className="text-xs text-gray-500">
+                                  Applied:{" "}
+                                  {new Date(
+                                    candidate.createdAt
+                                  ).toLocaleDateString()}
+                                </span>
+                                {candidate.resume && (
+                                  <a
+                                    href={candidate.resume}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-xs font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                                  >
+                                    <svg
+                                      className="w-3 h-3 mr-1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                      />
+                                    </svg>
+                                    Resume
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Compact Action Buttons */}
+                          <div className="ml-6 flex flex-col space-y-2">
+                            <div
+                              className="relative"
+                              data-dropdown-id={candidate._id}
+                            >
+                              <button
+                                onClick={() =>
+                                  setActiveDropdown(
+                                    activeDropdown === candidate._id
+                                      ? null
+                                      : candidate._id
+                                  )
+                                }
+                                className="text-gray-400 hover:text-gray-600 p-2 rounded hover:bg-gray-50 transition-colors"
+                                title="Actions"
+                              >
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                              </button>
+
+                              {activeDropdown === candidate._id && (
+                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                                  <div className="py-1">
+                                    <button
+                                      onClick={() => {
+                                        handleViewProfile(candidate);
+                                        setActiveDropdown(null);
+                                      }}
+                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                    >
+                                      <svg
+                                        className="w-4 h-4 mr-3 text-green-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                        />
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                        />
+                                      </svg>
+                                      View Profile
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        handleEditCandidate(candidate);
+                                        setActiveDropdown(null);
+                                      }}
+                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                    >
+                                      <svg
+                                        className="w-4 h-4 mr-3 text-blue-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                        />
+                                      </svg>
+                                      Edit Profile
+                                    </button>
+
+                                    {candidate.status !== "selected" &&
+                                      candidate.status !== "rejected" && (
+                                        <>
+                                          <button
+                                            onClick={() => {
+                                              handleSelectCandidate(
+                                                candidate._id
+                                              );
+                                              setActiveDropdown(null);
+                                            }}
+                                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                          >
+                                            <svg
+                                              className="w-4 h-4 mr-3 text-green-500"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M5 13l4 4L19 7"
+                                              />
+                                            </svg>
+                                            Select
+                                          </button>
+
+                                          <button
+                                            onClick={() => {
+                                              handleRejectCandidate(
+                                                candidate._id
+                                              );
+                                              setActiveDropdown(null);
+                                            }}
+                                            className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                          >
+                                            <svg
+                                              className="w-4 h-4 mr-3 text-red-500"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M6 18L18 6M6 6l12 12"
+                                              />
+                                            </svg>
+                                            Reject
+                                          </button>
+                                        </>
+                                      )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {(candidate.status === "selected" ||
+                              candidate.status === "rejected") && (
+                              <select
+                                value={candidate.status}
+                                onChange={(e) =>
+                                  handleUpdateStatus(
+                                    candidate._id,
+                                    e.target.value
+                                  )
+                                }
+                                className="px-3 py-2 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-purple-500 bg-white shadow-md text-xs font-semibold text-gray-700 hover:border-purple-400 transition-all duration-300"
+                              >
+                                <option value="shortlist">Shortlist</option>
+                                <option value="assessment">Assessment</option>
+                                <option value="phone_interview">
+                                  Phone Interview
+                                </option>
+                                <option value="in_person_interview">
+                                  In-Person Interview
+                                </option>
+                                <option value="background_check">
+                                  Background Check
+                                </option>
+                                <option value="selected">Selected</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="stand_by">Stand By</option>
+                                <option value="no_response">No Response</option>
+                              </select>
                             )}
                           </div>
-                          
-                          {(candidate.status === "selected" || candidate.status === "rejected") && (
-                            <select
-                              value={candidate.status}
-                              onChange={(e) =>
-                                handleUpdateStatus(
-                                  candidate._id,
-                                  e.target.value
-                                )
-                              }
-                              className="px-3 py-2 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-purple-500 bg-white shadow-md text-xs font-semibold text-gray-700 hover:border-purple-400 transition-all duration-300"
-                            >
-                              <option value="shortlist">Shortlist</option>
-                              <option value="assessment">Assessment</option>
-                              <option value="phone_interview">
-                                Phone Interview
-                              </option>
-                              <option value="in_person_interview">
-                                In-Person Interview
-                              </option>
-                              <option value="background_check">
-                                Background Check
-                              </option>
-                              <option value="selected">Selected</option>
-                              <option value="rejected">Rejected</option>
-                              <option value="stand_by">Stand By</option>
-                              <option value="no_response">No Response</option>
-                            </select>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  ))
+                    )
+                  )
                 )}
               </div>
             </div>

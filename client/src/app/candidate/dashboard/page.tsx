@@ -139,8 +139,10 @@ export default function CandidateDashboard() {
 
   const getProfileCompletionMessage = (percentage: number) => {
     if (percentage >= 90) return "Excellent! Your profile is almost complete.";
-    if (percentage >= 70) return "Good profile strength. Add more details to stand out.";
-    if (percentage >= 50) return "Your profile needs more information to attract employers.";
+    if (percentage >= 70)
+      return "Good profile strength. Add more details to stand out.";
+    if (percentage >= 50)
+      return "Your profile needs more information to attract employers.";
     return "Complete your profile to increase your chances of being discovered.";
   };
 
@@ -186,6 +188,7 @@ export default function CandidateDashboard() {
       </ProtectedRoute>
     );
   }
+  console.log("xcvxcbxvb", currentUser?.profilePicture);
 
   return (
     <ProtectedRoute allowedRoles={["candidate", "recruitment_partner"]}>
@@ -198,10 +201,15 @@ export default function CandidateDashboard() {
               <div className="flex flex-col md:flex-row items-center justify-between">
                 <div className="text-center md:text-left mb-6 md:mb-0">
                   <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                    Welcome back, {profileData?.profile?.personalInfo?.firstName || 'Candidate'}! 👋
+                    Welcome back,{" "}
+                    {profileData?.profile?.personalInfo?.firstName ||
+                      "Candidate"}
+                    ! 👋
                   </h1>
                   <p className="text-lg text-white/90 mb-4">
-                    {getProfileCompletionMessage(dashboardStats.profileCompletion)}
+                    {getProfileCompletionMessage(
+                      dashboardStats.profileCompletion
+                    )}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
@@ -220,23 +228,28 @@ export default function CandidateDashboard() {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Profile Picture */}
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
                     <img
-                      src={profileData?.profile?.personalInfo?.avatarUrl || "https://res.cloudinary.com/dbeii9aot/image/upload/v1752680789/profile-pictures/zcay0rbjehnqpvwyesfn.png"}
+                      src={
+                        currentUser?.profilePicture?.cloudinaryUrl ||
+                        profileData?.profile?.personalInfo?.avatarUrl ||
+                        "https://res.cloudinary.com/dbeii9aot/image/upload/v1752680789/profile-pictures/zcay0rbjehnqpvwyesfn.png"
+                      }
                       alt="Profile"
                       className="w-28 h-28 rounded-full object-cover border-4 border-white/30"
                       onError={(e) => {
-                        e.currentTarget.src = "https://res.cloudinary.com/dbeii9aot/image/upload/v1752680789/profile-pictures/zcay0rbjehnqpvwyesfn.png";
+                        e.currentTarget.src =
+                          "https://res.cloudinary.com/dbeii9aot/image/upload/v1752680789/profile-pictures/zcay0rbjehnqpvwyesfn.png";
                       }}
                     />
                   </div>
                 </div>
               </div>
             </div>
-            
+
             {/* Decorative Elements */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-lg"></div>
@@ -275,7 +288,9 @@ export default function CandidateDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   My Applications
                 </h3>
-                <p className="text-gray-600 text-sm">Track application status</p>
+                <p className="text-gray-600 text-sm">
+                  Track application status
+                </p>
                 <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-600 transition-colors mt-2 mx-auto" />
               </div>
             </button>
@@ -341,7 +356,9 @@ export default function CandidateDashboard() {
                   </div>
                 </div>
                 <div className="text-sm text-gray-600">
-                  {getProfileCompletionMessage(dashboardStats.profileCompletion)}
+                  {getProfileCompletionMessage(
+                    dashboardStats.profileCompletion
+                  )}
                 </div>
                 {dashboardStats.profileCompletion < 100 && (
                   <button
@@ -509,7 +526,7 @@ export default function CandidateDashboard() {
               </div>
 
               {/* Recent Activity */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              {/* <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Recent Activity
                 </h3>
@@ -550,7 +567,7 @@ export default function CandidateDashboard() {
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Career Tips */}
               <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 border border-green-100">

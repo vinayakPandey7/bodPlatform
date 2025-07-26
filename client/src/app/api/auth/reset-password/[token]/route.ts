@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
     const body = await req.json();
-    const { token } = params;
+    const { token } = await params;
 
     // Forward request to backend
     const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";

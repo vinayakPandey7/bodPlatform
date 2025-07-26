@@ -13,12 +13,12 @@ interface DashboardStats {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  
+
   // Use TanStack Query hook
-  const { 
-    data: dashboardData, 
-    isLoading: loading, 
-    error 
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    error,
   } = useAdminDashboard();
 
   const stats = dashboardData || {
@@ -27,14 +27,6 @@ export default function AdminDashboard() {
     totalJobs: 0,
     totalCandidates: 0,
   };
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
 
   const handleManageEmployers = () => {
     router.push("/admin/employers");

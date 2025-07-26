@@ -42,34 +42,6 @@ export default function AdminNotificationsPage() {
   const deleteNotificationMutation = useDeleteNotification();
 
   const notifications = notificationsData?.data || [];
-            id: "admin1",
-            email: "admin@ciero.com",
-            role: "admin",
-          },
-          isRead: false,
-          createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          _id: "5",
-          title: "New Recruitment Partner",
-          message:
-            "Elite Talent Solutions has successfully registered and been approved.",
-          type: "success",
-          recipient: {
-            id: "admin1",
-            email: "admin@ciero.com",
-            role: "admin",
-          },
-          isRead: true,
-          createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {

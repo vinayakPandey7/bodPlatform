@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -73,6 +73,14 @@ interface Job {
 }
 
 export default function CandidateJobsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CandidateJobsPageContent />
+    </Suspense>
+  );
+}
+
+function CandidateJobsPageContent() {
   const { data: currentUserData } = useCurrentUser();
   const currentUser = currentUserData?.user;
   const searchParams = useSearchParams();

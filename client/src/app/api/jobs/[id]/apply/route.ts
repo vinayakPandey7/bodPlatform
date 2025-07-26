@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.API_URL || "http://localhost:5000/api";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -17,7 +17,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const jobId = params.id;
+    const { id: jobId } = await params;
 
     const response = await fetch(`${API_BASE_URL}/jobs/${jobId}/apply`, {
       method: "POST",

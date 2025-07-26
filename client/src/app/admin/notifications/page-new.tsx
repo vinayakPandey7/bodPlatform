@@ -9,7 +9,7 @@ import {
   useDeleteNotification,
 } from "@/lib/queries";
 
-interface Notification {
+interface NotificationData {
   _id: string;
   title: string;
   message: string;
@@ -41,7 +41,8 @@ export default function AdminNotificationsPage() {
   const markAllAsReadMutation = useMarkAllNotificationsAsRead();
   const deleteNotificationMutation = useDeleteNotification();
 
-  const notifications = notificationsData?.data || [];
+  const notifications = (notificationsData?.data ||
+    []) as unknown as NotificationData[];
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
@@ -68,7 +69,7 @@ export default function AdminNotificationsPage() {
   };
 
   const filteredNotifications = notifications.filter(
-    (notification: Notification) => {
+    (notification: NotificationData) => {
       const statusMatch =
         filter === "all" ||
         (filter === "read" && notification.isRead) ||
@@ -81,7 +82,7 @@ export default function AdminNotificationsPage() {
     }
   );
 
-  const getNotificationIcon = (type: Notification["type"]) => {
+  const getNotificationIcon = (type: NotificationData["type"]) => {
     switch (type) {
       case "info":
         return (
@@ -224,7 +225,7 @@ export default function AdminNotificationsPage() {
                 <p className="text-gray-500">No notifications found</p>
               </div>
             ) : (
-              filteredNotifications.map((notification: Notification) => (
+              filteredNotifications.map((notification: NotificationData) => (
                 <div
                   key={notification._id}
                   className={`border rounded-lg p-4 ${
