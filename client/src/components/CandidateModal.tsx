@@ -246,33 +246,62 @@ export default function CandidateModal({
 
     setLinkedInLoading(true);
     try {
-      // Simulate LinkedIn data import (replace with actual API call)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      // Mock data - replace with actual LinkedIn API integration
-      const mockLinkedInData = {
-        name: "John Doe",
-        currentPosition: "Senior Developer",
-        currentCompany: "Tech Corp",
-        experience: "5+ years in software development",
-        skills: ["React", "Node.js", "TypeScript", "Python"],
-        education: "Bachelor's in Computer Science",
+      // Validate LinkedIn URL format
+      const linkedInUrlPattern =
+        /^https?:\/\/(www\.)?linkedin\.com\/in\/([a-zA-Z0-9\-]+)\/?(\?.*)?$/;
+      const match = formData.linkedIn.match(linkedInUrlPattern);
+
+      if (!match) {
+        throw new Error(
+          "Invalid LinkedIn URL format. Please use a valid LinkedIn profile URL (e.g., https://linkedin.com/in/username)"
+        );
+      }
+
+      const username = match[2];
+
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Extract name from username (basic parsing)
+      const nameFromUsername = username
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase())
+        .replace(/\d+/g, "") // Remove numbers
+        .trim();
+
+      // Create placeholder data based on the LinkedIn URL
+      const placeholderData = {
+        name: nameFromUsername || "LinkedIn User",
+        currentPosition: "Position not available - Please update manually",
+        currentCompany: "Company not available - Please update manually",
+        experience: "Experience details not available - Please update manually",
+        skills: [], // Empty skills array to be filled manually
+        education: "Education details not available - Please update manually",
       };
 
       setFormData((prev) => ({
         ...prev,
-        name: mockLinkedInData.name,
-        currentPosition: mockLinkedInData.currentPosition,
-        currentCompany: mockLinkedInData.currentCompany,
-        experience: mockLinkedInData.experience,
-        skills: mockLinkedInData.skills,
-        education: mockLinkedInData.education,
+        name: placeholderData.name,
+        currentPosition: placeholderData.currentPosition,
+        currentCompany: placeholderData.currentCompany,
+        experience: placeholderData.experience,
+        skills: placeholderData.skills,
+        education: placeholderData.education,
       }));
 
-      toast.success("LinkedIn data imported successfully!");
+      toast.success(
+        `LinkedIn URL processed! Extracted name: "${nameFromUsername}". Please verify and complete the remaining information manually.`
+      );
+      toast.info(
+        "Note: Full LinkedIn integration requires LinkedIn API access. Currently showing placeholder data."
+      );
     } catch (error) {
       console.error("LinkedIn import error:", error);
-      toast.error("Failed to import LinkedIn data");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to process LinkedIn URL"
+      );
     } finally {
       setLinkedInLoading(false);
     }
@@ -298,7 +327,7 @@ export default function CandidateModal({
 
     try {
       const formDataToSend = new FormData();
-      
+
       // Append all form fields
       Object.keys(formData).forEach((key) => {
         if (key === "resume" && formData.resume) {
@@ -312,11 +341,15 @@ export default function CandidateModal({
 
       if (candidate) {
         // Edit existing candidate
-        await api.put(`/recruitment-partner/candidates/${candidate._id}`, formDataToSend, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+        await api.put(
+          `/recruitment-partner/candidates/${candidate._id}`,
+          formDataToSend,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
         toast.success("Candidate updated successfully!");
       } else {
         // Add new candidate
@@ -378,8 +411,18 @@ export default function CandidateModal({
 
           <Box sx={{ display: "grid", gap: 3 }}>
             {/* LinkedIn Import Section */}
-            <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2, border: "1px solid #e2e8f0" }}>
-              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: "#374151" }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: "#f8fafc",
+                borderRadius: 2,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{ mb: 2, fontWeight: 600, color: "#374151" }}
+              >
                 LinkedIn Import (Optional)
               </Typography>
               <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
@@ -405,7 +448,13 @@ export default function CandidateModal({
                   disabled={!formData.linkedIn || linkedInLoading}
                   variant="outlined"
                   size="small"
-                  startIcon={linkedInLoading ? <CircularProgress size={16} /> : <LinkedInIcon />}
+                  startIcon={
+                    linkedInLoading ? (
+                      <CircularProgress size={16} />
+                    ) : (
+                      <LinkedInIcon />
+                    )
+                  }
                   sx={{ minWidth: "auto", px: 2 }}
                 >
                   {linkedInLoading ? "Importing..." : "Import"}
@@ -426,8 +475,10 @@ export default function CandidateModal({
             <Typography variant="h6" sx={{ fontWeight: 600, color: "#374151" }}>
               Basic Information
             </Typography>
-            
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 label="Full Name *"
                 name="name"
@@ -465,7 +516,9 @@ export default function CandidateModal({
               />
             </Box>
 
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 label="Phone *"
                 name="phone"
@@ -503,8 +556,18 @@ export default function CandidateModal({
             </Box>
 
             {/* Resume Upload */}
-            <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2, border: "1px solid #e2e8f0" }}>
-              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: "#374151" }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: "#f8fafc",
+                borderRadius: 2,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{ mb: 2, fontWeight: 600, color: "#374151" }}
+              >
                 Resume Upload
               </Typography>
               <input
@@ -545,7 +608,9 @@ export default function CandidateModal({
               Professional Information
             </Typography>
 
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 label="Current Position"
                 name="currentPosition"
@@ -580,7 +645,9 @@ export default function CandidateModal({
               />
             </Box>
 
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 label="Years of Experience"
                 name="experience"
@@ -617,7 +684,9 @@ export default function CandidateModal({
               />
             </Box>
 
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 label="Notice Period"
                 name="noticePeriod"
@@ -692,7 +761,11 @@ export default function CandidateModal({
                 pattern: "\\d{5}",
               }}
               error={!!error && error.includes("zipcode")}
-              helperText={error && error.includes("zipcode") ? error : "Enter a 5-digit US zipcode. City and state will be auto-populated."}
+              helperText={
+                error && error.includes("zipcode")
+                  ? error
+                  : "Enter a 5-digit US zipcode. City and state will be auto-populated."
+              }
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
@@ -702,7 +775,9 @@ export default function CandidateModal({
               }}
             />
 
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 label="City"
                 name="city"
@@ -800,10 +875,14 @@ export default function CandidateModal({
               "&:hover": { bgcolor: "#2563eb" },
             }}
           >
-            {loading ? "Saving..." : candidate ? "Update Candidate" : "Add Candidate"}
+            {loading
+              ? "Saving..."
+              : candidate
+              ? "Update Candidate"
+              : "Add Candidate"}
           </Button>
         </DialogActions>
       </form>
     </Dialog>
   );
-} 
+}

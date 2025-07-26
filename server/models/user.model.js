@@ -309,6 +309,14 @@ const userSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
+
+  // Track which recruitment partner added this candidate (if applicable)
+  addedByRecruitmentPartner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "RecruitmentPartner",
+    sparse: true,
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,

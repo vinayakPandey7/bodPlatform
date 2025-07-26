@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CandidateModal from "@/components/CandidateModal";
+import ResumePreviewModal from "@/components/ResumePreviewModal";
 import api from "@/lib/api";
 
 interface Candidate {
@@ -12,6 +13,17 @@ interface Candidate {
   phone: string;
   status: string;
   resume: string;
+  resumeUrl?: string;
+  resumeData?: {
+    fileName: string;
+    originalName: string;
+    url: string;
+    uploadDate: string;
+    fileSize: string;
+    cloudinaryUrl?: string;
+    cloudinaryPublicId?: string;
+    storageType?: string;
+  };
   job: {
     _id: string;
     title: string;
@@ -22,11 +34,16 @@ interface Candidate {
 }
 
 export default function RecruitmentPartnerCandidatesPage() {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
+    null
+  );
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [currentResumeUrl, setCurrentResumeUrl] = useState("");
+  const [currentCandidateName, setCurrentCandidateName] = useState("");
 
   useEffect(() => {
     fetchCandidates();
@@ -34,7 +51,7 @@ export default function RecruitmentPartnerCandidatesPage() {
 
   const fetchCandidates = async () => {
     try {
-      const response = await api.get("/admin/candidates");
+      const response = await api.get("/recruitment-partner/candidates");
       setCandidates(response.data.candidates || []);
     } catch (error: any) {
       setError("Failed to fetch candidates");
@@ -60,6 +77,53 @@ export default function RecruitmentPartnerCandidatesPage() {
 
   const handleModalSuccess = () => {
     fetchCandidates(); // Refresh the candidates list
+  };
+
+  const previewResume = (candidate: Candidate) => {
+    console.log("previewResume called with candidate:", candidate);
+    console.log("candidate.resumeData:", candidate.resumeData);
+    console.log("candidate.resumeUrl:", candidate.resumeUrl);
+    console.log("candidate.resume:", candidate.resume);
+
+    // Priority order: cloudinaryUrl > url > local file path
+    const resumeUrl =
+      candidate.resumeData?.cloudinaryUrl ||
+      candidate.resumeData?.url ||
+      candidate.resumeUrl ||
+      (candidate.resume ? `/api/uploads/resumes/${candidate.resume}` : null);
+
+    console.log("Final resumeUrl:", resumeUrl);
+
+    if (resumeUrl) {
+      setCurrentResumeUrl(resumeUrl);
+      setCurrentCandidateName(candidate.name);
+      setShowResumeModal(true);
+    } else {
+      console.error("No resume URL available for candidate:", candidate);
+    }
+  };
+
+  const downloadResume = (candidate: Candidate) => {
+    // Priority order: cloudinaryUrl > url > local file path
+    const resumeUrl =
+      candidate.resumeData?.cloudinaryUrl ||
+      candidate.resumeData?.url ||
+      candidate.resumeUrl ||
+      (candidate.resume ? `/api/uploads/resumes/${candidate.resume}` : null);
+    const fileName =
+      candidate.resumeData?.originalName || `${candidate.name}-resume.pdf`;
+
+    if (resumeUrl) {
+      const link = document.createElement("a");
+      link.href = resumeUrl;
+      link.download = fileName;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      console.error("No resume URL available for download:", candidate);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -95,6 +159,8 @@ export default function RecruitmentPartnerCandidatesPage() {
       </ProtectedRoute>
     );
   }
+
+  console.log("cbcvb", candidates[0]?.resumeData);
 
   return (
     <ProtectedRoute allowedRoles={["recruitment_partner"]}>
@@ -271,17 +337,25 @@ export default function RecruitmentPartnerCandidatesPage() {
                   </div>
 
                   <div className="flex space-x-2">
-                    {candidate.resume && (
-                      <a
-                        href={`/api/uploads/${candidate.resume}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 bg-indigo-600 text-white text-sm py-2 px-3 rounded-md hover:bg-indigo-700 transition-colors text-center"
-                      >
-                        View Resume
-                      </a>
+                    {(candidate.resume ||
+                      candidate.resumeData ||
+                      candidate.resumeUrl) && (
+                      <>
+                        <button
+                          onClick={() => previewResume(candidate)}
+                          className="flex-1 bg-indigo-600 text-white text-sm py-2 px-3 rounded-md hover:bg-indigo-700 transition-colors text-center"
+                        >
+                          View Resume
+                        </button>
+                        <button
+                          onClick={() => downloadResume(candidate)}
+                          className="bg-green-600 text-white text-sm py-2 px-3 rounded-md hover:bg-green-700 transition-colors"
+                        >
+                          Download
+                        </button>
+                      </>
                     )}
-                    <button 
+                    <button
                       onClick={() => handleEditCandidate(candidate)}
                       className="bg-gray-600 text-white text-sm py-2 px-3 rounded-md hover:bg-gray-700 transition-colors"
                     >
@@ -300,6 +374,26 @@ export default function RecruitmentPartnerCandidatesPage() {
           onClose={handleModalClose}
           candidate={selectedCandidate}
           onSuccess={handleModalSuccess}
+        />
+
+        {/* Resume Preview Modal */}
+        <ResumePreviewModal
+          isOpen={showResumeModal}
+          onClose={() => setShowResumeModal(false)}
+          resumeUrl={currentResumeUrl}
+          candidateName={currentCandidateName}
+          onDownload={() => {
+            // Find the candidate with current resume URL and download
+            const candidate = candidates.find(
+              (c) =>
+                c.resumeData?.cloudinaryUrl === currentResumeUrl ||
+                c.resumeData?.url === currentResumeUrl ||
+                c.resumeUrl === currentResumeUrl
+            );
+            if (candidate) {
+              downloadResume(candidate);
+            }
+          }}
         />
       </DashboardLayout>
     </ProtectedRoute>

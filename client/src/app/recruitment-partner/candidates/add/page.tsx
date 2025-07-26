@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import api from "@/lib/api";
+import { toast } from "sonner";
 import {
   TextField,
   Select,
@@ -180,32 +181,69 @@ export default function AddCandidatePage() {
   };
 
   const handleLinkedInImport = async () => {
-    if (!formData.linkedIn) return;
-    
+    if (!formData.linkedIn) {
+      toast.error("Please enter a LinkedIn URL first");
+      return;
+    }
+
     setLinkedInLoading(true);
     try {
-      // This would be an API call to fetch LinkedIn data
-      // For now, we'll simulate the import
-      const mockLinkedInData = {
-        name: "John Doe",
-        currentCompany: "Tech Corp",
-        currentPosition: "Senior Developer",
-        skills: ["JavaScript", "React", "Node.js", "Python"],
-        experience: "5-8",
-        education: "Bachelor's in Computer Science from Tech University (2018)",
+      // Validate LinkedIn URL format
+      const linkedInUrlPattern =
+        /^https?:\/\/(www\.)?linkedin\.com\/in\/([a-zA-Z0-9\-]+)\/?(\?.*)?$/;
+      const match = formData.linkedIn.match(linkedInUrlPattern);
+
+      if (!match) {
+        throw new Error(
+          "Invalid LinkedIn URL format. Please use a valid LinkedIn profile URL (e.g., https://linkedin.com/in/username)"
+        );
+      }
+
+      const username = match[2];
+
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Extract name from username (basic parsing)
+      const nameFromUsername = username
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase())
+        .replace(/\d+/g, "") // Remove numbers
+        .trim();
+
+      // Create placeholder data based on the LinkedIn URL
+      const placeholderData = {
+        name: nameFromUsername || "LinkedIn User",
+        currentCompany: "Company not available - Please update manually",
+        currentPosition: "Position not available - Please update manually",
+        skills: [], // Empty skills array to be filled manually
+        experience: "Experience details not available - Please update manually",
+        education: "Education details not available - Please update manually",
       };
-      
+
       setFormData((prev) => ({
         ...prev,
-        name: mockLinkedInData.name,
-        currentCompany: mockLinkedInData.currentCompany,
-        currentPosition: mockLinkedInData.currentPosition,
-        skills: mockLinkedInData.skills,
-        experience: mockLinkedInData.experience,
-        education: mockLinkedInData.education,
+        name: placeholderData.name,
+        currentCompany: placeholderData.currentCompany,
+        currentPosition: placeholderData.currentPosition,
+        skills: placeholderData.skills,
+        experience: placeholderData.experience,
+        education: placeholderData.education,
       }));
+
+      toast.success(
+        `LinkedIn URL processed! Extracted name: "${nameFromUsername}". Please verify and complete the remaining information manually.`
+      );
+      toast.info(
+        "Note: Full LinkedIn integration requires LinkedIn API access. Currently showing placeholder data."
+      );
     } catch (error) {
       console.error("Error importing LinkedIn data:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to process LinkedIn URL"
+      );
     } finally {
       setLinkedInLoading(false);
     }
@@ -230,12 +268,12 @@ export default function AddCandidatePage() {
 
     try {
       const formDataToSend = new FormData();
-      
+
       // Append all form data
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'skills') {
+        if (key === "skills") {
           formDataToSend.append(key, JSON.stringify(value));
-        } else if (key === 'resume' && value) {
+        } else if (key === "resume" && value) {
           formDataToSend.append(key, value);
         } else if (value !== null && value !== undefined) {
           formDataToSend.append(key, value.toString());
@@ -244,7 +282,7 @@ export default function AddCandidatePage() {
 
       await api.post("/recruitment-partner/candidates", formDataToSend, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
       router.push("/recruitment-partner/candidates");
@@ -323,8 +361,12 @@ export default function AddCandidatePage() {
                   <ClearIcon />
                 </IconButton>
               </div>
-              <Typography variant="caption" className="text-blue-600 mt-2 block">
-                Import basic information from LinkedIn profile to auto-fill the form
+              <Typography
+                variant="caption"
+                className="text-blue-600 mt-2 block"
+              >
+                Import basic information from LinkedIn profile to auto-fill the
+                form
               </Typography>
             </Box>
 
@@ -429,7 +471,10 @@ export default function AddCandidatePage() {
 
               {/* Resume Upload */}
               <Box className="flex flex-col gap-2">
-                <Typography variant="body2" className="text-gray-700 font-medium">
+                <Typography
+                  variant="body2"
+                  className="text-gray-700 font-medium"
+                >
                   Resume Upload *
                 </Typography>
                 <input
@@ -487,7 +532,11 @@ export default function AddCandidatePage() {
                   pattern: "\\d{5}",
                 }}
                 error={!!error && error.includes("zipcode")}
-                helperText={error && error.includes("zipcode") ? error : "Enter a 5-digit US zipcode. City and state will be auto-populated."}
+                helperText={
+                  error && error.includes("zipcode")
+                    ? error
+                    : "Enter a 5-digit US zipcode. City and state will be auto-populated."
+                }
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "8px",
@@ -767,7 +816,9 @@ export default function AddCandidatePage() {
                   <MenuItem value="1 month">1 month</MenuItem>
                   <MenuItem value="2 months">2 months</MenuItem>
                   <MenuItem value="3 months">3 months</MenuItem>
-                  <MenuItem value="More than 3 months">More than 3 months</MenuItem>
+                  <MenuItem value="More than 3 months">
+                    More than 3 months
+                  </MenuItem>
                 </Select>
               </FormControl>
 

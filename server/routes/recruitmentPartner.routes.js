@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const recruitmentPartnerController = require("../controllers/recruitmentPartner.controller");
 const { auth, authorizeRoles } = require("../middlewares/auth.middleware");
+const upload = require("../middlewares/upload.middleware");
+const { uploadToCloudinary } = require("../middlewares/cloudinary.middleware");
 
 // Recruitment partner routes
 router.get(
@@ -27,6 +29,34 @@ router.get(
   auth,
   authorizeRoles("recruitment_partner"),
   recruitmentPartnerController.getAppliedJobs
+);
+
+// Add candidate route
+router.post(
+  "/candidates",
+  auth,
+  authorizeRoles("recruitment_partner"),
+  (req, res, next) => {
+    uploadToCloudinary.single("resume")(req, res, (err) => {
+      if (err) {
+        console.error("Cloudinary upload error:", err);
+        return res.status(400).json({
+          message: "Resume upload failed",
+          error: err.message,
+        });
+      }
+      next();
+    });
+  },
+  recruitmentPartnerController.addCandidate
+);
+
+// Get candidates route
+router.get(
+  "/candidates",
+  auth,
+  authorizeRoles("recruitment_partner"),
+  recruitmentPartnerController.getCandidates
 );
 
 module.exports = router;

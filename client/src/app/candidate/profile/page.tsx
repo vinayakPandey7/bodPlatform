@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import ResumePreviewModal from "@/components/ResumePreviewModal";
 
 export default function CandidateProfilePage() {
   const router = useRouter();
@@ -79,8 +80,6 @@ export default function CandidateProfilePage() {
   const [editingEducation, setEditingEducation] = useState<string | null>(null);
   const [editingSkill, setEditingSkill] = useState<string | null>(null);
   const [showResumeModal, setShowResumeModal] = useState(false);
-  const [pdfViewError, setPdfViewError] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showProfilePicModal, setShowProfilePicModal] = useState(false);
   const [profilePicDragOver, setProfilePicDragOver] = useState(false);
@@ -127,10 +126,7 @@ export default function CandidateProfilePage() {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get("tab");
-      if (
-        tabParam &&
-        ["profile", "security", "help"].includes(tabParam)
-      ) {
+      if (tabParam && ["profile", "security", "help"].includes(tabParam)) {
         setActiveTab(tabParam);
       }
     }
@@ -224,7 +220,6 @@ export default function CandidateProfilePage() {
   };
 
   const handleViewResume = () => {
-    setPdfViewError(false);
     setShowResumeModal(true);
   };
 
@@ -1357,7 +1352,9 @@ export default function CandidateProfilePage() {
                                         setExperienceForm({
                                           ...experienceForm,
                                           current: e.target.checked,
-                                          endDate: e.target.checked ? "" : experienceForm.endDate,
+                                          endDate: e.target.checked
+                                            ? ""
+                                            : experienceForm.endDate,
                                         })
                                       }
                                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -1417,8 +1414,11 @@ export default function CandidateProfilePage() {
                                     {exp.company}
                                   </p>
                                   <p className="text-sm text-gray-600">
-                                    {exp.location} • {formatDate(exp.startDate)} -{" "}
-                                    {exp.current ? "Present" : formatDate(exp.endDate)}
+                                    {exp.location} • {formatDate(exp.startDate)}{" "}
+                                    -{" "}
+                                    {exp.current
+                                      ? "Present"
+                                      : formatDate(exp.endDate)}
                                   </p>
                                 </div>
                                 <div className="flex space-x-2">
@@ -1432,7 +1432,9 @@ export default function CandidateProfilePage() {
                                     <Edit className="h-4 w-4" />
                                   </button>
                                   <button
-                                    onClick={() => handleDeleteExperience(exp.id)}
+                                    onClick={() =>
+                                      handleDeleteExperience(exp.id)
+                                    }
                                     className="text-red-600 hover:text-red-700"
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -1544,7 +1546,9 @@ export default function CandidateProfilePage() {
                                       setExperienceForm({
                                         ...experienceForm,
                                         current: e.target.checked,
-                                        endDate: e.target.checked ? "" : experienceForm.endDate,
+                                        endDate: e.target.checked
+                                          ? ""
+                                          : experienceForm.endDate,
                                       })
                                     }
                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -1596,13 +1600,20 @@ export default function CandidateProfilePage() {
                         </div>
                       )}
 
-                      {(!profile.experience || profile.experience.length === 0) && editingExperience !== "new" && (
-                        <div className="text-center py-8 text-gray-500">
-                          <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                          <p className="text-lg font-medium mb-2">No work experience added yet</p>
-                          <p className="text-sm">Add your professional experience to showcase your career journey</p>
-                        </div>
-                      )}
+                      {(!profile.experience ||
+                        profile.experience.length === 0) &&
+                        editingExperience !== "new" && (
+                          <div className="text-center py-8 text-gray-500">
+                            <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <p className="text-lg font-medium mb-2">
+                              No work experience added yet
+                            </p>
+                            <p className="text-sm">
+                              Add your professional experience to showcase your
+                              career journey
+                            </p>
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -1786,9 +1797,12 @@ export default function CandidateProfilePage() {
                                     {edu.school}
                                   </p>
                                   <p className="text-sm text-gray-600">
-                                    {edu.location} • {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
+                                    {edu.location} • {formatDate(edu.startDate)}{" "}
+                                    - {formatDate(edu.endDate)}
                                     {edu.gpa && (
-                                      <span className="ml-2 font-medium">• GPA: {edu.gpa}</span>
+                                      <span className="ml-2 font-medium">
+                                        • GPA: {edu.gpa}
+                                      </span>
                                     )}
                                   </p>
                                 </div>
@@ -1803,7 +1817,9 @@ export default function CandidateProfilePage() {
                                     <Edit className="h-4 w-4" />
                                   </button>
                                   <button
-                                    onClick={() => handleDeleteEducation(edu.id)}
+                                    onClick={() =>
+                                      handleDeleteEducation(edu.id)
+                                    }
                                     className="text-red-600 hover:text-red-700"
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -1962,13 +1978,19 @@ export default function CandidateProfilePage() {
                         </div>
                       )}
 
-                      {(!profile.education || profile.education.length === 0) && editingEducation !== "new" && (
-                        <div className="text-center py-8 text-gray-500">
-                          <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                          <p className="text-lg font-medium mb-2">No education added yet</p>
-                          <p className="text-sm">Add your educational background to strengthen your profile</p>
-                        </div>
-                      )}
+                      {(!profile.education || profile.education.length === 0) &&
+                        editingEducation !== "new" && (
+                          <div className="text-center py-8 text-gray-500">
+                            <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <p className="text-lg font-medium mb-2">
+                              No education added yet
+                            </p>
+                            <p className="text-sm">
+                              Add your educational background to strengthen your
+                              profile
+                            </p>
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -2037,7 +2059,9 @@ export default function CandidateProfilePage() {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                   >
                                     <option value="beginner">Beginner</option>
-                                    <option value="intermediate">Intermediate</option>
+                                    <option value="intermediate">
+                                      Intermediate
+                                    </option>
                                     <option value="advanced">Advanced</option>
                                     <option value="expert">Expert</option>
                                   </select>
@@ -2100,7 +2124,9 @@ export default function CandidateProfilePage() {
                                         <Edit className="h-4 w-4" />
                                       </button>
                                       <button
-                                        onClick={() => handleDeleteSkill(skill.id)}
+                                        onClick={() =>
+                                          handleDeleteSkill(skill.id)
+                                        }
                                         className="text-red-600 hover:text-red-700"
                                       >
                                         <Trash2 className="h-4 w-4" />
@@ -2113,10 +2139,13 @@ export default function CandidateProfilePage() {
                                         skill.level
                                       )}`}
                                     >
-                                      {skill.level.charAt(0).toUpperCase() + skill.level.slice(1)}
+                                      {skill.level.charAt(0).toUpperCase() +
+                                        skill.level.slice(1)}
                                     </span>
                                     <span className="text-sm text-gray-600">
-                                      {skill.years} year{skill.years !== 1 ? 's' : ''} of experience
+                                      {skill.years} year
+                                      {skill.years !== 1 ? "s" : ""} of
+                                      experience
                                     </span>
                                   </div>
                                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -2168,7 +2197,9 @@ export default function CandidateProfilePage() {
                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
                                   <option value="beginner">Beginner</option>
-                                  <option value="intermediate">Intermediate</option>
+                                  <option value="intermediate">
+                                    Intermediate
+                                  </option>
                                   <option value="advanced">Advanced</option>
                                   <option value="expert">Expert</option>
                                 </select>
@@ -2215,13 +2246,18 @@ export default function CandidateProfilePage() {
                         </div>
                       )}
 
-                      {(!profile.skills || profile.skills.length === 0) && editingSkill !== "new" && (
-                        <div className="text-center py-8 text-gray-500">
-                          <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                          <p className="text-lg font-medium mb-2">No skills added yet</p>
-                          <p className="text-sm">Add your skills to showcase your expertise</p>
-                        </div>
-                      )}
+                      {(!profile.skills || profile.skills.length === 0) &&
+                        editingSkill !== "new" && (
+                          <div className="text-center py-8 text-gray-500">
+                            <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <p className="text-lg font-medium mb-2">
+                              No skills added yet
+                            </p>
+                            <p className="text-sm">
+                              Add your skills to showcase your expertise
+                            </p>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -2736,83 +2772,13 @@ export default function CandidateProfilePage() {
         </div>
 
         {/* Resume Modal */}
-        {showResumeModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-4xl w-full h-3/4 flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="text-lg font-semibold">Resume Preview</h3>
-                <button
-                  onClick={() => setShowResumeModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="flex-1 p-4">
-                {profile.resume?.cloudinaryUrl ? (
-                  pdfViewError ? (
-                    <div className="flex flex-col items-center justify-center h-full">
-                      <AlertCircle className="h-12 w-12 text-orange-500 mb-4" />
-                      <p className="text-gray-600 mb-4">
-                        Unable to preview this file format.
-                      </p>
-                      <button
-                        onClick={handleDownloadResume}
-                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Resume
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-full h-full">
-                      {/* Try Google Docs Viewer first */}
-                      <iframe
-                        src={`https://docs.google.com/gview?url=${encodeURIComponent(
-                          profile.resume.cloudinaryUrl
-                        )}&embedded=true`}
-                        className="w-full h-full border rounded"
-                        onError={() => {
-                          // If Google viewer fails, try direct PDF display
-                          const iframe = document.querySelector(
-                            'iframe[title="Resume Preview"]'
-                          ) as HTMLIFrameElement;
-                          if (iframe) {
-                            iframe.src = `${profile.resume.cloudinaryUrl}#view=FitH&toolbar=0&navpanes=0`;
-                            iframe.onload = () => {
-                              // If still fails after trying direct PDF, show error
-                              setTimeout(() => {
-                                try {
-                                  if (
-                                    iframe.contentDocument?.title === "" ||
-                                    iframe.contentDocument?.readyState !==
-                                      "complete"
-                                  ) {
-                                    setPdfViewError(true);
-                                  }
-                                } catch (e) {
-                                  setPdfViewError(true);
-                                }
-                              }, 3000);
-                            };
-                            iframe.onerror = () => setPdfViewError(true);
-                          }
-                        }}
-                        title="Resume Preview"
-                      >
-                        <p>This browser does not support PDF preview.</p>
-                      </iframe>
-                    </div>
-                  )
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">No resume uploaded</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        <ResumePreviewModal
+          isOpen={showResumeModal}
+          onClose={() => setShowResumeModal(false)}
+          resumeUrl={profile.resume?.cloudinaryUrl || null}
+          onDownload={handleDownloadResume}
+          downloadFileName={profile.resume?.originalName || "resume.pdf"}
+        />
       </DashboardLayout>
     </ProtectedRoute>
   );
