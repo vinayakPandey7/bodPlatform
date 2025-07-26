@@ -10,6 +10,20 @@ const jobSchema = new mongoose.Schema({
   employer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Employer",
+    required: function () {
+      return this.postedBy === "employer";
+    },
+  },
+  recruitmentPartner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "RecruitmentPartner",
+    required: function () {
+      return this.postedBy === "recruitment_partner";
+    },
+  },
+  postedBy: {
+    type: String,
+    enum: ["employer", "recruitment_partner"],
     required: true,
   },
   title: {
@@ -284,7 +298,16 @@ const jobSchema = new mongoose.Schema({
   },
   workSchedule: {
     type: String,
-    enum: ["full_time", "part_time"],
+    enum: {
+      values: ["full_time", "part_time"],
+      message: "{VALUE} is not a valid work schedule",
+    },
+    validate: {
+      validator: function (v) {
+        return !v || v === "full_time" || v === "part_time";
+      },
+      message: 'Work schedule must be "full_time", "part_time" or empty',
+    },
   },
   partTimeWorkDays: {
     type: [String],
@@ -301,7 +324,16 @@ const jobSchema = new mongoose.Schema({
   },
   officeRequirement: {
     type: String,
-    enum: ["yes", "no"],
+    enum: {
+      values: ["yes", "no"],
+      message: "{VALUE} is not a valid office requirement",
+    },
+    validate: {
+      validator: function (v) {
+        return !v || v === "yes" || v === "no";
+      },
+      message: 'Office requirement must be "yes" or "no" or empty',
+    },
   },
   officeDetails: {
     type: String,
@@ -326,7 +358,23 @@ const jobSchema = new mongoose.Schema({
   },
   payStructureType: {
     type: String,
-    enum: ["hourly", "salary", "commission", "base_plus_commission"],
+    enum: {
+      values: ["hourly", "salary", "commission", "base_plus_commission"],
+      message: "{VALUE} is not a valid pay structure type",
+    },
+    validate: {
+      validator: function (v) {
+        return (
+          !v ||
+          v === "hourly" ||
+          v === "salary" ||
+          v === "commission" ||
+          v === "base_plus_commission"
+        );
+      },
+      message:
+        'Pay structure type must be "hourly", "salary", "commission", "base_plus_commission" or empty',
+    },
   },
   hourlyPay: {
     type: String,
@@ -342,11 +390,32 @@ const jobSchema = new mongoose.Schema({
   },
   freeParking: {
     type: String,
-    enum: ["yes", "no", "paid_parking"],
+    enum: {
+      values: ["yes", "no", "paid_parking"],
+      message: "{VALUE} is not a valid parking option",
+    },
+    validate: {
+      validator: function (v) {
+        return !v || v === "yes" || v === "no" || v === "paid_parking";
+      },
+      message: 'Free parking must be "yes", "no", "paid_parking" or empty',
+    },
   },
   roleType: {
     type: String,
-    enum: ["service_only", "sales_only", "mixed"],
+    enum: {
+      values: ["service_only", "sales_only", "mixed"],
+      message: "{VALUE} is not a valid role type",
+    },
+    validate: {
+      validator: function (v) {
+        return (
+          !v || v === "service_only" || v === "sales_only" || v === "mixed"
+        );
+      },
+      message:
+        'Role type must be "service_only", "sales_only", "mixed" or empty',
+    },
   },
   qualifications: {
     type: [String],

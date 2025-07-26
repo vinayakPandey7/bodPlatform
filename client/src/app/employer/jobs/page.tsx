@@ -27,8 +27,26 @@ import {
   RefreshCw,
   ChevronDown,
   X,
+  Sparkles,
+  FileText,
+  ArrowRight,
 } from "lucide-react";
-import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import {
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Chip,
+} from "@mui/material";
 
 interface Job {
   _id: string;
@@ -79,6 +97,7 @@ export default function EmployerJobsPage() {
   const [error, setError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [showJobTypeModal, setShowJobTypeModal] = useState(false);
   const router = useRouter();
 
   // Filter states
@@ -215,7 +234,16 @@ export default function EmployerJobsPage() {
   }, [jobs]);
 
   const handleCreateJob = () => {
-    router.push("/employer/jobs/create");
+    setShowJobTypeModal(true);
+  };
+
+  const handleJobTypeSelection = (type: "normal" | "enhanced") => {
+    setShowJobTypeModal(false);
+    if (type === "normal") {
+      router.push("/employer/jobs/create");
+    } else {
+      router.push("/employer/jobs/create-enhanced");
+    }
   };
 
   const handleJobClick = (jobId: string) => {
@@ -319,10 +347,11 @@ export default function EmployerJobsPage() {
               </button>
               <button
                 onClick={handleCreateJob}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg cursor-pointer"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg cursor-pointer group"
               >
                 <Plus className="h-5 w-5 mr-2" />
-                Post New Job
+                Create New Job Posting
+                <ChevronDown className="h-4 w-4 ml-1 group-hover:translate-y-0.5 transition-transform" />
               </button>
             </div>
           </div>
@@ -445,13 +474,13 @@ export default function EmployerJobsPage() {
                       }
                       label="Status"
                       sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
                         },
                       }}
@@ -472,13 +501,13 @@ export default function EmployerJobsPage() {
                       }
                       label="Approval"
                       sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
                         },
                       }}
@@ -499,13 +528,13 @@ export default function EmployerJobsPage() {
                       }
                       label="Job Role"
                       sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
                         },
                       }}
@@ -528,13 +557,13 @@ export default function EmployerJobsPage() {
                       }
                       label="Work Type"
                       sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
                         },
                       }}
@@ -552,17 +581,20 @@ export default function EmployerJobsPage() {
                     <Select
                       value={filters.dateRange}
                       onChange={(e) =>
-                        handleFilterChange("dateRange", e.target.value as string)
+                        handleFilterChange(
+                          "dateRange",
+                          e.target.value as string
+                        )
                       }
                       label="Posted"
                       sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
                         },
                       }}
@@ -584,13 +616,13 @@ export default function EmployerJobsPage() {
                       }
                       label="Sort By"
                       sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#3b82f6',
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
                           },
                         },
                       }}
@@ -650,7 +682,7 @@ export default function EmployerJobsPage() {
                     className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
                   >
                     <Plus className="h-5 w-5 mr-2" />
-                    Post Your First Job
+                    Create Your First Job Posting
                   </button>
                 ) : (
                   <button
@@ -792,6 +824,212 @@ export default function EmployerJobsPage() {
             </div>
           )}
         </div>
+
+        {/* Job Type Selection Modal */}
+        <Dialog
+          open={showJobTypeModal}
+          onClose={() => setShowJobTypeModal(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: "bold", color: "primary.main" }}
+            >
+              Choose Job Posting Type
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
+              Select the type of job posting that best fits your needs
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ pb: 3 }}>
+            <Box sx={{ display: "flex", gap: 3, mt: 2 }}>
+              {/* Normal Posting Card */}
+              <Card
+                sx={{
+                  flex: 1,
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  border: "2px solid transparent",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    transform: "translateY(-4px)",
+                    boxShadow: 3,
+                  },
+                }}
+                onClick={() => handleJobTypeSelection("normal")}
+              >
+                <CardContent sx={{ p: 3, textAlign: "center" }}>
+                  <Box sx={{ mb: 2 }}>
+                    <FileText size={48} color="#3b82f6" />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                    Standard Job Posting
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", mb: 2 }}
+                  >
+                    Comprehensive job posting designed specifically for
+                    recruiting licensed insurance professionals
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                      mb: 3,
+                    }}
+                  >
+                    <Chip
+                      label="Licensed Candidate Search"
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                    <Chip
+                      label="Detailed Requirements Form"
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                    <Chip
+                      label="Insurance-Specific Fields"
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary", display: "block", mb: 2 }}
+                  >
+                    ✓ Work schedule & office requirements
+                    <br />
+                    ✓ Pay structure & benefits
+                    <br />
+                    ✓ License requirements & qualifications
+                    <br />✓ Role-specific details
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    sx={{ mt: 1 }}
+                    endIcon={<ArrowRight size={16} />}
+                  >
+                    Choose Standard
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Enhanced Posting Card */}
+              <Card
+                sx={{
+                  flex: 1,
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  border: "2px solid transparent",
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() => handleJobTypeSelection("enhanced")}
+              >
+                <CardContent sx={{ p: 3, textAlign: "center" }}>
+                  <Box sx={{ mb: 2 }}>
+                    <Sparkles size={48} color="#fbbf24" />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                    Enhanced Job Posting
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "rgba(255,255,255,0.9)", mb: 2 }}
+                  >
+                    Modern, guided job posting experience with templates and
+                    step-by-step workflow
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                      mb: 3,
+                    }}
+                  >
+                    <Chip
+                      label="Pre-built Templates"
+                      size="small"
+                      sx={{
+                        bgcolor: "rgba(255,255,255,0.2)",
+                        color: "white",
+                        "&:hover": { bgcolor: "rgba(255,255,255,0.3)" },
+                      }}
+                    />
+                    <Chip
+                      label="5-Step Guided Process"
+                      size="small"
+                      sx={{
+                        bgcolor: "rgba(255,255,255,0.2)",
+                        color: "white",
+                        "&:hover": { bgcolor: "rgba(255,255,255,0.3)" },
+                      }}
+                    />
+                    <Chip
+                      label="Live Preview & Validation"
+                      size="small"
+                      sx={{
+                        bgcolor: "rgba(255,255,255,0.2)",
+                        color: "white",
+                        "&:hover": { bgcolor: "rgba(255,255,255,0.3)" },
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "rgba(255,255,255,0.8)",
+                      display: "block",
+                      mb: 2,
+                    }}
+                  >
+                    ✓ Insurance agent templates
+                    <br />
+                    ✓ Progressive form completion
+                    <br />
+                    ✓ Real-time validation
+                    <br />✓ Modern, intuitive interface
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    sx={{
+                      mt: 1,
+                      bgcolor: "rgba(255,255,255,0.2)",
+                      color: "white",
+                      "&:hover": { bgcolor: "rgba(255,255,255,0.3)" },
+                    }}
+                    endIcon={<ArrowRight size={16} />}
+                  >
+                    Choose Enhanced
+                  </Button>
+                </CardContent>
+              </Card>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, pt: 0 }}>
+            <Button
+              onClick={() => setShowJobTypeModal(false)}
+              variant="outlined"
+              sx={{ minWidth: 100 }}
+            >
+              Cancel
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Job Details Modal */}
         {selectedJobId && (

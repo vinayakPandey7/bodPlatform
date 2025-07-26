@@ -24,6 +24,14 @@ router.get(
   jobController.getEmployerJobs
 );
 
+// Recruitment Partner routes (specific routes before dynamic ones)
+router.get(
+  "/recruitment-partner/my-jobs",
+  auth,
+  authorizeRoles("recruitment_partner"),
+  jobController.getRecruitmentPartnerJobs
+);
+
 // Dynamic routes (must be last)
 router.get("/:id", jobController.getJobById);
 router.get(
@@ -33,19 +41,29 @@ router.get(
   jobController.getJobApplications
 );
 
-// Employer routes
-router.post("/", auth, authorizeRoles("employer"), jobController.createJob);
-router.put("/:id", auth, authorizeRoles("employer"), jobController.updateJob);
+// Employer and Recruitment Partner routes
+router.post(
+  "/",
+  auth,
+  authorizeRoles("employer", "recruitment_partner"),
+  jobController.createJob
+);
+router.put(
+  "/:id",
+  auth,
+  authorizeRoles("employer", "recruitment_partner"),
+  jobController.updateJob
+);
 router.delete(
   "/:id",
   auth,
-  authorizeRoles("employer"),
+  authorizeRoles("employer", "recruitment_partner"),
   jobController.deleteJob
 );
 router.patch(
   "/:id/toggle-status",
   auth,
-  authorizeRoles("employer"),
+  authorizeRoles("employer", "recruitment_partner"),
   jobController.toggleJobStatus
 );
 

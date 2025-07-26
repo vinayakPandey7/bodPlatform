@@ -1,5 +1,6 @@
 const Job = require("../models/job.model");
 const Employer = require("../models/employer.model");
+const RecruitmentPartner = require("../models/recruitmentPartner.model");
 const Candidate = require("../models/candidate.model");
 const {
   getCoordinatesFromZipCode,
@@ -10,10 +11,31 @@ const {
 // Create a new job post
 exports.createJob = async (req, res) => {
   try {
-    const employer = await Employer.findOne({ user: req.user.id });
+    let poster = null;
+    let posterId = null;
+    let postedBy = null;
 
-    if (!employer) {
-      return res.status(404).json({ message: "Employer profile not found" });
+    // Check if user is an employer or recruitment partner
+    if (req.user.role === "employer") {
+      poster = await Employer.findOne({ user: req.user.id });
+      if (!poster) {
+        return res.status(404).json({ message: "Employer profile not found" });
+      }
+      posterId = poster._id;
+      postedBy = "employer";
+    } else if (req.user.role === "recruitment_partner") {
+      poster = await RecruitmentPartner.findOne({ user: req.user.id });
+      if (!poster) {
+        return res
+          .status(404)
+          .json({ message: "Recruitment partner profile not found" });
+      }
+      posterId = poster._id;
+      postedBy = "recruitment_partner";
+    } else {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to create job posts" });
     }
 
     // Validate required US location fields
@@ -58,7 +80,7 @@ exports.createJob = async (req, res) => {
 
     const jobData = {
       ...req.body,
-      employer: employer._id,
+      postedBy,
       zipCode,
       city,
       state,
@@ -68,6 +90,13 @@ exports.createJob = async (req, res) => {
         coordinates: coordinates,
       },
     };
+
+    // Set the appropriate poster reference
+    if (postedBy === "employer") {
+      jobData.employer = posterId;
+    } else {
+      jobData.recruitmentPartner = posterId;
+    }
 
     // Handle licensed candidate data if present
     if (req.body.licensedCandidateData) {
@@ -122,6 +151,23 @@ exports.createJob = async (req, res) => {
     }
     if (!jobData.startDate) {
       jobData.startDate = new Date();
+    }
+
+    // Handle enum fields with empty string validation
+    if (!jobData.officeRequirement || jobData.officeRequirement === "") {
+      delete jobData.officeRequirement; // Let schema default handle it
+    }
+    if (!jobData.freeParking || jobData.freeParking === "") {
+      delete jobData.freeParking; // Let schema default handle it
+    }
+    if (!jobData.payStructureType || jobData.payStructureType === "") {
+      delete jobData.payStructureType; // Let schema default handle it
+    }
+    if (!jobData.roleType || jobData.roleType === "") {
+      delete jobData.roleType; // Let schema default handle it
+    }
+    if (!jobData.workSchedule || jobData.workSchedule === "") {
+      delete jobData.workSchedule; // Let schema default handle it
     }
 
     // Set approval status - Auto-approve all jobs by default
@@ -283,16 +329,15 @@ exports.getActiveJobs = async (req, res) => {
 // Get job details
 exports.getJobById = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id).populate(
-      "employer",
-      "companyName ownerName"
-    );
+    const job = await Job.findById(req.params.id)
+      .populate("employer", "companyName ownerName")
+      .populate("recruitmentPartner", "companyName ownerName");
 
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
     }
 
-    res.json({ job });
+    res.json(job);
   } catch (error) {
     console.error("Get job by ID error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -603,6 +648,36 @@ exports.getJobsForCandidates = async (req, res) => {
     }
   } catch (error) {
     console.error("Get jobs for candidates error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get all jobs posted by a recruitment partner
+exports.getRecruitmentPartnerJobs = async (req, res) => {
+  try {
+    const recruitmentPartner = await RecruitmentPartner.findOne({
+      user: req.user.id,
+    });
+
+    if (!recruitmentPartner) {
+      return res
+        .status(404)
+        .json({ message: "Recruitment partner profile not found" });
+    }
+
+    const jobs = await Job.find({
+      recruitmentPartner: recruitmentPartner._id,
+      postedBy: "recruitment_partner",
+    })
+      .populate("recruitmentPartner", "ownerName companyName")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      message: "Jobs fetched successfully",
+      jobs,
+    });
+  } catch (error) {
+    console.error("Get recruitment partner jobs error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
