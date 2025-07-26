@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import CandidateModal from "@/components/CandidateModal";
 import api from "@/lib/api";
 
 interface Candidate {
@@ -25,7 +25,8 @@ export default function RecruitmentPartnerCandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const router = useRouter();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   useEffect(() => {
     fetchCandidates();
@@ -36,7 +37,6 @@ export default function RecruitmentPartnerCandidatesPage() {
       const response = await api.get("/admin/candidates");
       setCandidates(response.data.candidates || []);
     } catch (error: any) {
-      console.error("Error fetching candidates:", error);
       setError("Failed to fetch candidates");
     } finally {
       setLoading(false);
@@ -44,7 +44,22 @@ export default function RecruitmentPartnerCandidatesPage() {
   };
 
   const handleAddCandidate = () => {
-    router.push("/recruitment-partner/candidates/add");
+    setSelectedCandidate(null);
+    setModalOpen(true);
+  };
+
+  const handleEditCandidate = (candidate: Candidate) => {
+    setSelectedCandidate(candidate);
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedCandidate(null);
+  };
+
+  const handleModalSuccess = () => {
+    fetchCandidates(); // Refresh the candidates list
   };
 
   const getStatusColor = (status: string) => {
@@ -266,7 +281,10 @@ export default function RecruitmentPartnerCandidatesPage() {
                         View Resume
                       </a>
                     )}
-                    <button className="bg-gray-600 text-white text-sm py-2 px-3 rounded-md hover:bg-gray-700 transition-colors">
+                    <button 
+                      onClick={() => handleEditCandidate(candidate)}
+                      className="bg-gray-600 text-white text-sm py-2 px-3 rounded-md hover:bg-gray-700 transition-colors"
+                    >
                       Edit
                     </button>
                   </div>
@@ -275,6 +293,14 @@ export default function RecruitmentPartnerCandidatesPage() {
             </div>
           )}
         </div>
+
+        {/* Candidate Modal */}
+        <CandidateModal
+          open={modalOpen}
+          onClose={handleModalClose}
+          candidate={selectedCandidate}
+          onSuccess={handleModalSuccess}
+        />
       </DashboardLayout>
     </ProtectedRoute>
   );

@@ -8,7 +8,13 @@ import { useJobsForCandidates, useApplyToJob } from "@/lib/hooks/job.hooks";
 import { useSaveJob, useUnsaveJob } from "@/lib/hooks/candidate.hooks";
 import { useCurrentUser } from "@/lib/hooks/auth.hooks";
 import { toast } from "sonner";
-import { TextField, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
 
 interface JobSearchFilters {
   zipCode: string;
@@ -171,16 +177,22 @@ export default function CandidateJobsPage() {
   const searchCriteria = jobsData?.searchCriteria;
 
   const handleFilterChange = (
-    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | { target: { name: string; value: unknown } }
   ) => {
-    const { name, value } = e.target as { name: string; value: string };
+    const { name, value } = e.target;
 
     if (name === "zipCode") {
       // Validate zip code format
-      if (value && !/^\d{0,5}$/.test(value)) {
+      if (value && !/^\d{0,5}$/.test(value as string)) {
         return; // Don't update if not valid digits
       }
-      if (value && value.length === 5 && !/^\d{5}$/.test(value)) {
+      if (
+        value &&
+        (value as string).length === 5 &&
+        !/^\d{5}$/.test(value as string)
+      ) {
         setZipCodeError("Invalid zip code format");
       } else {
         setZipCodeError("");
@@ -316,7 +328,13 @@ export default function CandidateJobsPage() {
                 label="Your Zip Code *"
                 name="zipCode"
                 value={filters.zipCode}
-                onChange={handleFilterChange}
+                onChange={(e) =>
+                  handleFilterChange(
+                    e as
+                      | React.ChangeEvent<HTMLInputElement>
+                      | { target: { name: string; value: unknown } }
+                  )
+                }
                 placeholder="e.g., 90210"
                 inputProps={{ maxLength: 5 }}
                 error={!!zipCodeError}
@@ -366,13 +384,15 @@ export default function CandidateJobsPage() {
                   <MenuItem value="3-5">3-5 years (Mid Level)</MenuItem>
                   <MenuItem value="5-8">5-8 years (Senior)</MenuItem>
                   <MenuItem value="8-12">8-12 years (Lead)</MenuItem>
-                  <MenuItem value="12+">12+ years (Principal/Director)</MenuItem>
+                  <MenuItem value="12+">
+                    12+ years (Principal/Director)
+                  </MenuItem>
                 </Select>
               </FormControl>
             </div>
 
             <div className="flex justify-between items-center">
-            {searchCriteria && (
+              {searchCriteria && (
                 <div className="text-sm text-gray-600">
                   {searchCriteria.searchRadius && (
                     <span>
@@ -389,8 +409,6 @@ export default function CandidateJobsPage() {
               >
                 {isLoading ? "Searching..." : "Search Jobs"}
               </button>
-
-             
             </div>
           </div>
 
@@ -439,7 +457,7 @@ export default function CandidateJobsPage() {
                         )}
                       </div>
                       <p className="text-gray-600">
-                        {job.employer.companyName}
+                        {job?.employer?.companyName}
                       </p>
                       <p className="text-sm text-gray-500">
                         {job.city}, {job.state} {job.zipCode}

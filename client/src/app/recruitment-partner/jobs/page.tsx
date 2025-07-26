@@ -488,11 +488,7 @@ export default function RecruitmentPartnerJobsPage() {
 
                       <div className="mb-4">
                         <p className="text-lg font-medium text-gray-800">
-                          {getCompanyName(job)}
-                        </p>
-                        <p className="text-gray-600 flex items-center">
-                          <LocationIcon fontSize="small" className="mr-1" />
-                          {job.location}
+                          {job?.employer?.companyName}
                         </p>
                       </div>
 
@@ -529,60 +525,21 @@ export default function RecruitmentPartnerJobsPage() {
                     </div>
 
                     <div className="ml-6">
-                      {activeTab === 0 ? (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleApplyToJob(job._id);
-                          }}
-                          variant="contained"
-                          sx={{
-                            backgroundColor: "#4f46e5",
-                            "&:hover": {
-                              backgroundColor: "#4338ca",
-                            },
-                            borderRadius: "6px",
-                            padding: "12px 24px",
-                            fontWeight: 500,
-                          }}
-                        >
-                          Submit Candidates
-                        </Button>
-                      ) : (
-                        <Box sx={{ display: "flex", gap: 1 }}>
-                          <Tooltip title="View Details">
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleJobPreview(job._id);
-                              }}
-                            >
-                              <VisibilityIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Edit Job">
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Handle edit
-                              }}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete Job">
-                            <IconButton
-                              color="error"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Handle delete
-                              }}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      )}
+                      <Button
+                        onClick={() => handleApplyToJob(job._id)}
+                        variant="contained"
+                        sx={{
+                          backgroundColor: "#4f46e5",
+                          "&:hover": {
+                            backgroundColor: "#4338ca",
+                          },
+                          borderRadius: "6px",
+                          padding: "12px 24px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Submit Candidates
+                      </Button>
                     </div>
                   </div>
                 </div>

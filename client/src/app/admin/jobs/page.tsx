@@ -945,7 +945,7 @@ export default function AdminJobsPage() {
                           {job.title}
                         </td>
                         <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                          {job.employer.companyName}
+                          {job?.employer?.companyName}
                         </td>
                         <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
                           {job.location}

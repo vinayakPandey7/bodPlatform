@@ -12,7 +12,17 @@ import {
   InputLabel,
   Button,
   Alert,
+  Box,
+  Typography,
+  IconButton,
+  Chip,
 } from "@mui/material";
+import {
+  Upload as UploadIcon,
+  LinkedIn as LinkedInIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
+} from "@mui/icons-material";
 
 interface CandidateFormData {
   name: string;
@@ -21,7 +31,10 @@ interface CandidateFormData {
   skills: string[];
   experience: string;
   education: string;
-  location: string;
+  zipcode: string;
+  address: string;
+  city: string;
+  state: string;
   expectedSalary: string;
   currentCompany: string;
   currentPosition: string;
@@ -29,6 +42,13 @@ interface CandidateFormData {
   linkedIn: string;
   portfolio: string;
   notes: string;
+  resume: File | null;
+}
+
+interface LocationData {
+  city: string;
+  state: string;
+  country: string;
 }
 
 export default function AddCandidatePage() {
@@ -39,7 +59,10 @@ export default function AddCandidatePage() {
     skills: [],
     experience: "",
     education: "",
-    location: "",
+    zipcode: "",
+    address: "",
+    city: "",
+    state: "",
     expectedSalary: "",
     currentCompany: "",
     currentPosition: "",
@@ -47,9 +70,13 @@ export default function AddCandidatePage() {
     linkedIn: "",
     portfolio: "",
     notes: "",
+    resume: null,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [resumeFileName, setResumeFileName] = useState("");
+  const [linkedInLoading, setLinkedInLoading] = useState(false);
   const router = useRouter();
 
   const handleInputChange = (
@@ -60,6 +87,30 @@ export default function AddCandidatePage() {
       ...prev,
       [name]: value,
     }));
+
+    // Handle zipcode validation and auto-population (following signup form pattern)
+    if (name === "zipcode") {
+      // Clear previous location error
+      setError("");
+
+      // Validate zipcode format (5 digits)
+      if (value && !/^\d{5}$/.test(value)) {
+        setError("Zipcode must be 5 digits");
+        return;
+      }
+
+      // Auto-populate city and state if valid zipcode
+      if (value.length === 5) {
+        handleZipcodeLookup(value);
+      } else {
+        // Clear city/state if zipcode is incomplete
+        setFormData((prev) => ({
+          ...prev,
+          city: "",
+          state: "",
+        }));
+      }
+    }
   };
 
   const handleSelectChange = (e: any) => {
@@ -81,13 +132,121 @@ export default function AddCandidatePage() {
     }));
   };
 
+  const handleZipcodeLookup = async (zipcode: string) => {
+    if (!zipcode || zipcode.length !== 5) {
+      setError("");
+      return;
+    }
+
+    setLocationLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/location/validate?zipCode=${zipcode}`);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setFormData((prev) => ({
+          ...prev,
+          city: data.city,
+          state: data.state,
+        }));
+        setError("");
+      } else {
+        setError(data.message || "Invalid zipcode");
+        setFormData((prev) => ({
+          ...prev,
+          city: "",
+          state: "",
+        }));
+      }
+    } catch (error) {
+      console.error("Zipcode validation error:", error);
+      setError("Unable to validate zipcode");
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        resume: file,
+      }));
+      setResumeFileName(file.name);
+    }
+  };
+
+  const handleLinkedInImport = async () => {
+    if (!formData.linkedIn) return;
+    
+    setLinkedInLoading(true);
+    try {
+      // This would be an API call to fetch LinkedIn data
+      // For now, we'll simulate the import
+      const mockLinkedInData = {
+        name: "John Doe",
+        currentCompany: "Tech Corp",
+        currentPosition: "Senior Developer",
+        skills: ["JavaScript", "React", "Node.js", "Python"],
+        experience: "5-8",
+        education: "Bachelor's in Computer Science from Tech University (2018)",
+      };
+      
+      setFormData((prev) => ({
+        ...prev,
+        name: mockLinkedInData.name,
+        currentCompany: mockLinkedInData.currentCompany,
+        currentPosition: mockLinkedInData.currentPosition,
+        skills: mockLinkedInData.skills,
+        experience: mockLinkedInData.experience,
+        education: mockLinkedInData.education,
+      }));
+    } catch (error) {
+      console.error("Error importing LinkedIn data:", error);
+    } finally {
+      setLinkedInLoading(false);
+    }
+  };
+
+  const clearLinkedInData = () => {
+    setFormData((prev) => ({
+      ...prev,
+      name: "",
+      currentCompany: "",
+      currentPosition: "",
+      skills: [],
+      experience: "",
+      education: "",
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      await api.post("/recruitment-partner/candidates", formData);
+      const formDataToSend = new FormData();
+      
+      // Append all form data
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === 'skills') {
+          formDataToSend.append(key, JSON.stringify(value));
+        } else if (key === 'resume' && value) {
+          formDataToSend.append(key, value);
+        } else if (value !== null && value !== undefined) {
+          formDataToSend.append(key, value.toString());
+        }
+      });
+
+      await api.post("/recruitment-partner/candidates", formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       router.push("/recruitment-partner/candidates");
     } catch (error: any) {
       console.error("Error adding candidate:", error);
@@ -129,6 +288,46 @@ export default function AddCandidatePage() {
             onSubmit={handleSubmit}
             className="bg-white rounded-lg shadow p-6 space-y-6"
           >
+            {/* LinkedIn Import Section */}
+            <Box className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <Typography variant="h6" className="text-blue-800 mb-3">
+                <LinkedInIcon className="mr-2" />
+                LinkedIn Import (Optional)
+              </Typography>
+              <div className="flex gap-2 items-center">
+                <TextField
+                  label="LinkedIn Profile URL"
+                  name="linkedIn"
+                  type="url"
+                  value={formData.linkedIn}
+                  onChange={handleInputChange}
+                  placeholder="https://linkedin.com/in/username"
+                  size="small"
+                  sx={{ flexGrow: 1 }}
+                />
+                <Button
+                  onClick={handleLinkedInImport}
+                  disabled={!formData.linkedIn || linkedInLoading}
+                  variant="contained"
+                  size="small"
+                  startIcon={<SearchIcon />}
+                  sx={{ backgroundColor: "#0077b5" }}
+                >
+                  {linkedInLoading ? "Importing..." : "Import"}
+                </Button>
+                <IconButton
+                  onClick={clearLinkedInData}
+                  size="small"
+                  color="error"
+                >
+                  <ClearIcon />
+                </IconButton>
+              </div>
+              <Typography variant="caption" className="text-blue-600 mt-2 block">
+                Import basic information from LinkedIn profile to auto-fill the form
+              </Typography>
+            </Box>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <TextField
                 label="Full Name *"
@@ -228,20 +427,174 @@ export default function AddCandidatePage() {
                 }}
               />
 
+              {/* Resume Upload */}
+              <Box className="flex flex-col gap-2">
+                <Typography variant="body2" className="text-gray-700 font-medium">
+                  Resume Upload *
+                </Typography>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleResumeUpload}
+                  className="hidden"
+                  id="resume-upload"
+                />
+                <label htmlFor="resume-upload">
+                  <Button
+                    component="span"
+                    variant="outlined"
+                    startIcon={<UploadIcon />}
+                    fullWidth
+                    sx={{
+                      borderColor: "#e2e8f0",
+                      color: "#64748b",
+                      "&:hover": {
+                        borderColor: "#cbd5e1",
+                        backgroundColor: "#f8fafc",
+                      },
+                    }}
+                  >
+                    {resumeFileName || "Upload Resume"}
+                  </Button>
+                </label>
+                {resumeFileName && (
+                  <Chip
+                    label={resumeFileName}
+                    onDelete={() => {
+                      setFormData((prev) => ({ ...prev, resume: null }));
+                      setResumeFileName("");
+                    }}
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                  />
+                )}
+              </Box>
+
+              {/* Zipcode with auto-lookup */}
               <TextField
-                label="Location *"
-                name="location"
-                value={formData.location}
+                label="Zipcode *"
+                name="zipcode"
+                value={formData.zipcode}
                 onChange={handleInputChange}
                 required
                 fullWidth
                 variant="outlined"
                 size="medium"
-                placeholder="City, State/Country"
+                placeholder="e.g., 90210"
+                inputProps={{
+                  maxLength: 5,
+                  pattern: "\\d{5}",
+                }}
+                error={!!error && error.includes("zipcode")}
+                helperText={error && error.includes("zipcode") ? error : "Enter a 5-digit US zipcode. City and state will be auto-populated."}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "8px",
                     backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
+
+              <TextField
+                label="Address *"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                placeholder="Street address"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
+
+              <TextField
+                label="City"
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                size="medium"
+                placeholder="Auto-populated from zipcode"
+                InputProps={{
+                  readOnly: true,
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "#f8fafc",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
+
+              <TextField
+                label="State"
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                size="medium"
+                placeholder="Auto-populated from zipcode"
+                InputProps={{
+                  readOnly: true,
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "#f8fafc",
                     fontSize: "16px",
                     "& fieldset": {
                       borderColor: "#e2e8f0",
@@ -419,39 +772,6 @@ export default function AddCandidatePage() {
               </FormControl>
 
               <TextField
-                label="LinkedIn Profile"
-                name="linkedIn"
-                type="url"
-                value={formData.linkedIn}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                size="medium"
-                placeholder="https://linkedin.com/in/username"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    fontSize: "16px",
-                    "& fieldset": {
-                      borderColor: "#e2e8f0",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#cbd5e1",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#3b82f6",
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    fontSize: "16px",
-                    fontWeight: 500,
-                    color: "#64748b",
-                  },
-                }}
-              />
-
-              <TextField
                 label="Portfolio/Website"
                 name="portfolio"
                 type="url"
@@ -484,110 +804,110 @@ export default function AddCandidatePage() {
                 }}
               />
             </div>
-<div className="flex flex-col gap-4">
-            <TextField
-              label="Skills (comma-separated) *"
-              name="skills"
-              value={formData.skills.join(", ")}
-              onChange={handleSkillsChange}
-              required
-              fullWidth
-              variant="outlined"
-              size="medium"
-              placeholder="e.g., JavaScript, React, Node.js, Python"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                  backgroundColor: "white",
-                  fontSize: "16px",
-                  "& fieldset": {
-                    borderColor: "#e2e8f0",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#cbd5e1",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#3b82f6",
-                  },
-                },
-                "& .MuiInputLabel-root": {
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  color: "#64748b",
-                },
-              }}
-            />
 
-            <TextField
-              label="Education *"
-              name="education"
-              value={formData.education}
-              onChange={handleInputChange}
-              required
-              fullWidth
-              variant="outlined"
-              size="medium"
-              multiline
-              rows={3}
-              placeholder="e.g., Bachelor's in Computer Science from XYZ University (2020)"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                  backgroundColor: "white",
-                  fontSize: "16px",
-                  "& fieldset": {
-                    borderColor: "#e2e8f0",
+            <div className="flex flex-col gap-4">
+              <TextField
+                label="Skills (comma-separated) *"
+                name="skills"
+                value={formData.skills.join(", ")}
+                onChange={handleSkillsChange}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                placeholder="e.g., JavaScript, React, Node.js, Python"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
                   },
-                  "&:hover fieldset": {
-                    borderColor: "#cbd5e1",
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
                   },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#3b82f6",
-                  },
-                },
-                "& .MuiInputLabel-root": {
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  color: "#64748b",
-                },
-              }}
-            />
+                }}
+              />
 
-            <TextField
-              label="Additional Notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              fullWidth
-              variant="outlined"
-              size="medium"
-              multiline
-              rows={4}
-              placeholder="Any additional information about the candidate..."
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                  backgroundColor: "white",
-                  fontSize: "16px",
-                  "& fieldset": {
-                    borderColor: "#e2e8f0",
+              <TextField
+                label="Education *"
+                name="education"
+                value={formData.education}
+                onChange={handleInputChange}
+                required
+                fullWidth
+                variant="outlined"
+                size="medium"
+                multiline
+                rows={3}
+                placeholder="e.g., Bachelor's in Computer Science from XYZ University (2020)"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
                   },
-                  "&:hover fieldset": {
-                    borderColor: "#cbd5e1",
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
                   },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#3b82f6",
-                  },
-                },
-                "& .MuiInputLabel-root": {
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  color: "#64748b",
-                },
-              }}
-            />
+                }}
+              />
 
-</div>
+              <TextField
+                label="Additional Notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                size="medium"
+                multiline
+                rows={4}
+                placeholder="Any additional information about the candidate..."
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& fieldset": {
+                      borderColor: "#e2e8f0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#cbd5e1",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#64748b",
+                  },
+                }}
+              />
+            </div>
 
             <div className="flex justify-end gap-4">
               <Button
