@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ClientModal from "@/components/ClientModal";
 import api from "@/lib/api";
 import {
   TextField,
@@ -72,7 +72,6 @@ interface ClientStats {
 }
 
 export default function ClientsPage() {
-  const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [stats, setStats] = useState<ClientStats>({
     totalClients: 0,
@@ -90,7 +89,7 @@ export default function ClientsPage() {
   const [locationFilter, setLocationFilter] = useState("");
   const [contractValueFilter, setContractValueFilter] = useState("all");
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   useEffect(() => {
@@ -237,16 +236,26 @@ export default function ClientsPage() {
   });
 
   const handleAddClient = () => {
-    setShowAddModal(true);
+    setSelectedClient(null);
+    setModalOpen(true);
+  };
+
+  const handleEditClient = (client: Client) => {
+    setSelectedClient(client);
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedClient(null);
+  };
+
+  const handleModalSuccess = () => {
+    fetchClients(); // Refresh the clients list
   };
 
   const handleViewClient = (client: Client) => {
     setSelectedClient(client);
-  };
-
-  const handleEditClient = (client: Client) => {
-    // Navigate to edit page or open edit modal
-    console.log("Edit client:", client);
   };
 
   const handleDeleteClient = (clientId: string) => {
@@ -337,18 +346,18 @@ export default function ClientsPage() {
               onClick={handleAddClient}
               variant="contained"
               startIcon={<Plus className="w-5 h-5" />}
-                              sx={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                  borderRadius: '12px',
-                  padding: '12px 24px',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                    transform: 'scale(1.05)',
-                  },
-                }}
+              sx={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                borderRadius: '12px',
+                padding: '12px 24px',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                  transform: 'scale(1.05)',
+                },
+              }}
             >
               Add New Client
             </Button>
@@ -782,6 +791,14 @@ export default function ClientsPage() {
             </div>
           )}
         </div>
+
+        {/* Client Modal */}
+        <ClientModal
+          open={modalOpen}
+          onClose={handleModalClose}
+          client={selectedClient}
+          onSuccess={handleModalSuccess}
+        />
       </DashboardLayout>
     </ProtectedRoute>
   );

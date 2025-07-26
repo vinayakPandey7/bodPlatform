@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import SubmitCandidateModal from "@/components/SubmitCandidateModal";
 import api from "@/lib/api";
+import { toast } from "sonner";
 import {
   TextField,
   Select,
@@ -106,6 +108,8 @@ export default function RecruitmentPartnerJobsPage() {
   const [payStructureFilter, setPayStructureFilter] = useState("all");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [selectedJobForSubmission, setSelectedJobForSubmission] = useState<Job | null>(null);
 
   // Utility function to safely format dates
   const formatDate = (dateString: string | undefined) => {
@@ -166,9 +170,19 @@ export default function RecruitmentPartnerJobsPage() {
     );
   });
 
-  const handleApplyToJob = (jobId: string) => {
-    // This would open a modal or redirect to application form
-    alert(`Apply to job ${jobId} - This feature will be implemented`);
+  const handleApplyToJob = (job: Job) => {
+    setSelectedJobForSubmission(job);
+    setSubmitModalOpen(true);
+  };
+
+  const handleSubmitModalClose = () => {
+    setSubmitModalOpen(false);
+    setSelectedJobForSubmission(null);
+  };
+
+  const handleSubmitSuccess = () => {
+    // Optionally refresh data or show success message
+    toast.success("Candidate submitted successfully!");
   };
 
   const handleCreateJob = () => {
@@ -526,7 +540,10 @@ export default function RecruitmentPartnerJobsPage() {
 
                     <div className="ml-6">
                       <Button
-                        onClick={() => handleApplyToJob(job._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApplyToJob(job);
+                        }}
                         variant="contained"
                         sx={{
                           backgroundColor: "#4f46e5",
@@ -969,7 +986,7 @@ export default function RecruitmentPartnerJobsPage() {
                   variant="contained"
                   onClick={() => {
                     handleClosePreview();
-                    handleApplyToJob(selectedJob._id);
+                    handleApplyToJob(selectedJob);
                   }}
                   sx={{
                     backgroundColor: "#4f46e5",
@@ -983,6 +1000,18 @@ export default function RecruitmentPartnerJobsPage() {
               )}
             </DialogActions>
           </Dialog>
+
+          {/* Submit Candidate Modal */}
+          {selectedJobForSubmission && (
+            <SubmitCandidateModal
+              open={submitModalOpen}
+              onClose={handleSubmitModalClose}
+              jobId={selectedJobForSubmission._id}
+              jobTitle={selectedJobForSubmission.title}
+              companyName={getCompanyName(selectedJobForSubmission)}
+              onSuccess={handleSubmitSuccess}
+            />
+          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>
