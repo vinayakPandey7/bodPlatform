@@ -109,7 +109,41 @@ export default function RecruitmentPartnerJobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
-  const [selectedJobForSubmission, setSelectedJobForSubmission] = useState<Job | null>(null);
+  const [selectedJobForSubmission, setSelectedJobForSubmission] =
+    useState<Job | null>(null);
+  const [showQuickSubmit, setShowQuickSubmit] = useState(false);
+
+  // Quick submit for existing candidates
+  const handleQuickSubmitCandidates = async (job: Job) => {
+    try {
+      // First, fetch existing candidates
+      const candidatesResponse = await api.get(
+        "/recruitment-partner/candidates"
+      );
+      const candidates = candidatesResponse.data.candidates || [];
+
+      if (candidates.length === 0) {
+        toast.info(
+          "No candidates available. Please add candidates first or use the detailed submission form."
+        );
+        handleApplyToJob(job);
+        return;
+      }
+
+      // For now, open the modal for detailed submission
+      // In the future, you could show a quick select dialog here
+      toast.info(
+        `Found ${candidates.length} candidates. Opening submission form...`
+      );
+      handleApplyToJob(job);
+    } catch (error: any) {
+      console.error("Error fetching candidates for quick submit:", error);
+      toast.error(
+        "Failed to fetch candidates. Opening detailed submission form..."
+      );
+      handleApplyToJob(job);
+    }
+  };
 
   // Utility function to safely format dates
   const formatDate = (dateString: string | undefined) => {
@@ -171,6 +205,23 @@ export default function RecruitmentPartnerJobsPage() {
   });
 
   const handleApplyToJob = (job: Job) => {
+    // Validate if job is still active
+    if (!job.isActive || !job.isApproved) {
+      toast.error("This job is no longer active for submissions");
+      return;
+    }
+
+    // Check if job has expired
+    const now = new Date();
+    const expiryDate = new Date(job.expires);
+    if (expiryDate < now) {
+      toast.error("This job posting has expired");
+      return;
+    }
+
+    // Show loading indicator briefly for user feedback
+    toast.info("Opening candidate submission form...");
+
     setSelectedJobForSubmission(job);
     setSubmitModalOpen(true);
   };
@@ -181,8 +232,15 @@ export default function RecruitmentPartnerJobsPage() {
   };
 
   const handleSubmitSuccess = () => {
-    // Optionally refresh data or show success message
+    // Show success message
     toast.success("Candidate submitted successfully!");
+
+    // Close modal
+    handleSubmitModalClose();
+
+    // Optional: You could refresh the jobs list or update UI state here
+    // Optional: Track analytics or update local state
+    // fetchAllJobs(); // Uncomment if you want to refresh jobs
   };
 
   const handleCreateJob = () => {
@@ -542,7 +600,7 @@ export default function RecruitmentPartnerJobsPage() {
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleApplyToJob(job);
+                          handleQuickSubmitCandidates(job);
                         }}
                         variant="contained"
                         sx={{
@@ -986,7 +1044,7 @@ export default function RecruitmentPartnerJobsPage() {
                   variant="contained"
                   onClick={() => {
                     handleClosePreview();
-                    handleApplyToJob(selectedJob);
+                    handleQuickSubmitCandidates(selectedJob);
                   }}
                   sx={{
                     backgroundColor: "#4f46e5",

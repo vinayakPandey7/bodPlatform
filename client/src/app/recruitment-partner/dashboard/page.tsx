@@ -40,11 +40,11 @@ interface DashboardStats {
 
 interface RecentActivity {
   id: string;
-  type: 'placement' | 'interview' | 'application' | 'client' | 'candidate';
+  type: "placement" | "interview" | "application" | "client" | "candidate";
   title: string;
   description: string;
   timestamp: string;
-  status: 'success' | 'pending' | 'warning' | 'info';
+  status: "success" | "pending" | "warning" | "info";
 }
 
 interface TopPerformer {
@@ -75,89 +75,63 @@ export default function RecruitmentPartnerDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // For now, we'll use placeholder data
+        setLoading(true);
+
+        console.log("Fetching dashboard data...");
+
+        // Fetch real dashboard data from API
+        const response = await api.get("/recruitment-partner/dashboard");
+
+        console.log("Dashboard API Response:", response.data);
+
+        if (response.data.success) {
+          const { stats, recentActivity, topPerformers } = response.data.data;
+
+          console.log("Stats from API:", stats);
+          console.log("Recent Activity from API:", recentActivity);
+          console.log("Top Performers from API:", topPerformers);
+
+          setStats({
+            totalCandidates: stats.totalCandidates || 0,
+            activePlacements: stats.activePlacements || 0,
+            totalRevenue: stats.totalRevenue || 0,
+            successRate: stats.successRate || 0,
+            pendingInterviews: stats.pendingInterviews || 0,
+            activeClients: stats.activeClients || 0,
+            thisMonthPlacements: stats.thisMonthPlacements || 0,
+            averageTimeToPlace: stats.averageTimeToPlace || 0,
+          });
+
+          // Format recent activity timestamps
+          const formattedActivity =
+            recentActivity?.map((activity: any) => ({
+              ...activity,
+              timestamp: formatTimestamp(activity.timestamp),
+            })) || [];
+
+          setRecentActivity(formattedActivity);
+          setTopPerformers(topPerformers || []);
+        } else {
+          console.error("API returned success: false", response.data);
+        }
+      } catch (error: any) {
+        console.error("Error fetching dashboard data:", error);
+        console.error("Error details:", error.response?.data || error.message);
+
+        // Fallback to placeholder data if API fails
         setStats({
-          totalCandidates: 247,
-          activePlacements: 18,
-          totalRevenue: 125000,
-          successRate: 78,
-          pendingInterviews: 12,
-          activeClients: 8,
-          thisMonthPlacements: 5,
-          averageTimeToPlace: 23,
+          totalCandidates: 0,
+          activePlacements: 0,
+          totalRevenue: 0,
+          successRate: 0,
+          pendingInterviews: 0,
+          activeClients: 0,
+          thisMonthPlacements: 0,
+          averageTimeToPlace: 0,
         });
 
-        setRecentActivity([
-          {
-            id: '1',
-            type: 'placement',
-            title: 'Senior Developer placed at TechCorp',
-            description: 'John Smith successfully placed with $95k salary',
-            timestamp: '2 hours ago',
-            status: 'success'
-          },
-          {
-            id: '2',
-            type: 'interview',
-            title: 'Interview scheduled for Product Manager',
-            description: 'Sarah Johnson - Interview with Google tomorrow',
-            timestamp: '4 hours ago',
-            status: 'pending'
-          },
-          {
-            id: '3',
-            type: 'client',
-            title: 'New client onboarded',
-            description: 'StartupXYZ signed contract for 3 positions',
-            timestamp: '6 hours ago',
-            status: 'info'
-          },
-          {
-            id: '4',
-            type: 'candidate',
-            title: 'New candidate added',
-            description: 'Mike Wilson - Senior DevOps Engineer',
-            timestamp: '1 day ago',
-            status: 'info'
-          },
-          {
-            id: '5',
-            type: 'placement',
-            title: 'UX Designer placed at DesignStudio',
-            description: 'Emily Chen successfully placed with $85k salary',
-            timestamp: '2 days ago',
-            status: 'success'
-          }
-        ]);
-
-        setTopPerformers([
-          {
-            id: '1',
-            name: 'John Smith',
-            role: 'Senior Software Engineer',
-            company: 'TechCorp',
-            placementDate: '2024-01-15',
-            revenue: 9500
-          },
-          {
-            id: '2',
-            name: 'Sarah Johnson',
-            role: 'Product Manager',
-            company: 'InnovateLab',
-            placementDate: '2024-01-12',
-            revenue: 12000
-          },
-          {
-            id: '3',
-            name: 'Mike Wilson',
-            role: 'DevOps Engineer',
-            company: 'CloudTech',
-            placementDate: '2024-01-10',
-            revenue: 8800
-          }
-        ]);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        setRecentActivity([]);
+        setTopPerformers([]);
       } finally {
         setLoading(false);
       }
@@ -165,6 +139,25 @@ export default function RecruitmentPartnerDashboard() {
 
     fetchDashboardData();
   }, []);
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+    } else if (diffHours > 0) {
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes} minute${diffMinutes > 1 ? "s" : ""} ago`;
+    } else {
+      return "Just now";
+    }
+  };
 
   const handleAddCandidate = () => {
     router.push("/recruitment-partner/candidates/add");
@@ -184,15 +177,15 @@ export default function RecruitmentPartnerDashboard() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'placement':
+      case "placement":
         return <CheckCircle className="h-4 w-4" />;
-      case 'interview':
+      case "interview":
         return <Calendar className="h-4 w-4" />;
-      case 'application':
+      case "application":
         return <FileText className="h-4 w-4" />;
-      case 'client':
+      case "client":
         return <Building2 className="h-4 w-4" />;
-      case 'candidate':
+      case "candidate":
         return <UserPlus className="h-4 w-4" />;
       default:
         return <Activity className="h-4 w-4" />;
@@ -201,16 +194,16 @@ export default function RecruitmentPartnerDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success':
-        return 'text-green-600 bg-green-100';
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'warning':
-        return 'text-red-600 bg-red-100';
-      case 'info':
-        return 'text-blue-600 bg-blue-100';
+      case "success":
+        return "text-green-600 bg-green-100";
+      case "pending":
+        return "text-yellow-600 bg-yellow-100";
+      case "warning":
+        return "text-red-600 bg-red-100";
+      case "info":
+        return "text-blue-600 bg-blue-100";
       default:
-        return 'text-gray-600 bg-gray-100';
+        return "text-gray-600 bg-gray-100";
     }
   };
 
@@ -293,7 +286,9 @@ export default function RecruitmentPartnerDashboard() {
                   <h3 className="text-sm font-semibold text-gray-600 group-hover:text-gray-800 transition-colors">
                     Active Placements
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1">Currently working</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Currently working
+                  </p>
                 </div>
               </div>
             </div>
@@ -339,7 +334,9 @@ export default function RecruitmentPartnerDashboard() {
                   <h3 className="text-sm font-semibold text-gray-600 group-hover:text-gray-800 transition-colors">
                     Success Rate
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1">Placement success</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Placement success
+                  </p>
                 </div>
               </div>
             </div>
@@ -354,8 +351,12 @@ export default function RecruitmentPartnerDashboard() {
                   <Calendar className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">Pending Interviews</p>
-                  <p className="text-lg font-semibold text-gray-900">{stats.pendingInterviews}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Pending Interviews
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {stats.pendingInterviews}
+                  </p>
                 </div>
               </div>
             </div>
@@ -367,8 +368,12 @@ export default function RecruitmentPartnerDashboard() {
                   <Building2 className="h-5 w-5 text-green-600" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">Active Clients</p>
-                  <p className="text-lg font-semibold text-gray-900">{stats.activeClients}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Active Clients
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {stats.activeClients}
+                  </p>
                 </div>
               </div>
             </div>
@@ -380,8 +385,12 @@ export default function RecruitmentPartnerDashboard() {
                   <TrendingUp className="h-5 w-5 text-purple-600" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-lg font-semibold text-gray-900">{stats.thisMonthPlacements}</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    This Month
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {stats.thisMonthPlacements}
+                  </p>
                 </div>
               </div>
             </div>
@@ -393,8 +402,12 @@ export default function RecruitmentPartnerDashboard() {
                   <Clock className="h-5 w-5 text-orange-600" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">Avg Time to Place</p>
-                  <p className="text-lg font-semibold text-gray-900">{stats.averageTimeToPlace} days</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Avg Time to Place
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {stats.averageTimeToPlace} days
+                  </p>
                 </div>
               </div>
             </div>
@@ -417,7 +430,9 @@ export default function RecruitmentPartnerDashboard() {
                     <UserPlus className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-bold mb-1">Add Candidate</h3>
-                  <p className="text-blue-100 text-sm">Add new candidate to database</p>
+                  <p className="text-blue-100 text-sm">
+                    Add new candidate to database
+                  </p>
                 </div>
               </button>
 
@@ -432,7 +447,9 @@ export default function RecruitmentPartnerDashboard() {
                     <Briefcase className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-bold mb-1">Browse Jobs</h3>
-                  <p className="text-green-100 text-sm">Find opportunities for candidates</p>
+                  <p className="text-green-100 text-sm">
+                    Find opportunities for candidates
+                  </p>
                 </div>
               </button>
 
@@ -447,7 +464,9 @@ export default function RecruitmentPartnerDashboard() {
                     <Building2 className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-bold mb-1">Manage Clients</h3>
-                  <p className="text-orange-100 text-sm">View and manage client relationships</p>
+                  <p className="text-orange-100 text-sm">
+                    View and manage client relationships
+                  </p>
                 </div>
               </button>
 
@@ -462,72 +481,134 @@ export default function RecruitmentPartnerDashboard() {
                     <Award className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-bold mb-1">View Placements</h3>
-                  <p className="text-purple-100 text-sm">Track successful placements</p>
+                  <p className="text-purple-100 text-sm">
+                    Track successful placements
+                  </p>
                 </div>
               </button>
             </div>
           </div>
 
           {/* Main Content Grid */}
-          <div className="">
-            {/* Recent Activity */}
-            {/* <div className="lg:col-span-2">
+          {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+            <div className="lg:col-span-2">
               <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">Recent Activity</h3>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Recent Activity
+                  </h3>
                   <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
                     View All
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className={`p-2 rounded-lg ${getStatusColor(activity.status)}`}>
-                        {getActivityIcon(activity.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                        <p className="text-sm text-gray-600">{activity.description}</p>
-                        <p className="text-xs text-gray-500 mt-1">{activity.timestamp}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div> */}
-
-            {/* Top Performers */}
-            {/* <div className="lg:col-span-1">
-              <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">Top Placements</h3>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    View All
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {topPerformers.map((performer, index) => (
-                    <div key={performer.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {index + 1}
+                  {recentActivity.length > 0 ? (
+                    recentActivity.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div
+                          className={`p-2 rounded-lg ${getStatusColor(
+                            activity.status
+                          )}`}
+                        >
+                          {getActivityIcon(activity.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">
+                            {activity.title}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {activity.description}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {activity.timestamp}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{performer.name}</p>
-                        <p className="text-xs text-gray-600">{performer.role}</p>
-                        <p className="text-xs text-gray-500">{performer.company}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-green-600">${performer.revenue.toLocaleString()}</p>
-                        <p className="text-xs text-gray-500">{new Date(performer.placementDate).toLocaleDateString()}</p>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Activity className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">
+                        No recent activity
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Activity will appear here as you work with candidates
+                        and clients.
+                      </p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
-            </div> */}
-          </div>
+            </div>
+
+           
+            <div className="lg:col-span-1">
+              <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Recent Placements
+                  </h3>
+                  <button
+                    onClick={handleViewPlacements}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    View All
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {topPerformers.length > 0 ? (
+                    topPerformers.map((performer, index) => (
+                      <div
+                        key={performer.id}
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            {index + 1}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">
+                            {performer.name}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {performer.role}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {performer.company}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-green-600">
+                            ${performer.revenue.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(
+                              performer.placementDate
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Award className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">
+                        No placements yet
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Successful placements will appear here.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div> */}
         </div>
       </DashboardLayout>
     </ProtectedRoute>

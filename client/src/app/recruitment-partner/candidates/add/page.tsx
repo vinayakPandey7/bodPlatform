@@ -327,7 +327,7 @@ export default function AddCandidatePage() {
             className="bg-white rounded-lg shadow p-6 space-y-6"
           >
             {/* LinkedIn Import Section */}
-            <Box className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            {/* <Box className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <Typography variant="h6" className="text-blue-800 mb-3">
                 <LinkedInIcon className="mr-2" />
                 LinkedIn Import (Optional)
@@ -368,7 +368,7 @@ export default function AddCandidatePage() {
                 Import basic information from LinkedIn profile to auto-fill the
                 form
               </Typography>
-            </Box>
+            </Box> */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <TextField

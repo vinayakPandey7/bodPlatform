@@ -59,4 +59,32 @@ router.get(
   recruitmentPartnerController.getCandidates
 );
 
+// Get applications route
+router.get(
+  "/applications",
+  auth,
+  authorizeRoles("recruitment_partner"),
+  recruitmentPartnerController.getApplications
+);
+
+// Submit candidate to job route
+router.post(
+  "/submit-candidate",
+  auth,
+  authorizeRoles("recruitment_partner"),
+  (req, res, next) => {
+    uploadToCloudinary.single("resume")(req, res, (err) => {
+      if (err) {
+        console.error("Cloudinary upload error:", err);
+        return res.status(400).json({
+          message: "Resume upload failed",
+          error: err.message,
+        });
+      }
+      next();
+    });
+  },
+  recruitmentPartnerController.submitCandidate
+);
+
 module.exports = router;

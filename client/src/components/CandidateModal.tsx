@@ -411,7 +411,7 @@ export default function CandidateModal({
 
           <Box sx={{ display: "grid", gap: 3 }}>
             {/* LinkedIn Import Section */}
-            <Box
+            {/* <Box
               sx={{
                 p: 2,
                 bgcolor: "#f8fafc",
@@ -469,7 +469,7 @@ export default function CandidateModal({
                   Clear
                 </Button>
               </Box>
-            </Box>
+            </Box> */}
 
             {/* Basic Information */}
             <Typography variant="h6" sx={{ fontWeight: 600, color: "#374151" }}>
