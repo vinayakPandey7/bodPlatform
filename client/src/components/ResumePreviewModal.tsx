@@ -76,7 +76,7 @@ export default function ResumePreviewModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-[60]">
+    <div className="fixed inset-0 bg-black/50 bg-opacity-75 flex items-center justify-center p-4 z-[60]">
       <div className="bg-white rounded-lg w-11/12 h-5/6 max-w-4xl flex flex-col">
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">

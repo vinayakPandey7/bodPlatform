@@ -157,7 +157,7 @@ const LogoutButton = memo(({ onLogout }: LogoutButtonProps) => {
           setShowTooltip(false);
           setAnchorEl(null);
         }}
-        className="p-2 cursor-pointer rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-gray-600 hover:text-red-600"
+        className="p-2 cursor-pointer rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none  text-gray-600 hover:text-red-600"
       >
         <LogOut className="h-5 w-5" />
       </button>
