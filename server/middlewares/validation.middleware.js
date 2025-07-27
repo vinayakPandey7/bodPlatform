@@ -1,4 +1,18 @@
 const Joi = require("joi");
+const { validationResult } = require("express-validator");
+
+// Express-validator middleware for handling validation results
+const validateRequest = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors: errors.array(),
+    });
+  }
+  next();
+};
 
 // Validation middleware
 const validate = (schema) => {
@@ -292,6 +306,7 @@ const employerRegistrationSchema = Joi.object({
 
 module.exports = {
   validate,
+  validateRequest,
   loginSchema,
   registerSchema,
   forgotPasswordSchema,

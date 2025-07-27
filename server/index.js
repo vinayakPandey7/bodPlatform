@@ -17,6 +17,7 @@ const candidateRoutes = require("./routes/candidate.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const cloudinaryRoutes = require("./routes/cloudinary.routes");
 const locationRoutes = require("./routes/location.routes");
+const clientRoutes = require("./routes/client.routes");
 
 // Initialize express app
 const app = express();
@@ -65,6 +66,7 @@ mongoose
 app.use("/api/auth", authRoutes);
 app.use("/api/employer", employerRoutes);
 app.use("/api/recruitment-partner", recruitmentPartnerRoutes);
+app.use("/api/recruitment-partner/clients", clientRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/candidates", candidateRoutes);
