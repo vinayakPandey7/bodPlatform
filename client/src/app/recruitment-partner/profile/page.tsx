@@ -5,6 +5,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useCurrentUser } from "@/lib/hooks";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import PhoneNumberInput from "@/components/PhoneNumberInput";
 import {
   User,
   Shield,
@@ -485,16 +486,15 @@ export default function RecruitmentPartnerProfilePage() {
                           size="small"
                         />
 
-                        <TextField
+                        <PhoneNumberInput
                           label="Contact Phone *"
-                          name="contactPhone"
-                          type="tel"
                           value={profile.contactPhone || ""}
-                          onChange={handleInputChange}
+                          onChange={(value) => {
+                            if (profile) {
+                              setProfile({ ...profile, contactPhone: value });
+                            }
+                          }}
                           required
-                          fullWidth
-                          variant="outlined"
-                          size="small"
                         />
 
                         <TextField

@@ -65,6 +65,7 @@ import { useTheme } from "@mui/material/styles";
 import { jobFetchers } from "@/lib/fetchers";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/Loader";
+import PhoneNumberInput from "@/components/PhoneNumberInput";
 
 // Language options
 const LANGUAGE_OPTIONS = [
@@ -853,19 +854,16 @@ export default function CreateJobPageRecruitmentPartner() {
           </Box>
 
           <Box>
-            <TextField
-              fullWidth
+            <PhoneNumberInput
               label="Contact Phone Number *"
               value={formData.contactNumber}
-              onChange={(e) =>
-                handleInputChange("contactNumber", e.target.value)
-              }
+              onChange={(value) => handleInputChange("contactNumber", value)}
               error={!!errors.contactNumber}
               helperText={
                 errors.contactNumber ||
                 "Phone number where candidates can reach about this position"
               }
-              placeholder="e.g. (555) 123-4567"
+              required
             />
           </Box>
 

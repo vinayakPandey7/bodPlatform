@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import PhoneNumberInput from "@/components/PhoneNumberInput";
 import {
   TextField,
   Select,
@@ -436,37 +437,11 @@ export default function AddCandidatePage() {
                 }}
               />
 
-              <TextField
+              <PhoneNumberInput
                 label="Phone *"
-                name="phone"
-                type="tel"
                 value={formData.phone}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
                 required
-                fullWidth
-                variant="outlined"
-                size="medium"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    fontSize: "16px",
-                    "& fieldset": {
-                      borderColor: "#e2e8f0",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#cbd5e1",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#3b82f6",
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    fontSize: "16px",
-                    fontWeight: 500,
-                    color: "#64748b",
-                  },
-                }}
               />
 
               {/* Resume Upload */}

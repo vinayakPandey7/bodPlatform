@@ -32,6 +32,7 @@ import {
 } from "@mui/icons-material";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import PhoneNumberInput from "@/components/PhoneNumberInput";
 
 interface ClientFormData {
   companyName: string;
@@ -378,27 +379,13 @@ export default function ClientModal({
                     }}
                   />
 
-                  <Field
-                    as={TextField}
-                    name="phone"
+                  <PhoneNumberInput
                     label="Phone *"
-                    fullWidth
-                    variant="outlined"
-                    size="small"
+                    value={values.phone}
+                    onChange={(value) => setFieldValue("phone", value)}
                     error={touched.phone && Boolean(errors.phone)}
-                    helperText={touched.phone && errors.phone}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    InputProps={{
-                      startAdornment: <PhoneIcon sx={{ mr: 1, color: "#9ca3af" }} />,
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "8px",
-                        backgroundColor: "white",
-                        fontSize: "16px",
-                      },
-                    }}
+                    helperText={touched.phone && errors.phone ? errors.phone : undefined}
+                    required
                   />
                 </Box>
 

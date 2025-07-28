@@ -27,6 +27,7 @@ import {
 } from "@mui/icons-material";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import PhoneNumberInput from "@/components/PhoneNumberInput";
 
 interface CandidateFormData {
   name: string;
@@ -519,22 +520,11 @@ export default function CandidateModal({
             <Box
               sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
             >
-              <TextField
+              <PhoneNumberInput
                 label="Phone *"
-                name="phone"
                 value={formData.phone}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
                 required
-                fullWidth
-                variant="outlined"
-                size="small"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    fontSize: "16px",
-                  },
-                }}
               />
               <TextField
                 label="Portfolio URL"

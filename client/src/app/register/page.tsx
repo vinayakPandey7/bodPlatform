@@ -36,6 +36,7 @@ import {
   Play,
 } from "lucide-react";
 import { toast } from "sonner";
+import PhoneNumberInput from "@/components/PhoneNumberInput";
 
 // Compact Input Component
 interface InputProps {
@@ -856,18 +857,13 @@ function RegisterPageContent() {
                                 }
                               />
 
-                              <CompactInput
+                              <PhoneNumberInput
                                 label="Phone Number"
-                                name="phoneNumber"
                                 value={values.phoneNumber}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                error={errors.phoneNumber}
-                                touched={touched.phoneNumber}
+                                onChange={(value) => setFieldValue("phoneNumber", value)}
+                                error={touched.phoneNumber && Boolean(errors.phoneNumber)}
+                                helperText={touched.phoneNumber && errors.phoneNumber ? errors.phoneNumber : undefined}
                                 required
-                                icon={
-                                  <Phone size={20} className="text-gray-400" />
-                                }
                               />
 
                               <CompactSelect
@@ -955,18 +951,13 @@ function RegisterPageContent() {
                                 }
                               />
 
-                              <CompactInput
+                              <PhoneNumberInput
                                 label="Phone"
-                                name="partnerPhone"
                                 value={values.partnerPhone}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                error={errors.partnerPhone}
-                                touched={touched.partnerPhone}
+                                onChange={(value) => setFieldValue("partnerPhone", value)}
+                                error={touched.partnerPhone && Boolean(errors.partnerPhone)}
+                                helperText={touched.partnerPhone && errors.partnerPhone ? errors.partnerPhone : undefined}
                                 required
-                                icon={
-                                  <Phone size={20} className="text-gray-400" />
-                                }
                               />
 
                               <CompactInput
@@ -1029,18 +1020,13 @@ function RegisterPageContent() {
                                 }
                               />
 
-                              <CompactInput
+                              <PhoneNumberInput
                                 label="Phone"
-                                name="candidatePhone"
                                 value={values.candidatePhone}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                error={errors.candidatePhone}
-                                touched={touched.candidatePhone}
+                                onChange={(value) => setFieldValue("candidatePhone", value)}
+                                error={touched.candidatePhone && Boolean(errors.candidatePhone)}
+                                helperText={touched.candidatePhone && errors.candidatePhone ? errors.candidatePhone : undefined}
                                 required
-                                icon={
-                                  <Phone size={20} className="text-gray-400" />
-                                }
                               />
                             </>
                           )}
