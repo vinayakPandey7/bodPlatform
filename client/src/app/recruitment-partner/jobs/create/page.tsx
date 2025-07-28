@@ -43,6 +43,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+
 import {
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
@@ -258,7 +259,52 @@ export default function CreateJobPageRecruitmentPartner() {
   const [showTemplates, setShowTemplates] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    requirements: string[];
+    skills: string[];
+    experience: string;
+    location: string;
+    zipCode: string;
+    city: string;
+    state: string;
+    country: string;
+    jobType: string;
+    workMode: string;
+    salaryMin: string;
+    salaryMax: string;
+    currency: string;
+    benefits: string[];
+    department: string;
+    contactNumber: string;
+    urgency: string;
+    numberOfPositions: number;
+    expires: string;
+    languagePreference: string[];
+    candidateType: string[];
+    workSchedule: string;
+    partTimeWorkDays: string[];
+    officeRequirement: string;
+    officeDetails: string;
+    remoteWorkDays: string;
+    remoteWorkPreferredDays: string[];
+    payStructureType: string;
+    hourlyPay: string;
+    payDays: string;
+    employeeBenefits: string[];
+    freeParking: string;
+    roleType: string;
+    qualifications: string[];
+    additionalRequirements: string[];
+    serviceSalesFocus: string;
+    licenseRequirement: string;
+    otherLicenseRequirement: string;
+    startDate: string;
+    additionalInfo: string;
+    recruitmentDuration: string;
+    assessmentLink: string;
+  }>({
     title: "",
     description: "",
     requirements: [],
@@ -281,7 +327,6 @@ export default function CreateJobPageRecruitmentPartner() {
     numberOfPositions: 1,
     expires: "",
     languagePreference: ["English"],
-    // Enhanced fields
     candidateType: [],
     workSchedule: "",
     partTimeWorkDays: [],
@@ -306,7 +351,7 @@ export default function CreateJobPageRecruitmentPartner() {
     assessmentLink: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [newRequirement, setNewRequirement] = useState("");
   const [newAdditionalRequirement, setNewAdditionalRequirement] = useState("");
 
@@ -321,14 +366,14 @@ export default function CreateJobPageRecruitmentPartner() {
     },
   });
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
+    if (errors[field as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const applyTemplate = (template) => {
+  const applyTemplate = (template: any) => {
     setFormData((prev) => ({
       ...prev,
       ...template,
@@ -350,7 +395,7 @@ export default function CreateJobPageRecruitmentPartner() {
     }
   };
 
-  const removeRequirement = (requirement) => {
+  const removeRequirement = (requirement: string) => {
     setFormData((prev) => ({
       ...prev,
       requirements: prev.requirements.filter((req) => req !== requirement),
@@ -373,7 +418,7 @@ export default function CreateJobPageRecruitmentPartner() {
     }
   };
 
-  const removeAdditionalRequirement = (requirement) => {
+  const removeAdditionalRequirement = (requirement: string) => {
     setFormData((prev) => ({
       ...prev,
       additionalRequirements: prev.additionalRequirements.filter(
@@ -382,8 +427,8 @@ export default function CreateJobPageRecruitmentPartner() {
     }));
   };
 
-  const validateStep = (stepIndex) => {
-    const newErrors = {};
+  const validateStep = (stepIndex: number) => {
+    const newErrors: Record<string, string> = {};
 
     switch (stepIndex) {
       case 0: // Job Basics
@@ -429,7 +474,7 @@ export default function CreateJobPageRecruitmentPartner() {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const handleStepClick = (stepIndex) => {
+  const handleStepClick = (stepIndex: number) => {
     if (stepIndex <= activeStep || completedSteps.has(stepIndex)) {
       setActiveStep(stepIndex);
     }
@@ -440,7 +485,7 @@ export default function CreateJobPageRecruitmentPartner() {
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) newErrors.title = "Job title is required";
     if (!formData.description.trim())
@@ -458,7 +503,7 @@ export default function CreateJobPageRecruitmentPartner() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -491,9 +536,9 @@ export default function CreateJobPageRecruitmentPartner() {
           templates, or create your own from scratch.
         </Typography>
 
-        <Grid container spacing={2}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
           {JOB_TEMPLATES.map((template, index) => (
-            <Grid item xs={12} md={4} key={index}>
+            <Box key={index}>
               <Card
                 sx={{
                   cursor: "pointer",
@@ -538,9 +583,9 @@ export default function CreateJobPageRecruitmentPartner() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         <Divider sx={{ my: 3, bgcolor: "rgba(255,255,255,0.2)" }} />
 
@@ -563,7 +608,7 @@ export default function CreateJobPageRecruitmentPartner() {
     </Card>
   );
 
-  const renderStepContent = (stepIndex) => {
+  const renderStepContent = (stepIndex: number) => {
     switch (stepIndex) {
       case 0:
         return renderJobBasics();
@@ -591,8 +636,8 @@ export default function CreateJobPageRecruitmentPartner() {
           Job Basics
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 3 }}>
+          <Box>
             <TextField
               fullWidth
               label="Job Title *"
@@ -612,9 +657,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 ),
               }}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <TextField
               fullWidth
               label="Job Description *"
@@ -629,9 +674,9 @@ export default function CreateJobPageRecruitmentPartner() {
               rows={6}
               placeholder="Describe the role, company culture, and what makes this opportunity great for your candidates..."
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth error={!!errors.jobType}>
               <InputLabel>Job Type *</InputLabel>
               <Select
@@ -649,9 +694,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 <FormHelperText>{errors.jobType}</FormHelperText>
               )}
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth error={!!errors.workMode}>
               <InputLabel>Work Mode *</InputLabel>
               <Select
@@ -667,9 +712,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 <FormHelperText>{errors.workMode}</FormHelperText>
               )}
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Experience Level</InputLabel>
               <Select
@@ -688,9 +733,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 <MenuItem value="12+">Executive (12+ years)</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Department"
@@ -699,9 +744,9 @@ export default function CreateJobPageRecruitmentPartner() {
               placeholder="e.g. Sales, Customer Service, Claims"
               helperText="Which department will this role be part of?"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Number of Positions"
@@ -713,9 +758,9 @@ export default function CreateJobPageRecruitmentPartner() {
               inputProps={{ min: 1 }}
               helperText="How many people are you looking to place for this role?"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Urgency Level</InputLabel>
               <Select
@@ -731,8 +776,8 @@ export default function CreateJobPageRecruitmentPartner() {
                 How quickly does the client need this position filled?
               </FormHelperText>
             </FormControl>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -748,8 +793,8 @@ export default function CreateJobPageRecruitmentPartner() {
           Location & Compensation
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 3 }}>
+          <Box>
             <TextField
               fullWidth
               label="Full Address *"
@@ -769,9 +814,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 ),
               }}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={4}>
+          <Box>
             <TextField
               fullWidth
               label="City *"
@@ -781,9 +826,9 @@ export default function CreateJobPageRecruitmentPartner() {
               helperText={errors.city}
               placeholder="e.g. Chicago"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={4}>
+          <Box>
             <TextField
               fullWidth
               label="State *"
@@ -793,9 +838,9 @@ export default function CreateJobPageRecruitmentPartner() {
               helperText={errors.state}
               placeholder="e.g. Illinois"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={4}>
+          <Box>
             <TextField
               fullWidth
               label="Zip Code *"
@@ -805,9 +850,9 @@ export default function CreateJobPageRecruitmentPartner() {
               helperText={errors.zipCode}
               placeholder="e.g. 60601"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <TextField
               fullWidth
               label="Contact Phone Number *"
@@ -822,9 +867,9 @@ export default function CreateJobPageRecruitmentPartner() {
               }
               placeholder="e.g. (555) 123-4567"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <Typography
               variant="h6"
               sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
@@ -832,9 +877,9 @@ export default function CreateJobPageRecruitmentPartner() {
               <MoneyIcon color="primary" />
               Compensation
             </Typography>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Minimum Salary"
@@ -848,9 +893,9 @@ export default function CreateJobPageRecruitmentPartner() {
               }}
               helperText="Annual salary minimum"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Maximum Salary"
@@ -865,9 +910,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 ),
               }}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Pay Structure</InputLabel>
               <Select
@@ -885,9 +930,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 </MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Currency</InputLabel>
               <Select
@@ -901,8 +946,8 @@ export default function CreateJobPageRecruitmentPartner() {
                 <MenuItem value="CAD">CAD</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -918,8 +963,8 @@ export default function CreateJobPageRecruitmentPartner() {
           Requirements & Qualifications
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 3 }}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>License Requirement</InputLabel>
               <Select
@@ -939,10 +984,10 @@ export default function CreateJobPageRecruitmentPartner() {
                 <MenuItem value="Other">Other License</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
           {formData.licenseRequirement === "Other" && (
-            <Grid item xs={12}>
+            <Box>
               <TextField
                 fullWidth
                 label="Other License Requirement"
@@ -952,10 +997,10 @@ export default function CreateJobPageRecruitmentPartner() {
                 }
                 placeholder="Specify the required license"
               />
-            </Grid>
+            </Box>
           )}
 
-          <Grid item xs={12}>
+          <Box>
             <Autocomplete
               multiple
               options={SKILLS_OPTIONS}
@@ -981,9 +1026,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 />
               )}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <Autocomplete
               multiple
               options={QUALIFICATIONS_OPTIONS}
@@ -1009,9 +1054,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 />
               )}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <Box>
               <Typography variant="subtitle1" sx={{ mb: 2 }}>
                 Job Requirements
@@ -1053,8 +1098,8 @@ export default function CreateJobPageRecruitmentPartner() {
                 </Box>
               )}
             </Box>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -1070,8 +1115,8 @@ export default function CreateJobPageRecruitmentPartner() {
           Schedule & Benefits
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 3 }}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Work Schedule</InputLabel>
               <Select
@@ -1085,9 +1130,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 <MenuItem value="part_time">Part Time</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Role Focus</InputLabel>
               <Select
@@ -1100,9 +1145,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 <MenuItem value="mixed">Service & Sales</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Start Date"
@@ -1112,9 +1157,9 @@ export default function CreateJobPageRecruitmentPartner() {
               InputLabelProps={{ shrink: true }}
               helperText="When would you like the candidate to start?"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Application Deadline"
@@ -1124,9 +1169,9 @@ export default function CreateJobPageRecruitmentPartner() {
               InputLabelProps={{ shrink: true }}
               helperText="When do applications close?"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <Autocomplete
               multiple
               options={EMPLOYEE_BENEFITS_OPTIONS}
@@ -1152,9 +1197,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 />
               )}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <Autocomplete
               multiple
               options={LANGUAGE_OPTIONS}
@@ -1180,9 +1225,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 />
               )}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <TextField
               fullWidth
               label="Additional Information"
@@ -1195,8 +1240,8 @@ export default function CreateJobPageRecruitmentPartner() {
               placeholder="Any additional information about the role, company culture, or application process..."
               helperText="Share any other relevant details about this opportunity"
             />
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -1228,8 +1273,8 @@ export default function CreateJobPageRecruitmentPartner() {
           </Button>
         </Box>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 3 }}>
+          <Box>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 2, color: "primary.main" }}>
@@ -1255,9 +1300,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 2, color: "primary.main" }}>
@@ -1285,9 +1330,9 @@ export default function CreateJobPageRecruitmentPartner() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 2, color: "primary.main" }}>
@@ -1311,8 +1356,8 @@ export default function CreateJobPageRecruitmentPartner() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -1442,24 +1487,40 @@ export default function CreateJobPageRecruitmentPartner() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-        <IconButton onClick={() => router.back()}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 } }}>
+      <Box sx={{ display: "flex", alignItems: "center", mb: { xs: 2, md: 3 } }}>
+        <IconButton onClick={() => router.back()} sx={{ mr: 1 }}>
           <ArrowBackIcon />
         </IconButton>
-        <Typography variant="h4" sx={{ ml: 2, fontWeight: "bold" }}>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontWeight: "bold",
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+          }}
+        >
           Create a New Job Posting
         </Typography>
       </Box>
 
       {/* Progress Bar */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 3, md: 4 } }}>
         <LinearProgress
           variant="determinate"
           value={getProgressPercentage()}
-          sx={{ height: 8, borderRadius: 4 }}
+          sx={{ 
+            height: { xs: 6, md: 8 }, 
+            borderRadius: 4,
+            mb: 1
+          }}
         />
-        <Typography variant="body2" sx={{ mt: 1, textAlign: "center" }}>
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            textAlign: "center",
+            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+          }}
+        >
           Step {activeStep + 1} of {steps.length} -{" "}
           {steps[activeStep]?.description}
         </Typography>
@@ -1467,8 +1528,23 @@ export default function CreateJobPageRecruitmentPartner() {
 
       {/* Step Navigation */}
       <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Stepper activeStep={activeStep} orientation="horizontal">
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Stepper 
+            activeStep={activeStep} 
+            orientation="horizontal"
+            sx={{
+              '& .MuiStepLabel-root': {
+                cursor: 'pointer',
+              },
+              '& .MuiStepLabel-label': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                fontWeight: 500,
+              },
+              '& .MuiStepIcon-root': {
+                fontSize: { xs: '1.5rem', sm: '2rem' },
+              },
+            }}
+          >
             {steps.map((step, index) => (
               <Step
                 key={step.label}
@@ -1489,8 +1565,15 @@ export default function CreateJobPageRecruitmentPartner() {
                       step.icon
                     )
                   }
+                  sx={{
+                    '& .MuiStepLabel-label': {
+                      display: { xs: 'none', sm: 'block' },
+                    },
+                  }}
                 >
-                  {step.label}
+                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                    {step.label}
+                  </Box>
                 </StepLabel>
               </Step>
             ))}
@@ -1502,38 +1585,58 @@ export default function CreateJobPageRecruitmentPartner() {
         {renderStepContent(activeStep)}
 
         {/* Navigation Buttons */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          mt: { xs: 3, md: 4 },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 0 }
+        }}>
           <Button
             onClick={handleBack}
             disabled={activeStep === 0}
             variant="outlined"
+            size="large"
+            sx={{ 
+              order: { xs: 2, sm: 1 },
+              width: { xs: '100%', sm: 'auto' }
+            }}
           >
             Back
           </Button>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ 
+            display: "flex", 
+            gap: 2,
+            order: { xs: 1, sm: 2 },
+            width: { xs: '100%', sm: 'auto' }
+          }}>
             {activeStep === steps.length - 1 ? (
-              <>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={createJobMutation.isPending}
-                  startIcon={
-                    createJobMutation.isPending ? (
-                      <Spinner size="w-5 h-5" />
-                    ) : (
-                      <PublishIcon />
-                    )
-                  }
-                  size="large"
-                >
-                  {createJobMutation.isPending
-                    ? "Publishing..."
-                    : "Publish Job"}
-                </Button>
-              </>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={createJobMutation.isPending}
+                startIcon={
+                  createJobMutation.isPending ? (
+                    <Spinner size="w-5 h-5" />
+                  ) : (
+                    <PublishIcon />
+                  )
+                }
+                size="large"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
+                {createJobMutation.isPending
+                  ? "Publishing..."
+                  : "Publish Job"}
+              </Button>
             ) : (
-              <Button onClick={handleNext} variant="contained" size="large">
+              <Button 
+                onClick={handleNext} 
+                variant="contained" 
+                size="large"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
                 Next
               </Button>
             )}

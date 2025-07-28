@@ -115,9 +115,6 @@ export default function RecruitmentPartnerDashboard() {
           console.error("API returned success: false", response.data);
         }
       } catch (error: any) {
-        console.error("Error fetching dashboard data:", error);
-        console.error("Error details:", error.response?.data || error.message);
-
         // Fallback to placeholder data if API fails
         setStats({
           totalCandidates: 0,

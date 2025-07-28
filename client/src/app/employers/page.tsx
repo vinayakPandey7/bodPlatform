@@ -116,7 +116,7 @@ export default function EmployersPage() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
-                <Logo size="sm" />
+                <Logo size="md" />
               </Link>
             </div>
             <div className="flex items-center space-x-6">
@@ -559,7 +559,7 @@ export default function EmployersPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
-                <Logo size="sm" />
+                <Logo size="md" />
                 <span className="ml-3 text-lg font-bold">CIERO</span>
               </div>
               <p className="text-gray-400">

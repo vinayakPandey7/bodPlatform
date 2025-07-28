@@ -269,8 +269,6 @@ function RegisterPageContent() {
     candidateZipCode: "",
   });
 
-
-
   // Handle ZIP code change for auto-population
   const handleZipCodeChange = async (
     zipCode: string,
@@ -536,7 +534,7 @@ function RegisterPageContent() {
       <div className="w-2/6 bg-white p-8 flex flex-col">
         {/* Logo */}
         <div className="mb-12">
-          <Logo size="sm" showText={true} />
+          <Logo size="md" showText={false} />
         </div>
 
         {/* Steps */}
@@ -694,7 +692,10 @@ function RegisterPageContent() {
                 return (
                   <Form className="h-full flex flex-col justify-center  backdrop-blur-sm transition-all duration-500">
                     {error && (
-                      <Alert severity="error" className="rounded-lg text-sm mb-6">
+                      <Alert
+                        severity="error"
+                        className="rounded-lg text-sm mb-6"
+                      >
                         {error}
                       </Alert>
                     )}
@@ -800,13 +801,13 @@ function RegisterPageContent() {
                               setCurrentRole(e.target.value);
                               setFieldValue("role", e.target.value);
                               // Update initial values to match the new role
-                              setInitialValues(prev => ({ 
-                                ...prev, 
+                              setInitialValues((prev) => ({
+                                ...prev,
                                 role: e.target.value,
                                 // Preserve email and password
                                 email: values.email || "",
                                 password: values.password || "",
-                                confirmPassword: values.confirmPassword || ""
+                                confirmPassword: values.confirmPassword || "",
                               }));
                             }}
                             onBlur={handleBlur}
@@ -834,7 +835,10 @@ function RegisterPageContent() {
                                 touched={touched.companyName}
                                 required
                                 icon={
-                                  <Building size={20} className="text-gray-400" />
+                                  <Building
+                                    size={20}
+                                    className="text-gray-400"
+                                  />
                                 }
                               />
 
@@ -876,8 +880,12 @@ function RegisterPageContent() {
                                 touched={touched.industry}
                                 required
                               >
-                                <MenuItem value="technology">Technology</MenuItem>
-                                <MenuItem value="healthcare">Healthcare</MenuItem>
+                                <MenuItem value="technology">
+                                  Technology
+                                </MenuItem>
+                                <MenuItem value="healthcare">
+                                  Healthcare
+                                </MenuItem>
                                 <MenuItem value="finance">Finance</MenuItem>
                                 <MenuItem value="education">Education</MenuItem>
                                 <MenuItem value="manufacturing">
@@ -898,14 +906,18 @@ function RegisterPageContent() {
                                 required
                               >
                                 <MenuItem value="1-10">1-10 employees</MenuItem>
-                                <MenuItem value="11-50">11-50 employees</MenuItem>
+                                <MenuItem value="11-50">
+                                  11-50 employees
+                                </MenuItem>
                                 <MenuItem value="51-200">
                                   51-200 employees
                                 </MenuItem>
                                 <MenuItem value="201-1000">
                                   201-1000 employees
                                 </MenuItem>
-                                <MenuItem value="1000+">1000+ employees</MenuItem>
+                                <MenuItem value="1000+">
+                                  1000+ employees
+                                </MenuItem>
                               </CompactSelect>
                             </>
                           )}
@@ -922,7 +934,10 @@ function RegisterPageContent() {
                                 touched={touched.partnerCompanyName}
                                 required
                                 icon={
-                                  <Building size={20} className="text-gray-400" />
+                                  <Building
+                                    size={20}
+                                    className="text-gray-400"
+                                  />
                                 }
                               />
 
@@ -964,7 +979,10 @@ function RegisterPageContent() {
                                 touched={touched.yearsOfExperience}
                                 required
                                 icon={
-                                  <Calendar size={20} className="text-gray-400" />
+                                  <Calendar
+                                    size={20}
+                                    className="text-gray-400"
+                                  />
                                 }
                               />
 
@@ -1071,7 +1089,11 @@ function RegisterPageContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 disabled
-                                endIcon={zipcodeLoading ? <CircularProgress size={20} /> : null}
+                                endIcon={
+                                  zipcodeLoading ? (
+                                    <CircularProgress size={20} />
+                                  ) : null
+                                }
                               />
 
                               <CompactInput
@@ -1081,7 +1103,11 @@ function RegisterPageContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 disabled
-                                endIcon={zipcodeLoading ? <CircularProgress size={20} /> : null}
+                                endIcon={
+                                  zipcodeLoading ? (
+                                    <CircularProgress size={20} />
+                                  ) : null
+                                }
                               />
 
                               <CompactInput
@@ -1130,7 +1156,11 @@ function RegisterPageContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 disabled
-                                endIcon={zipcodeLoading ? <CircularProgress size={20} /> : null}
+                                endIcon={
+                                  zipcodeLoading ? (
+                                    <CircularProgress size={20} />
+                                  ) : null
+                                }
                               />
 
                               <CompactInput
@@ -1140,7 +1170,11 @@ function RegisterPageContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 disabled
-                                endIcon={zipcodeLoading ? <CircularProgress size={20} /> : null}
+                                endIcon={
+                                  zipcodeLoading ? (
+                                    <CircularProgress size={20} />
+                                  ) : null
+                                }
                               />
 
                               <CompactInput
@@ -1189,7 +1223,11 @@ function RegisterPageContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 disabled
-                                endIcon={zipcodeLoading ? <CircularProgress size={20} /> : null}
+                                endIcon={
+                                  zipcodeLoading ? (
+                                    <CircularProgress size={20} />
+                                  ) : null
+                                }
                               />
 
                               <CompactInput
@@ -1199,7 +1237,11 @@ function RegisterPageContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 disabled
-                                endIcon={zipcodeLoading ? <CircularProgress size={20} /> : null}
+                                endIcon={
+                                  zipcodeLoading ? (
+                                    <CircularProgress size={20} />
+                                  ) : null
+                                }
                               />
 
                               <CompactInput

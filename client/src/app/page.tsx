@@ -175,7 +175,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <Logo size="sm" />
+              <Logo size="md" />
             </div>
             <div className="flex items-center space-x-6">
               <Link
@@ -651,7 +651,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
-                <Logo size="sm" />
+                <Logo size="md" />
               </div>
               <p className="text-gray-400">
                 Your trusted partner in finding the right talent for your

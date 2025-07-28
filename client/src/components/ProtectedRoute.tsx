@@ -10,14 +10,24 @@ interface ProtectedRouteProps {
 
 // Stable loading component that prevents layout shift
 const LoadingComponent = memo(() => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+  <div className="min-h-screen flex items-center justify-center bg-white">
     <div className="text-center">
-      <div className="w-12 h-12 mx-auto mb-4">
-        <div className="animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 w-full h-full"></div>
+      {/* Simple Round Loader */}
+      <div className="mb-8 flex justify-center">
+        <div className="relative w-16 h-16">
+          {/* Outer ring */}
+          <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+          
+          {/* Animated ring */}
+          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 animate-spin"></div>
+          
+          {/* Inner pulse */}
+          <div className="absolute inset-2 rounded-full bg-blue-600 animate-pulse opacity-20"></div>
+          
+          {/* Center dot */}
+          <div className="absolute inset-6 rounded-full bg-blue-600 animate-bounce"></div>
+        </div>
       </div>
-      <p className="text-gray-600 text-sm font-medium">
-        Verifying access...
-      </p>
     </div>
   </div>
 ));
