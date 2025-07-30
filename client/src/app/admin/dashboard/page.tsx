@@ -40,6 +40,11 @@ export default function AdminDashboard() {
     router.push("/admin/jobs");
   };
 
+  const handleCandidateClick = () => {
+    router.push("/admin/candidates");
+  };
+
+
   if (loading) {
     return (
       <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
@@ -51,6 +56,8 @@ export default function AdminDashboard() {
       </ProtectedRoute>
     );
   }
+
+  console.log("xcvxcvx",stats.totalJobs)
 
   return (
     <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
@@ -129,7 +136,7 @@ export default function AdminDashboard() {
                     Recruitment Partners
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {stats.totalRecruitmentPartners}
+                    {stats.totalRecruiters}
                   </p>
                 </div>
               </div>
@@ -164,7 +171,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6 cursor-pointer"  onClick={handleCandidateClick}>
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-yellow-500 bg-opacity-10">
                   <svg

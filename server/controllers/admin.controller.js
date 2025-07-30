@@ -49,6 +49,8 @@ exports.getEmployers = async (req, res) => {
 
 exports.createEmployer = async (req, res) => {
   try {
+    console.log("Create employer request body:", req.body);
+    
     const {
       ownerName,
       companyName,
@@ -57,9 +59,15 @@ exports.createEmployer = async (req, res) => {
       address,
       city,
       state,
+      zipCode,
       country,
       jobPosting = "manual",
+      isApproved = true, // Default to true for admin-created employers
+      website,
+      description,
     } = req.body;
+
+    console.log("Extracted isApproved value:", isApproved, typeof isApproved);
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -81,20 +89,45 @@ exports.createEmployer = async (req, res) => {
 
     await user.save();
 
+    console.log("Employer data to save:", {
+      user: user._id,
+      ownerName,
+      companyName,
+      email,
+      phoneNumber,
+      address,
+      city,
+      state,
+      zipCode,
+      country,
+      jobPosting,
+      isApproved,
+      website,
+      description,
+    });
+
     // Create employer profile
     const employer = new Employer({
       user: user._id,
       ownerName,
       companyName,
+      email, // Add email field
       phoneNumber,
       address,
       city,
       state,
+      zipCode, // Add zipCode field
       country,
       jobPosting,
+      isApproved, // Add isApproved field
+      website,
+      description,
     });
 
     await employer.save();
+
+    // Populate the user data for the response
+    await employer.populate("user", "email isActive createdAt");
 
     // TODO: Send email with credentials
 
@@ -178,6 +211,38 @@ exports.approveEmployer = async (req, res) => {
   }
 };
 
+// Approve recruitment partner
+exports.approveRecruitmentPartner = async (req, res) => {
+ 
+  try {
+    const recruitmentPartner = await RecruitmentPartner.findById(req.params.id);
+
+    if (!recruitmentPartner) {
+      return res.status(404).json({ message: "Recruitment partner not found" });
+    }
+    console.log("******************",recruitmentPartner)
+    recruitmentPartner.isApproved = true;
+    await recruitmentPartner.save();
+
+     
+    // Also activate the user account
+    await User.findByIdAndUpdate(recruitmentPartner.user, { isActive: true });
+
+    res.json({
+      message: "Recruitment partner approved successfully",
+      recruitmentPartner,
+    });
+  } catch (error) {
+    console.error("Approve recruitment partner error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+    
+
+  
+
+
+
 // Reject employer (same as delete for now)
 exports.rejectEmployer = async (req, res) => {
   try {
@@ -225,7 +290,14 @@ exports.createRecruitmentPartner = async (req, res) => {
       city,
       state,
       country,
+      zipCode,
+      website,
+      description,
+      specializations,
+      isApproved = true, // Default to approved for admin-created partners
     } = req.body;
+
+    console.log("Creating recruitment partner with data:", req.body);
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -252,11 +324,17 @@ exports.createRecruitmentPartner = async (req, res) => {
       user: user._id,
       ownerName,
       companyName,
+      email,
       phoneNumber,
       address,
       city,
       state,
       country,
+      zipCode,
+      website,
+      description,
+      specializations: specializations ? specializations.split(',').map(s => s.trim()) : [],
+      isApproved,
     });
 
     await recruitmentPartner.save();
@@ -270,6 +348,64 @@ exports.createRecruitmentPartner = async (req, res) => {
     });
   } catch (error) {
     console.error("Create recruitment partner error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.updateRecruitmentPartner = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ownerName, companyName, phoneNumber, address, city, state, country, zipCode, website, description, specializations, isApproved } = req.body;
+
+    const recruitmentPartner = await RecruitmentPartner.findById(id);
+    if (!recruitmentPartner) {
+      return res.status(404).json({ message: "Recruitment partner not found" });
+    }
+
+    // Update recruitment partner fields
+    recruitmentPartner.ownerName = ownerName || recruitmentPartner.ownerName;
+    recruitmentPartner.companyName = companyName || recruitmentPartner.companyName;
+    recruitmentPartner.phoneNumber = phoneNumber || recruitmentPartner.phoneNumber;
+    recruitmentPartner.address = address || recruitmentPartner.address;
+    recruitmentPartner.city = city || recruitmentPartner.city;
+    recruitmentPartner.state = state || recruitmentPartner.state;
+    recruitmentPartner.country = country || recruitmentPartner.country;
+    recruitmentPartner.zipCode = zipCode || recruitmentPartner.zipCode;
+    recruitmentPartner.website = website || recruitmentPartner.website;
+    recruitmentPartner.description = description || recruitmentPartner.description;
+    recruitmentPartner.specializations = specializations || recruitmentPartner.specializations;
+    recruitmentPartner.isApproved = isApproved !== undefined ? isApproved : recruitmentPartner.isApproved;
+
+    await recruitmentPartner.save();
+
+    res.json({
+      message: "Recruitment partner updated successfully",
+      recruitmentPartner,
+    });
+  } catch (error) {
+    console.error("Update recruitment partner error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.deleteRecruitmentPartner = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const recruitmentPartner = await RecruitmentPartner.findById(id);
+    if (!recruitmentPartner) {
+      return res.status(404).json({ message: "Recruitment partner not found" });
+    }
+
+    // Delete the associated user account
+    await User.findByIdAndDelete(recruitmentPartner.user);
+    
+    // Delete the recruitment partner
+    await RecruitmentPartner.findByIdAndDelete(id);
+
+    res.json({ message: "Recruitment partner deleted successfully" });
+  } catch (error) {
+    console.error("Delete recruitment partner error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

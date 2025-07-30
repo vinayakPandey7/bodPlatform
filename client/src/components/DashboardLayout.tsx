@@ -498,13 +498,13 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             current: pathname === "/employer/saved-candidates",
             icon: Users,
           },
-          {
-            name: "Notifications",
-            href: "/employer/notifications",
-            current: pathname === "/employer/notifications",
-            icon: Bell,
-            badge: "3", // You can make this dynamic based on actual notification count
-          },
+          // {
+          //   name: "Notifications",
+          //   href: "/employer/notifications",
+          //   current: pathname === "/employer/notifications",
+          //   icon: Bell,
+          //   badge: "3", // You can make this dynamic based on actual notification count
+          // },
           {
             name: "Profile",
             href: "/employer/profile",
@@ -562,13 +562,13 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             current: pathname === "/recruitment-partner/reports",
             icon: BarChart3,
           },
-          {
-            name: "Notifications",
-            href: "/recruitment-partner/notifications",
-            current: pathname === "/recruitment-partner/notifications",
-            icon: Bell,
-            badge: "3",
-          },
+          // {
+          //   name: "Notifications",
+          //   href: "/recruitment-partner/notifications",
+          //   current: pathname === "/recruitment-partner/notifications",
+          //   icon: Bell,
+          //   badge: "3",
+          // },
           {
             name: "Profile",
             href: "/recruitment-partner/profile",
@@ -608,12 +608,12 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             current: pathname === "/admin/candidates",
             icon: Users,
           },
-          {
-            name: "Notifications",
-            href: "/admin/notifications",
-            current: pathname === "/admin/notifications",
-            icon: Bell,
-          },
+          // {
+          //   name: "Notifications",
+          //   href: "/admin/notifications",
+          //   current: pathname === "/admin/notifications",
+          //   icon: Bell,
+          // },
           {
             name: "Profile",
             href: "/admin/profile",

@@ -1,5 +1,11 @@
 const mongoose = require("mongoose");
 
+// Function to validate US zip codes
+function validateUSZipCode(zipCode) {
+  const zipRegex = /^\d{5}(-\d{4})?$/; // 5 digits or 5-4 format
+  return zipRegex.test(zipCode);
+}
+
 const recruitmentPartnerSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -15,6 +21,12 @@ const recruitmentPartnerSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
   },
   phoneNumber: {
     type: String,
@@ -36,10 +48,35 @@ const recruitmentPartnerSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  zipCode: {
+    type: String,
+    required: true,
+    trim: true,
+    validate: {
+      validator: validateUSZipCode,
+      message: "Invalid US zip code format. Use 5 digits (e.g., 12345) or 5+4 format (e.g., 12345-6789)",
+    },
+  },
   country: {
     type: String,
     required: true,
     trim: true,
+  },
+  website: {
+    type: String,
+    trim: true,
+  },
+  description: {
+    type: String,
+    trim: true,
+  },
+  specializations: [{
+    type: String,
+    trim: true,
+  }],
+  isApproved: {
+    type: Boolean,
+    default: false,
   },
   createdAt: {
     type: Date,

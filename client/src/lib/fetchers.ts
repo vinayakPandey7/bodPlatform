@@ -397,7 +397,7 @@ export const recruitmentPartnerFetchers = {
 export const adminFetchers = {
   getDashboard: async () => {
     const response = await Client.get(API_ENDPOINTS.ADMIN.DASHBOARD);
-    return response.data;
+    return response.data.stats;
   },
 
   getUsers: async (params?: any) => {
@@ -424,11 +424,61 @@ export const adminFetchers = {
     return response.data;
   },
 
+  createEmployer: async (data: any) => {
+    const response = await Client.post(API_ENDPOINTS.ADMIN.EMPLOYERS, data);
+    return response.data;
+  },
+
+  updateEmployer: async (id: string, data: any) => {
+    const response = await Client.put(`${API_ENDPOINTS.ADMIN.EMPLOYERS}/${id}`, data);
+    return response.data;
+  },
+
+  deleteEmployer: async (id: string) => {
+    const response = await Client.delete(`${API_ENDPOINTS.ADMIN.EMPLOYERS}/${id}`);
+    return response.data;
+  },
+
+  approveEmployer: async (id: string) => {
+    const response = await Client.put(`${API_ENDPOINTS.ADMIN.EMPLOYERS}/${id}/approve`);
+    return response.data;
+  },
+
+  rejectEmployer: async (id: string) => {
+    const response = await Client.delete(`${API_ENDPOINTS.ADMIN.EMPLOYERS}/${id}/reject`);
+    return response.data;
+  },
+
   getAdminRecruitmentPartners: async (params?: any) => {
     const response = await Client.get(
       API_ENDPOINTS.ADMIN.RECRUITMENT_PARTNERS,
       { params }
     );
+    return response.data;
+  },
+
+  createRecruitmentPartner: async (data: any) => {
+    const response = await Client.post(API_ENDPOINTS.ADMIN.RECRUITMENT_PARTNERS, data);
+    return response.data;
+  },
+
+  updateRecruitmentPartner: async (id: string, data: any) => {
+    const response = await Client.put(`${API_ENDPOINTS.ADMIN.RECRUITMENT_PARTNERS}/${id}`, data);
+    return response.data;
+  },
+
+  deleteRecruitmentPartner: async (id: string) => {
+    const response = await Client.delete(`${API_ENDPOINTS.ADMIN.RECRUITMENT_PARTNERS}/${id}`);
+    return response.data;
+  },
+
+  approveRecruitmentPartner: async (id: string) => {
+    const response = await Client.put(`${API_ENDPOINTS.ADMIN.RECRUITMENT_PARTNERS}/${id}/approve`);
+    return response.data;
+  },
+
+  rejectRecruitmentPartner: async (id: string) => {
+    const response = await Client.delete(`${API_ENDPOINTS.ADMIN.RECRUITMENT_PARTNERS}/${id}/reject`);
     return response.data;
   },
 

@@ -18,6 +18,7 @@ interface Employer {
   address: string;
   city: string;
   state: string;
+  zipCode?: string;
   country: string;
   jobPosting: string;
   isApproved: boolean;
@@ -39,6 +40,7 @@ interface EmployerFormData {
   address: string;
   city: string;
   state: string;
+  zipCode: string;
   country: string;
   jobPosting: string;
   website: string;
@@ -69,6 +71,7 @@ const EmployerFormModal = ({
     address: "",
     city: "",
     state: "",
+    zipCode: "",
     country: "United States",
     jobPosting: "automatic",
     website: "",
@@ -86,6 +89,7 @@ const EmployerFormModal = ({
         address: employer.address,
         city: employer.city,
         state: employer.state,
+        zipCode: employer.zipCode || "",
         country: employer.country,
         jobPosting: employer.jobPosting,
         website: employer.website || "",
@@ -101,6 +105,7 @@ const EmployerFormModal = ({
         address: "",
         city: "",
         state: "",
+        zipCode: "",
         country: "United States",
         jobPosting: "automatic",
         website: "",
@@ -126,6 +131,44 @@ const EmployerFormModal = ({
       [name]:
         type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
+  };
+
+  const handleZipCodeChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const zipCode = e.target.value;
+    
+    // Update the zipCode field first
+    setFormData((prev) => ({
+      ...prev,
+      zipCode: zipCode,
+    }));
+
+    // If zipCode is 5 digits, try to auto-fill city and state
+    if (zipCode.length === 5 && /^\d{5}$/.test(zipCode)) {
+      try {
+        const response = await fetch(`/api/location/lookup-zipcode`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ zipCode }),
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.city && data.state) {
+          setFormData((prev) => ({
+            ...prev,
+            city: data.city,
+            state: data.state,
+          }));
+        }
+      } catch (error) {
+        console.error('Error looking up zip code:', error);
+        // Don't show error to user, just silently fail
+      }
+    }
   };
 
   console.log("fdfdsdfsg", formData);
@@ -213,6 +256,22 @@ const EmployerFormModal = ({
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
                   required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ZIP Code *
+                </label>
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={formData.zipCode}
+                  onChange={handleZipCodeChange}
+                  required
+                  pattern="^\d{5}(-\d{4})?$"
+                  placeholder="12345 or 12345-6789"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -453,7 +512,7 @@ const ProfileModal = ({ employer, isOpen, onClose }: ProfileModalProps) => {
               </label>
               <p className="mt-1 text-sm text-gray-900">
                 {employer.address}, {employer.city}, {employer.state},{" "}
-                {employer.country}
+                {employer.zipCode}, {employer.country}
               </p>
             </div>
 
@@ -515,353 +574,9 @@ export default function AdminEmployersPage() {
   const [editingEmployer, setEditingEmployer] = useState<Employer | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  const generateMockEmployers = () => {
-    console.log("Generating mock employers...");
-    // Generate 50 mock employer records for demo
-    const mockEmployers: Employer[] = [];
-    const firstNames = [
-      "John",
-      "Jane",
-      "Mike",
-      "Sarah",
-      "David",
-      "Lisa",
-      "Robert",
-      "Maria",
-      "James",
-      "Emma",
-      "Michael",
-      "Anna",
-      "William",
-      "Laura",
-      "Richard",
-      "Jennifer",
-      "Charles",
-      "Linda",
-      "Joseph",
-      "Elizabeth",
-      "Thomas",
-      "Barbara",
-      "Christopher",
-      "Susan",
-      "Daniel",
-      "Jessica",
-      "Matthew",
-      "Patricia",
-      "Anthony",
-      "Nancy",
-      "Mark",
-      "Ashley",
-      "Donald",
-      "Kimberly",
-      "Steven",
-      "Donna",
-      "Paul",
-      "Carol",
-      "Andrew",
-      "Michelle",
-      "Joshua",
-      "Sandra",
-      "Kenneth",
-      "Amy",
-      "Kevin",
-      "Helen",
-      "Brian",
-      "Cynthia",
-      "George",
-      "Angela",
-    ];
-
-    const lastNames = [
-      "Smith",
-      "Johnson",
-      "Williams",
-      "Brown",
-      "Jones",
-      "Garcia",
-      "Miller",
-      "Davis",
-      "Rodriguez",
-      "Martinez",
-      "Hernandez",
-      "Lopez",
-      "Gonzalez",
-      "Wilson",
-      "Anderson",
-      "Thomas",
-      "Taylor",
-      "Moore",
-      "Jackson",
-      "Martin",
-      "Lee",
-      "Perez",
-      "Thompson",
-      "White",
-      "Harris",
-      "Sanchez",
-      "Clark",
-      "Ramirez",
-      "Lewis",
-      "Robinson",
-      "Walker",
-      "Young",
-      "Allen",
-      "King",
-      "Wright",
-      "Scott",
-      "Torres",
-      "Nguyen",
-      "Hill",
-      "Flores",
-      "Green",
-      "Adams",
-      "Nelson",
-      "Baker",
-      "Hall",
-      "Rivera",
-      "Campbell",
-      "Mitchell",
-      "Carter",
-    ];
-
-    const companies = [
-      "Tech Solutions Inc",
-      "Creative Agency",
-      "Digital Marketing Co",
-      "Global Services",
-      "Innovation Labs",
-      "Future Systems",
-      "Smart Solutions",
-      "Alpha Industries",
-      "Beta Corp",
-      "Gamma Technologies",
-      "Delta Consulting",
-      "Epsilon Ventures",
-      "Zeta Innovations",
-      "Eta Partners",
-      "Theta Group",
-      "Iota Dynamics",
-      "Kappa Solutions",
-      "Lambda Systems",
-      "Mu Technologies",
-      "Nu Enterprises",
-      "Xi Corporation",
-      "Omicron Ltd",
-      "Pi Innovations",
-      "Rho Industries",
-      "Sigma Services",
-      "Tau Technologies",
-      "Upsilon Ventures",
-      "Phi Consulting",
-      "Chi Solutions",
-      "Psi Systems",
-      "Omega Group",
-      "Nexus Corp",
-      "Vertex Solutions",
-      "Apex Technologies",
-      "Prime Industries",
-      "Core Systems",
-      "Elite Services",
-      "Premier Group",
-      "Supreme Solutions",
-      "Ultimate Corp",
-      "Advanced Tech",
-      "Superior Systems",
-      "Excellence Inc",
-      "Quality Solutions",
-      "Perfect Corp",
-      "Ideal Systems",
-      "Optimal Solutions",
-      "Maximum Corp",
-      "Peak Technologies",
-      "Summit Group",
-    ];
-
-    const cities = [
-      "New York",
-      "Los Angeles",
-      "Chicago",
-      "Houston",
-      "Phoenix",
-      "Philadelphia",
-      "San Antonio",
-      "San Diego",
-      "Dallas",
-      "San Jose",
-      "Austin",
-      "Jacksonville",
-      "Fort Worth",
-      "Columbus",
-      "San Francisco",
-      "Charlotte",
-      "Indianapolis",
-      "Seattle",
-      "Denver",
-      "Washington",
-      "Boston",
-      "El Paso",
-      "Nashville",
-      "Detroit",
-      "Oklahoma City",
-      "Portland",
-      "Las Vegas",
-      "Memphis",
-      "Louisville",
-      "Baltimore",
-      "Milwaukee",
-      "Albuquerque",
-      "Tucson",
-      "Fresno",
-      "Sacramento",
-      "Mesa",
-      "Kansas City",
-      "Atlanta",
-      "Long Beach",
-      "Colorado Springs",
-      "Raleigh",
-      "Miami",
-      "Virginia Beach",
-      "Omaha",
-      "Oakland",
-      "Minneapolis",
-      "Tulsa",
-      "Arlington",
-      "Tampa",
-      "New Orleans",
-    ];
-
-    const states = [
-      "California",
-      "Texas",
-      "Florida",
-      "New York",
-      "Illinois",
-      "Pennsylvania",
-      "Ohio",
-      "Georgia",
-      "North Carolina",
-      "Michigan",
-      "New Jersey",
-      "Virginia",
-      "Washington",
-      "Arizona",
-      "Massachusetts",
-      "Tennessee",
-      "Indiana",
-      "Missouri",
-      "Maryland",
-      "Wisconsin",
-      "Colorado",
-      "Minnesota",
-      "South Carolina",
-      "Alabama",
-      "Louisiana",
-      "Kentucky",
-      "Oregon",
-      "Oklahoma",
-      "Connecticut",
-      "Utah",
-      "Iowa",
-      "Nevada",
-      "Arkansas",
-      "Mississippi",
-      "Kansas",
-      "New Mexico",
-      "Nebraska",
-      "West Virginia",
-      "Idaho",
-      "Hawaii",
-      "New Hampshire",
-      "Maine",
-      "Montana",
-      "Rhode Island",
-      "Delaware",
-      "South Dakota",
-      "North Dakota",
-      "Alaska",
-      "Vermont",
-      "Wyoming",
-    ];
-
-    for (let i = 1; i <= 50; i++) {
-      const firstName =
-        firstNames[Math.floor(Math.random() * firstNames.length)];
-      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      const company = companies[Math.floor(Math.random() * companies.length)];
-      const city = cities[Math.floor(Math.random() * cities.length)];
-      const state = states[Math.floor(Math.random() * states.length)];
-      const isApproved = Math.random() > 0.3; // 70% approved
-      const jobPosting = Math.random() > 0.5 ? "automatic" : "manual";
-
-      mockEmployers.push({
-        _id: i.toString(),
-        user: {
-          email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${company
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "")}.com`,
-          createdAt: new Date(
-            Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000
-          ).toISOString(),
-        },
-        ownerName: `${firstName} ${lastName}`,
-        companyName: company,
-        phoneNumber: `+1-${Math.floor(Math.random() * 900 + 100)}-${Math.floor(
-          Math.random() * 900 + 100
-        )}-${Math.floor(Math.random() * 9000 + 1000)}`,
-        address: `${Math.floor(Math.random() * 9999 + 1)} ${
-          [
-            "Main",
-            "Oak",
-            "Pine",
-            "Cedar",
-            "Elm",
-            "Maple",
-            "Park",
-            "Washington",
-            "Lincoln",
-            "Jefferson",
-          ][Math.floor(Math.random() * 10)]
-        } ${"Street Ave Blvd Dr".split(" ")[Math.floor(Math.random() * 4)]}`,
-        city: city,
-        state: state,
-        country: "United States",
-        jobPosting: jobPosting,
-        isApproved: isApproved,
-        website: `https://www.${company
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "")}.com`,
-        description: `${company} is a leading provider of innovative solutions in the ${
-          [
-            "technology",
-            "healthcare",
-            "finance",
-            "education",
-            "manufacturing",
-            "retail",
-            "consulting",
-          ][Math.floor(Math.random() * 7)]
-        } industry.`,
-      });
-    }
-
-    console.log("Generated", mockEmployers.length, "mock employers");
-    setEmployers(mockEmployers);
-  };
-
   useEffect(() => {
-    // Initialize with mock data immediately
-    generateMockEmployers();
-    // Then try to fetch real data
     fetchEmployers();
   }, []);
-
-  // Also generate mock data on component mount as fallback
-  useEffect(() => {
-    if (employers.length === 0 && !loading) {
-      console.log("No employers found, generating mock data...");
-      generateMockEmployers();
-    }
-  }, [employers, loading]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -887,24 +602,20 @@ export default function AdminEmployersPage() {
   const fetchEmployers = async () => {
     try {
       setLoading(true);
+      setError("");
       const response = await adminFetchers.getAdminEmployers();
 
-      // If API returns data, use it, otherwise use mock data
-      if (response.data && response.data.length > 0) {
-        console.log("API returned data:", response.data.length, "employers");
-        setEmployers(response.data);
+      if (response.employers) {
+        console.log("API returned data:", response.employers.length, "employers");
+        setEmployers(response.employers);
       } else {
-        // Generate mock data if API returns empty or no data
-        console.log("API returned empty data, generating mock data...");
-        generateMockEmployers();
+        console.log("API returned no data");
+        setEmployers([]);
       }
     } catch (err: any) {
       console.error("Error fetching employers:", err);
       setError(err.response?.data?.message || "Failed to fetch employers");
-
-      // Generate mock data on API error
-      console.log("API error, generating mock data...");
-      generateMockEmployers();
+      setEmployers([]);
     } finally {
       setLoading(false);
     }
@@ -916,15 +627,24 @@ export default function AdminEmployersPage() {
       if (!employer) return;
 
       const newStatus = !employer.isApproved;
-      // await adminFetchers.updateUserStatus(employerId, newStatus ? 'active' : 'inactive');
+      
+      if (newStatus) {
+        await adminFetchers.approveEmployer(employerId);
+      } else {
+        // For deactivating, we'll update the employer directly
+        await adminFetchers.updateEmployer(employerId, { isApproved: false });
+      }
 
       setEmployers(
         employers.map((emp) =>
           emp._id === employerId ? { ...emp, isApproved: newStatus } : emp
         )
       );
+
+      toast.success(`Employer ${newStatus ? 'approved' : 'deactivated'} successfully!`);
     } catch (err: any) {
       console.error("Error updating employer status:", err);
+      toast.error("Failed to update employer status");
     }
   };
 
@@ -932,10 +652,12 @@ export default function AdminEmployersPage() {
     if (!confirm("Are you sure you want to delete this employer?")) return;
 
     try {
-      // await adminFetchers.deleteEmployer(employerId);
+      await adminFetchers.deleteEmployer(employerId);
       setEmployers(employers.filter((emp) => emp._id !== employerId));
+      toast.success("Employer deleted successfully!");
     } catch (err: any) {
       console.error("Error deleting employer:", err);
+      toast.error("Failed to delete employer");
     }
   };
 
@@ -957,19 +679,26 @@ export default function AdminEmployersPage() {
     try {
       if (isEditModalOpen && editingEmployer) {
         // Update existing employer
-        const updatedEmployer = {
-          ...editingEmployer,
+        const updateData = {
           ownerName: employerData.ownerName,
           companyName: employerData.companyName,
           phoneNumber: employerData.phoneNumber,
           address: employerData.address,
           city: employerData.city,
           state: employerData.state,
+          zipCode: employerData.zipCode,
           country: employerData.country,
           jobPosting: employerData.jobPosting,
           isApproved: employerData.isApproved,
           website: employerData.website,
           description: employerData.description,
+        };
+
+        await adminFetchers.updateEmployer(editingEmployer._id, updateData);
+
+        const updatedEmployer = {
+          ...editingEmployer,
+          ...updateData,
           user: {
             ...editingEmployer.user,
             email: employerData.email,
@@ -987,18 +716,15 @@ export default function AdminEmployersPage() {
         toast.success("Employer updated successfully!");
       } else if (isAddModalOpen) {
         // Add new employer
-        const newEmployer: Employer = {
-          _id: (employers.length + 1).toString(),
-          user: {
-            email: employerData.email,
-            createdAt: new Date().toISOString(),
-          },
+        const createData = {
           ownerName: employerData.ownerName,
           companyName: employerData.companyName,
+          email: employerData.email,
           phoneNumber: employerData.phoneNumber,
           address: employerData.address,
           city: employerData.city,
           state: employerData.state,
+          zipCode: employerData.zipCode,
           country: employerData.country,
           jobPosting: employerData.jobPosting,
           isApproved: employerData.isApproved,
@@ -1006,15 +732,24 @@ export default function AdminEmployersPage() {
           description: employerData.description,
         };
 
-        setEmployers([...employers, newEmployer]);
+        const response = await adminFetchers.createEmployer(createData);
+
+        // Refresh the employers list to get the latest data
+        fetchEmployers();
+
         setIsAddModalOpen(false);
         toast.success("Employer added successfully!");
       }
     } catch (err: any) {
       console.error("Error saving employer:", err);
-      alert("Error saving employer. Please try again.");
+      const errorMessage = err.response?.data?.message || "Error saving employer. Please try again.";
+      toast.error(errorMessage);
     }
   };
+
+    // Debug logging
+ 
+  // console.log("Filtered employers:", filteredEmployers.length);
 
   const filteredEmployers = employers.filter(
     (employer) =>
@@ -1023,10 +758,7 @@ export default function AdminEmployersPage() {
       employer.user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Debug logging
-  console.log("Total employers:", employers.length);
-  console.log("Filtered employers:", filteredEmployers.length);
-  console.log("Search term:", searchTerm);
+
 
   if (loading) {
     return (
@@ -1068,8 +800,8 @@ export default function AdminEmployersPage() {
             </div>
 
             {error && (
-              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-                API connection failed. Showing demo data. Error: {error}
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {error}
               </div>
             )}
 
@@ -1175,9 +907,9 @@ export default function AdminEmployersPage() {
                               >
                                 {employer.isApproved ? "Active" : "Deactivated"}
                               </span>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {/* <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                 Verified
-                              </span>
+                              </span> */}
                             </div>
                           </td>
                           <td className="w-40 px-6 py-4 whitespace-nowrap text-sm font-medium">

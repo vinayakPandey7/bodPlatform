@@ -56,6 +56,12 @@ router.put(
   authorizeRoles("admin", "sub_admin"),
   adminController.approveEmployer
 );
+router.put(
+  "/recruitment-partners/:id/approve",
+  auth,
+  authorizeRoles("admin", "sub_admin"),
+  adminController.approveRecruitmentPartner
+);
 router.delete(
   "/employers/:id/reject",
   auth,
@@ -75,6 +81,18 @@ router.post(
   auth,
   authorizeRoles("admin"),
   adminController.createRecruitmentPartner
+);
+router.put(
+  "/recruitment-partners/:id",
+  auth,
+  authorizeRoles("admin"),
+  adminController.updateRecruitmentPartner
+);
+router.delete(
+  "/recruitment-partners/:id",
+  auth,
+  authorizeRoles("admin"),
+  adminController.deleteRecruitmentPartner
 );
 
 // Job Management

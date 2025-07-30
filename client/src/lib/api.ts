@@ -2,7 +2,7 @@ import axios from "axios";
 import { v4 as uuid } from "uuid";
 
 export const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://bodplatform.onrender.com/api";
+  'http://localhost:5000/api/' 
 
 axios.interceptors.request.use(
   (config) => {

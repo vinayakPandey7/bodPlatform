@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { adminFetchers } from "@/lib/fetchers";
@@ -13,18 +13,21 @@ interface RecruitmentPartner {
   };
   ownerName: string;
   companyName: string;
+  email: string;
   phoneNumber: string;
   address: string;
   city: string;
   state: string;
+  zipCode?: string;
   country: string;
   isApproved: boolean;
   website?: string;
   description?: string;
   specializations?: string[];
+  createdAt?:string
 }
 
-interface ProfileModalProps {
+interface PartnerFormModalProps {
   partner: RecruitmentPartner | null;
   isOpen: boolean;
   onClose: () => void;
@@ -38,6 +41,7 @@ interface PartnerFormData {
   address: string;
   city: string;
   state: string;
+  zipCode: string;
   country: string;
   website: string;
   description: string;
@@ -50,27 +54,45 @@ interface PartnerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (partnerData: PartnerFormData) => void;
-  mode: 'add' | 'edit';
+  mode: "add" | "edit";
 }
 
-const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFormModalProps) => {
+interface ProfileModalProps {
+  partner: RecruitmentPartner | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const PartnerFormModal = ({
+  partner,
+  isOpen,
+  onClose,
+  onSave,
+  mode,
+}: PartnerFormModalProps) => {
+
+  console.log("cvbbcvb",partner)
   const [formData, setFormData] = useState({
-    ownerName: '',
-    companyName: '',
-    email: '',
-    phoneNumber: '',
-    address: '',
-    city: '',
-    state: '',
-    country: 'United States',
-    website: '',
-    description: '',
-    specializations: '',
-    isApproved: true
+    ownerName: "",
+    companyName: "",
+    email: "",
+    phoneNumber: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "United States",
+    website: "",
+    description: "",
+    specializations: "",
+    isApproved: true,
   });
 
   useEffect(() => {
-    if (mode === 'edit' && partner) {
+
+     console.log("dvxcvxvc",partner)
+    if (mode === "edit" && partner) {
+     
       setFormData({
         ownerName: partner.ownerName,
         companyName: partner.companyName,
@@ -79,26 +101,28 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
         address: partner.address,
         city: partner.city,
         state: partner.state,
+        zipCode: partner.zipCode || "",
         country: partner.country,
-        website: partner.website || '',
-        description: partner.description || '',
-        specializations: partner.specializations?.join(', ') || '',
-        isApproved: partner.isApproved
+        website: partner.website || "",
+        description: partner.description || "",
+        specializations: partner.specializations?.join(", ") || "",
+        isApproved: partner.isApproved,
       });
-    } else if (mode === 'add') {
+    } else if (mode === "add") {
       setFormData({
-        ownerName: '',
-        companyName: '',
-        email: '',
-        phoneNumber: '',
-        address: '',
-        city: '',
-        state: '',
-        country: 'United States',
-        website: '',
-        description: '',
-        specializations: '',
-        isApproved: true
+        ownerName: "",
+        companyName: "",
+        email: "",
+        phoneNumber: "",
+        address: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "United States",
+        website: "",
+        description: "",
+        specializations: "",
+        isApproved: true,
       });
     }
   }, [partner, mode, isOpen]);
@@ -108,34 +132,88 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
     onSave(formData);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]:
+        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
+  };
+
+  const handleZipCodeChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const zipCode = e.target.value;
+    
+    // Update the zipCode field first
+    setFormData((prev) => ({
+      ...prev,
+      zipCode: zipCode,
+    }));
+
+    // If zipCode is 5 digits, try to auto-fill city and state
+    if (zipCode.length === 5 && /^\d{5}$/.test(zipCode)) {
+      try {
+        const response = await fetch(`/api/location/lookup-zipcode`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ zipCode }),
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.city && data.state) {
+          setFormData((prev) => ({
+            ...prev,
+            city: data.city,
+            state: data.state,
+          }));
+        }
+      } catch (error) {
+        console.error('Error looking up zip code:', error);
+        // Don't show error to user, just silently fail
+      }
+    }
   };
 
   if (!isOpen) return null;
 
+  console.log("cxvxc",formData)
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
         <div className="mt-3">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900">
-              {mode === 'add' ? 'Add New Recruitment Partner' : 'Edit Recruitment Partner'}
+              {mode === "add" ? "Add New Recruitment Partner" : "Edit Recruitment Partner"}
             </h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -151,7 +229,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Company Name *
@@ -165,7 +243,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email *
@@ -179,7 +257,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone Number *
@@ -193,7 +271,23 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ZIP Code *
+                </label>
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={formData.zipCode}
+                  onChange={handleZipCodeChange}
+                  required
+                  pattern="^\d{5}(-\d{4})?$"
+                  placeholder="12345 or 12345-6789"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   City *
@@ -207,7 +301,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   State *
@@ -221,7 +315,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Country *
@@ -235,7 +329,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Website
@@ -248,15 +342,20 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Status
                 </label>
                 <select
                   name="isApproved"
-                  value={formData.isApproved ? 'true' : 'false'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, isApproved: e.target.value === 'true' }))}
+                  value={formData.isApproved ? "true" : "false"}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isApproved: e.target.value === "true",
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="true">Active</option>
@@ -264,8 +363,8 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                 </select>
               </div>
             </div>
-            
-            <div>
+
+            <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Address *
               </label>
@@ -278,21 +377,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Specializations (comma-separated)
-              </label>
-              <input
-                type="text"
-                name="specializations"
-                value={formData.specializations}
-                onChange={handleInputChange}
-                placeholder="e.g., IT, Healthcare, Finance, Marketing"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Description
@@ -305,7 +390,21 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Specializations (comma-separated)
+              </label>
+              <textarea
+                name="specializations"
+                value={formData.specializations}
+                onChange={handleInputChange}
+                rows={2}
+                placeholder="e.g., IT, Healthcare, Finance"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
@@ -318,7 +417,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
                 type="submit"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                {mode === 'add' ? 'Add Partner' : 'Update Partner'}
+                {mode === "add" ? "Add Partner" : "Update Partner"}
               </button>
             </div>
           </form>
@@ -329,6 +428,7 @@ const PartnerFormModal = ({ partner, isOpen, onClose, onSave, mode }: PartnerFor
 };
 
 const ProfileModal = ({ partner, isOpen, onClose }: ProfileModalProps) => {
+  console.log("xvxvxcv",partner)
   if (!isOpen || !partner) return null;
 
   return (
@@ -343,78 +443,123 @@ const ProfileModal = ({ partner, isOpen, onClose }: ProfileModalProps) => {
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
-          
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Owner Name</label>
-                <p className="mt-1 text-sm text-gray-900">{partner.ownerName}</p>
+                <label className="block text-sm font-medium text-gray-700">
+                  Owner Name
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {partner.ownerName}
+                </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Company Name</label>
-                <p className="mt-1 text-sm text-gray-900">{partner.companyName}</p>
+                <label className="block text-sm font-medium text-gray-700">
+                  Company Name
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {partner.companyName}
+                </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="mt-1 text-sm text-gray-900">{partner.user.email}</p>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {partner.user.email}
+                </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <p className="mt-1 text-sm text-gray-900">{partner.phoneNumber}</p>
+                <label className="block text-sm font-medium text-gray-700">
+                  Phone
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {partner.phoneNumber}
+                </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  partner.isApproved 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {partner.isApproved ? 'Active' : 'Deactivated'}
+                <label className="block text-sm font-medium text-gray-700">
+                  Status
+                </label>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    partner.isApproved
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {partner.isApproved ? "Active" : "Deactivated"}
                 </span>
               </div>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Address
+              </label>
               <p className="mt-1 text-sm text-gray-900">
-                {partner.address}, {partner.city}, {partner.state}, {partner.country}
+                {partner.address}, {partner.city}, {partner.state},{" "}
+                {partner.zipCode}, {partner.country}
               </p>
             </div>
-            
+
             {partner.website && (
               <div>
-                <label className="block text-sm font-medium text-gray-700">Website</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Website
+                </label>
                 <p className="mt-1 text-sm text-gray-900">{partner.website}</p>
               </div>
             )}
-            
-            {partner.specializations && partner.specializations.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Specializations</label>
-                <p className="mt-1 text-sm text-gray-900">{partner.specializations.join(', ')}</p>
-              </div>
-            )}
-            
+
             {partner.description && (
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <p className="mt-1 text-sm text-gray-900">{partner.description}</p>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {partner.description}
+                </p>
               </div>
             )}
-            
+
+            {partner.specializations && partner.specializations.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Specializations
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {partner.specializations.join(", ")}
+                </p>
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Registered Date</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Registered Date
+              </label>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(partner.user.createdAt).toLocaleDateString()}
+                {new Date(partner.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
-          
+
           <div className="mt-6 flex justify-end space-x-3">
             <button
               onClick={onClose}
@@ -434,132 +579,57 @@ export default function AdminRecruitmentPartnersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPartner, setSelectedPartner] = useState<RecruitmentPartner | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<RecruitmentPartner | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<RecruitmentPartner | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  const generateMockPartners = () => {
-    console.log("Generating mock recruitment partners...");
-    const mockPartners: RecruitmentPartner[] = [];
-    const firstNames = ["John", "Jane", "Mike", "Sarah", "David", "Lisa", "Robert", "Maria", "James", "Emma", "Michael", "Anna", "William", "Laura", "Richard", "Jennifer", "Charles", "Linda", "Joseph", "Elizabeth", "Thomas", "Barbara", "Christopher", "Susan", "Daniel", "Jessica", "Matthew", "Patricia", "Anthony", "Nancy", "Mark", "Ashley", "Donald", "Kimberly", "Steven", "Donna", "Paul", "Carol", "Andrew", "Michelle", "Joshua", "Sandra", "Kenneth", "Amy", "Kevin", "Helen", "Brian", "Cynthia", "George", "Angela"];
-    
-    const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores", "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter"];
-    
-    const companies = [
-      "TalentBridge Recruiting", "Elite Talent Solutions", "ProStaff Partners", "Workforce Dynamics", "Talent Acquisition Corp", 
-      "Recruiting Excellence", "Staffing Solutions Inc", "Talent Connect", "Premier Recruiting", "Strategic Staffing",
-      "Talent Partners", "Recruiting Professionals", "Staffing Experts", "Talent Solutions", "Recruiting Masters",
-      "Workforce Solutions", "Talent Specialists", "Recruiting Network", "Staffing Partners", "Talent Hub",
-      "Recruiting Services", "Staffing Innovations", "Talent Recruiters", "Executive Search", "Talent Advisors",
-      "Recruiting Group", "Staffing Leaders", "Talent Force", "Recruiting Agency", "Staffing Consultants",
-      "Talent Builders", "Recruiting Pros", "Staffing Solutions", "Talent Finders", "Recruiting Experts",
-      "Staffing Network", "Talent Search", "Recruiting Solutions", "Staffing Specialists", "Talent Pipeline",
-      "Recruiting Hub", "Staffing Services", "Talent Acquisition", "Recruiting Partners", "Staffing Corp",
-      "Talent Group", "Recruiting Firm", "Staffing Agency", "Talent Consultants", "Recruiting Solutions Inc"
-    ];
-    
-    const cities = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose", "Austin", "Jacksonville", "Fort Worth", "Columbus", "San Francisco", "Charlotte", "Indianapolis", "Seattle", "Denver", "Washington", "Boston", "El Paso", "Nashville", "Detroit", "Oklahoma City", "Portland", "Las Vegas", "Memphis", "Louisville", "Baltimore", "Milwaukee", "Albuquerque", "Tucson", "Fresno", "Sacramento", "Mesa", "Kansas City", "Atlanta", "Long Beach", "Colorado Springs", "Raleigh", "Miami", "Virginia Beach", "Omaha", "Oakland", "Minneapolis", "Tulsa", "Arlington", "Tampa", "New Orleans"];
-    
-    const states = ["California", "Texas", "Florida", "New York", "Illinois", "Pennsylvania", "Ohio", "Georgia", "North Carolina", "Michigan", "New Jersey", "Virginia", "Washington", "Arizona", "Massachusetts", "Tennessee", "Indiana", "Missouri", "Maryland", "Wisconsin", "Colorado", "Minnesota", "South Carolina", "Alabama", "Louisiana", "Kentucky", "Oregon", "Oklahoma", "Connecticut", "Utah", "Iowa", "Nevada", "Arkansas", "Mississippi", "Kansas", "New Mexico", "Nebraska", "West Virginia", "Idaho", "Hawaii", "New Hampshire", "Maine", "Montana", "Rhode Island", "Delaware", "South Dakota", "North Dakota", "Alaska", "Vermont", "Wyoming"];
-    
-    const specializations = [
-      ["IT", "Technology", "Software Development"],
-      ["Healthcare", "Medical", "Nursing"],
-      ["Finance", "Banking", "Accounting"],
-      ["Marketing", "Sales", "Business Development"],
-      ["Engineering", "Manufacturing", "Construction"],
-      ["Human Resources", "Recruiting", "Talent Acquisition"],
-      ["Legal", "Compliance", "Law"],
-      ["Education", "Training", "Academia"],
-      ["Retail", "Customer Service", "Hospitality"],
-      ["Logistics", "Supply Chain", "Transportation"]
-    ];
-    
-    for (let i = 1; i <= 50; i++) {
-      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      const company = companies[Math.floor(Math.random() * companies.length)];
-      const city = cities[Math.floor(Math.random() * cities.length)];
-      const state = states[Math.floor(Math.random() * states.length)];
-      const isApproved = Math.random() > 0.25; // 75% approved
-      const selectedSpecs = specializations[Math.floor(Math.random() * specializations.length)];
-      
-      mockPartners.push({
-        _id: i.toString(),
-        user: {
-          email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${company.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-          createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        ownerName: `${firstName} ${lastName}`,
-        companyName: company,
-        phoneNumber: `+1-${Math.floor(Math.random() * 900 + 100)}-${Math.floor(Math.random() * 900 + 100)}-${Math.floor(Math.random() * 9000 + 1000)}`,
-        address: `${Math.floor(Math.random() * 9999 + 1)} ${["Main", "Oak", "Pine", "Cedar", "Elm", "Maple", "Park", "Washington", "Lincoln", "Jefferson"][Math.floor(Math.random() * 10)]} ${"Street Ave Blvd Dr".split(" ")[Math.floor(Math.random() * 4)]}`,
-        city: city,
-        state: state,
-        country: "United States",
-        isApproved: isApproved,
-        website: `https://www.${company.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-        description: `${company} is a leading recruiting firm specializing in ${selectedSpecs.join(', ')} talent acquisition and staffing solutions.`,
-        specializations: selectedSpecs,
-      });
-    }
-    
-    console.log("Generated", mockPartners.length, "mock recruitment partners");
-    setPartners(mockPartners);
-  };
-
   useEffect(() => {
-    generateMockPartners();
     fetchPartners();
   }, []);
-
-  useEffect(() => {
-    if (partners.length === 0 && !loading) {
-      console.log("No partners found, generating mock data...");
-      generateMockPartners();
-    }
-  }, [partners, loading]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (activeDropdown) {
         const target = event.target as Element;
-        const dropdownElement = document.querySelector(`[data-dropdown-id="${activeDropdown}"]`);
-        
+        const dropdownElement = document.querySelector(
+          `[data-dropdown-id="${activeDropdown}"]`
+        );
+
         if (dropdownElement && !dropdownElement.contains(target)) {
           setActiveDropdown(null);
         }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [activeDropdown]);
 
   const fetchPartners = async () => {
     try {
       setLoading(true);
+      setError("");
       const response = await adminFetchers.getAdminRecruitmentPartners();
-      
-      if (response.data && response.data.length > 0) {
-        console.log("API returned data:", response.data.length, "partners");
-        setPartners(response.data);
+
+      if (response.recruitmentPartners) {
+        console.log("API returned data:", response.recruitmentPartners.length, "recruitment partners");
+        setPartners(response.recruitmentPartners);
       } else {
-        console.log("API returned empty data, generating mock data...");
-        generateMockPartners();
+        console.log("API returned no data");
+        setPartners([]);
       }
     } catch (err: any) {
       console.error("Error fetching recruitment partners:", err);
       setError(err.response?.data?.message || "Failed to fetch recruitment partners");
-      
-      console.log("API error, generating mock data...");
-      generateMockPartners();
+      setPartners([]);
     } finally {
       setLoading(false);
     }
@@ -567,28 +637,41 @@ export default function AdminRecruitmentPartnersPage() {
 
   const handleToggleStatus = async (partnerId: string) => {
     try {
-      const partner = partners.find((p) => p._id === partnerId);
+      const partner = partners.find((emp) => emp._id === partnerId);
       if (!partner) return;
 
       const newStatus = !partner.isApproved;
       
+      if (newStatus) {
+        await adminFetchers.approveRecruitmentPartner(partnerId);
+      } else {
+        // For deactivating, we'll update the partner directly
+        await adminFetchers.updateRecruitmentPartner(partnerId, { isApproved: false });
+      }
+
       setPartners(
-        partners.map((p) =>
-          p._id === partnerId ? { ...p, isApproved: newStatus } : p
+        partners.map((emp) =>
+          emp._id === partnerId ? { ...emp, isApproved: newStatus } : emp
         )
       );
+
+      toast.success(`Recruitment Partner ${newStatus ? 'approved' : 'deactivated'} successfully!`);
     } catch (err: any) {
-      console.error("Error updating partner status:", err);
+      console.error("Error updating recruitment partner status:", err);
+      toast.error("Failed to update recruitment partner status");
     }
   };
 
   const handleDeletePartner = async (partnerId: string) => {
     if (!confirm("Are you sure you want to delete this recruitment partner?")) return;
-    
+
     try {
-      setPartners(partners.filter((p) => p._id !== partnerId));
+      await adminFetchers.deleteRecruitmentPartner(partnerId);
+      setPartners(partners.filter((emp) => emp._id !== partnerId));
+      toast.success("Recruitment Partner deleted successfully!");
     } catch (err: any) {
-      console.error("Error deleting partner:", err);
+      console.error("Error deleting recruitment partner:", err);
+      toast.error("Failed to delete recruitment partner");
     }
   };
 
@@ -609,19 +692,28 @@ export default function AdminRecruitmentPartnersPage() {
   const handleSavePartner = async (partnerData: PartnerFormData) => {
     try {
       if (isEditModalOpen && editingPartner) {
-        const updatedPartner = {
-          ...editingPartner,
+        // Update existing partner
+        const updateData = {
           ownerName: partnerData.ownerName,
           companyName: partnerData.companyName,
+          email: partnerData.email,
           phoneNumber: partnerData.phoneNumber,
           address: partnerData.address,
           city: partnerData.city,
           state: partnerData.state,
+          zipCode: partnerData.zipCode,
           country: partnerData.country,
           isApproved: partnerData.isApproved,
           website: partnerData.website,
           description: partnerData.description,
-          specializations: partnerData.specializations ? partnerData.specializations.split(',').map(s => s.trim()) : [],
+          specializations: partnerData.specializations.split(',').map(s => s.trim()).filter(s => s),
+        };
+
+        await adminFetchers.updateRecruitmentPartner(editingPartner._id, updateData);
+
+        const updatedPartner = {
+          ...editingPartner,
+          ...updateData,
           user: {
             ...editingPartner.user,
             email: partnerData.email,
@@ -629,53 +721,61 @@ export default function AdminRecruitmentPartnersPage() {
         };
 
         setPartners(
-          partners.map((p) =>
-            p._id === editingPartner._id ? updatedPartner : p
+          partners.map((emp) =>
+            emp._id === editingPartner._id ? updatedPartner : emp
           )
         );
-        
+
         setIsEditModalOpen(false);
         setEditingPartner(null);
-        toast.success("Recruitment partner updated successfully!");
+        toast.success("Recruitment Partner updated successfully!");
       } else if (isAddModalOpen) {
-        const newPartner: RecruitmentPartner = {
-          _id: (partners.length + 1).toString(),
-          user: {
-            email: partnerData.email,
-            createdAt: new Date().toISOString(),
-          },
+        // Add new partner
+        const createData = {
           ownerName: partnerData.ownerName,
           companyName: partnerData.companyName,
+          email: partnerData.email,
           phoneNumber: partnerData.phoneNumber,
           address: partnerData.address,
           city: partnerData.city,
           state: partnerData.state,
+          zipCode: partnerData.zipCode,
           country: partnerData.country,
           isApproved: partnerData.isApproved,
           website: partnerData.website,
           description: partnerData.description,
-          specializations: partnerData.specializations ? partnerData.specializations.split(',').map(s => s.trim()) : [],
+          specializations: partnerData.specializations.split(',').map(s => s.trim()).filter(s => s),
         };
 
-        setPartners([...partners, newPartner]);
+        const response = await adminFetchers.createRecruitmentPartner(createData);
+
+        // Refresh the partners list to get the latest data
+        fetchPartners();
+
         setIsAddModalOpen(false);
-        toast.success("Recruitment partner added successfully!");
+        toast.success("Recruitment Partner added successfully!");
       }
     } catch (err: any) {
-      console.error("Error saving partner:", err);
-      alert("Error saving partner. Please try again.");
+      console.error("Error saving recruitment partner:", err);
+      const errorMessage = err.response?.data?.message || "Error saving recruitment partner. Please try again.";
+      toast.error(errorMessage);
     }
   };
-
-  const filteredPartners = partners.filter((partner) =>
-    partner.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    partner.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    partner.user.email.toLowerCase().includes(searchTerm.toLowerCase())
+ 
+  const filteredPartners = partners?.filter(
+    (partner) =>
+      partner.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      partner.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      partner.user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+   
 
-  console.log("Total partners:", partners.length);
+  // Debug logging
+  console.log("Total partners:", partners);
   console.log("Filtered partners:", filteredPartners.length);
-  console.log("Search term:", searchTerm);
+
+ 
 
   if (loading) {
     return (
@@ -686,7 +786,10 @@ export default function AdminRecruitmentPartnersPage() {
             <div className="bg-white shadow rounded-lg">
               <div className="h-16 bg-gray-200 rounded-t-lg mb-4"></div>
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-gray-100 border-b border-gray-200"></div>
+                <div
+                  key={i}
+                  className="h-12 bg-gray-100 border-b border-gray-200"
+                ></div>
               ))}
             </div>
           </div>
@@ -700,11 +803,12 @@ export default function AdminRecruitmentPartnersPage() {
       <DashboardLayout>
         <div className="min-h-screen">
           <div className="space-y-6">
+            {/* Header */}
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">
                 Recruitment Partner Management
               </h1>
-              <button 
+              <button
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
                 onClick={handleAddNew}
               >
@@ -713,35 +817,50 @@ export default function AdminRecruitmentPartnersPage() {
             </div>
 
             {error && (
-              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-                API connection failed. Showing demo data. Error: {error}
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {error}
               </div>
             )}
 
+            {/* Search Bar */}
             <div className="bg-white p-4 rounded-lg shadow">
               <div className="relative max-w-md">
                 <input
                   type="text"
-                  placeholder="Search recruitment partners..."
+                  placeholder="Search employers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 </div>
               </div>
             </div>
 
+            {/* Table */}
             <div className="bg-white shadow rounded-lg overflow-hidden min-h-[600px]">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="hidden sm:table-cell w-12 px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                        />
                       </th>
                       <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Owner Name
@@ -752,9 +871,9 @@ export default function AdminRecruitmentPartnersPage() {
                       <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Specializations
-                      </th>
+                      {/* <th className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Job Posting
+                      </th> */}
                       <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
@@ -766,122 +885,176 @@ export default function AdminRecruitmentPartnersPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredPartners.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-3 sm:px-6 py-4 text-center text-gray-500">
-                          No recruitment partners found matching your search.
+                        <td
+                          colSpan={7}
+                          className="px-6 py-4 text-center text-gray-500"
+                        >
+                          No employers found matching your search.
                         </td>
                       </tr>
                     ) : (
-                      filteredPartners.map((partner) => (
-                        <tr key={partner._id} className="hover:bg-gray-50">
-                          <td className="hidden sm:table-cell w-12 px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <input type="checkbox" className="rounded border-gray-300" />
+                      filteredPartners.map((recruitmentPartner) => (
+                        <tr key={recruitmentPartner._id} className="hover:bg-gray-50">
+                          <td className="w-12 px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-300"
+                            />
                           </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            <div className="truncate max-w-[120px] sm:max-w-none">
-                              {partner.ownerName}
-                            </div>
-                            <div className="sm:hidden text-xs text-gray-500 truncate max-w-[120px]">
-                              {partner.companyName}
-                            </div>
+                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
+                            {recruitmentPartner.ownerName}
                           </td>
-                          <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="truncate max-w-[150px] lg:max-w-none">
-                              {partner.companyName}
-                            </div>
+                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
+                            {recruitmentPartner.companyName}
                           </td>
-                          <td className="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="truncate max-w-[200px] lg:max-w-none">
-                              {partner.user.email}
-                            </div>
+                          <td className="w-64 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
+                            {recruitmentPartner.user.email}
                           </td>
-                          <td className="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="truncate max-w-[150px]">
-                              {partner.specializations?.slice(0, 2).join(', ') || 'N/A'}
-                              {partner.specializations && partner.specializations.length > 2 && '...'}
-                            </div>
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-col sm:flex-row flex-wrap gap-1">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                partner.isApproved 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {partner.isApproved ? 'Active' : 'Deactivated'}
+                          {/* <td className="w-32 px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                            {employer.jobPosting}
+                          </td> */}
+                          <td className="w-48 px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-wrap gap-1">
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  recruitmentPartner.isApproved
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {recruitmentPartner.isApproved ? "Active" : "Deactivated"}
                               </span>
-                              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                Partner
-                              </span>
+                              
                             </div>
                           </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="relative" data-dropdown-id={partner._id}>
+                          <td className="w-40 px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div
+                              className="relative"
+                              data-dropdown-id={recruitmentPartner._id}
+                            >
                               <button
-                                onClick={() => setActiveDropdown(activeDropdown === partner._id ? null : partner._id)}
+                                onClick={() =>
+                                  setActiveDropdown(
+                                    activeDropdown === recruitmentPartner._id
+                                      ? null
+                                      : recruitmentPartner._id
+                                  )
+                                }
                                 className="text-gray-400 hover:text-gray-600 p-2 rounded hover:bg-gray-50 transition-colors"
                                 title="Actions"
                               >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
                                   <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                 </svg>
                               </button>
-                              
-                              {activeDropdown === partner._id && (
+
+                              {activeDropdown === recruitmentPartner._id && (
                                 <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                                   <div className="py-1">
                                     <button
                                       onClick={() => {
-                                        handleEditPartner(partner);
+                                        handleEditPartner(recruitmentPartner);
                                         setActiveDropdown(null);
                                       }}
                                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                     >
-                                      <svg className="w-4 h-4 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                      <svg
+                                        className="w-4 h-4 mr-3 text-blue-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                        />
                                       </svg>
-                                      Edit Partner
+                                      Edit Recruiter
                                     </button>
-                                    
+
                                     <button
                                       onClick={() => {
-                                        handleViewProfile(partner);
+                                        handleViewProfile(recruitmentPartner);
                                         setActiveDropdown(null);
                                       }}
                                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                     >
-                                      <svg className="w-4 h-4 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      <svg
+                                        className="w-4 h-4 mr-3 text-green-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                        />
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                        />
                                       </svg>
                                       View Profile
                                     </button>
-                                    
+
                                     <button
                                       onClick={() => {
-                                        handleToggleStatus(partner._id);
+                                        handleToggleStatus(recruitmentPartner._id);
                                         setActiveDropdown(null);
                                       }}
                                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                     >
-                                      <svg className="w-4 h-4 mr-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      <svg
+                                        className="w-4 h-4 mr-3 text-yellow-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
                                       </svg>
-                                      {partner.isApproved ? 'Deactivate' : 'Activate'}
+                                      {recruitmentPartner.isApproved
+                                        ? "Deactivate"
+                                        : "Activate"}
                                     </button>
-                                    
+
                                     <div className="border-t border-gray-100 my-1"></div>
-                                    
+
                                     <button
                                       onClick={() => {
-                                        handleDeletePartner(partner._id);
+                                        handleDeletePartner(recruitmentPartner._id);
                                         setActiveDropdown(null);
                                       }}
                                       className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                     >
-                                      <svg className="w-4 h-4 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      <svg
+                                        className="w-4 h-4 mr-3 text-red-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                        />
                                       </svg>
-                                      Delete Partner
+                                      Delete Employer
                                     </button>
                                   </div>
                                 </div>
@@ -898,28 +1071,31 @@ export default function AdminRecruitmentPartnersPage() {
           </div>
         </div>
 
+        {/* Profile Modal */}
         <ProfileModal
           partner={selectedPartner}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />
 
-        <PartnerFormModal
-          partner={null}
+        {/* Add Employer Modal */}
+        {selectedPartner && <PartnerFormModal
+          partner={selectedPartner}
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
-          onSave={handleSavePartner}
+          onSave={() => {}}
           mode="add"
-        />
+        />}
 
-        <PartnerFormModal
-          partner={editingPartner}
+        {/* Edit Employer Modal */}
+         {selectedPartner &&<PartnerFormModal
+          partner={selectedPartner}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSave={handleSavePartner}
           mode="edit"
-        />
+        />}
       </DashboardLayout>
     </ProtectedRoute>
   );
-} 
+}
