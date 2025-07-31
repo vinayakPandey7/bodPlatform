@@ -22,7 +22,7 @@ export const useLogin = () => {
       console.log("Queries invalidated");
     },
     onError: (error) => {
-      console.error("useLogin onError called with error:", error);
+      console.log("useLogin onError called with error:", error);
     },
   });
 };

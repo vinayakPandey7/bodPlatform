@@ -91,25 +91,19 @@ const ClientValidationSchema = Yup.object().shape({
   zipcode: Yup.string()
     .matches(/^\d{5}$/, "Zipcode must be 5 digits")
     .required("Zipcode is required"),
-  industry: Yup.string()
-    .required("Industry is required"),
-  companySize: Yup.string()
-    .required("Company size is required"),
+  industry: Yup.string().required("Industry is required"),
+  companySize: Yup.string().required("Company size is required"),
   contractValue: Yup.number()
     .min(1000, "Contract value must be at least $1,000")
     .max(10000000, "Contract value must be less than $10,000,000")
     .required("Contract value is required"),
-  contractStartDate: Yup.date()
-    .required("Contract start date is required"),
+  contractStartDate: Yup.date().required("Contract start date is required"),
   contractEndDate: Yup.date()
-    .min(Yup.ref('contractStartDate'), "End date must be after start date")
+    .min(Yup.ref("contractStartDate"), "End date must be after start date")
     .required("Contract end date is required"),
-  paymentTerms: Yup.string()
-    .required("Payment terms are required"),
-  status: Yup.string()
-    .required("Status is required"),
-  notes: Yup.string()
-    .max(500, "Notes must be less than 500 characters"),
+  paymentTerms: Yup.string().required("Payment terms are required"),
+  status: Yup.string().required("Status is required"),
+  notes: Yup.string().max(500, "Notes must be less than 500 characters"),
 });
 
 // Industry options
@@ -124,7 +118,7 @@ const industryOptions = [
   "Consulting",
   "Non-Profit",
   "Government",
-  "Other"
+  "Other",
 ];
 
 // Company size options
@@ -134,7 +128,7 @@ const companySizeOptions = [
   "50-100",
   "100-500",
   "500-1000",
-  "1000+"
+  "1000+",
 ];
 
 // Payment terms options
@@ -144,14 +138,14 @@ const paymentTermsOptions = [
   "Net 45",
   "Net 60",
   "Net 90",
-  "Due on Receipt"
+  "Due on Receipt",
 ];
 
 // Status options
 const statusOptions = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
-  { value: "prospect", label: "Prospect" }
+  { value: "prospect", label: "Prospect" },
 ];
 
 export default function ClientModal({
@@ -207,7 +201,10 @@ export default function ClientModal({
   };
 
   // Handle zipcode lookup
-  const handleZipcodeLookup = async (zipcode: string, setFieldValue: (field: string, value: any) => void) => {
+  const handleZipcodeLookup = async (
+    zipcode: string,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
     if (!zipcode || zipcode.length !== 5) {
       return;
     }
@@ -228,7 +225,10 @@ export default function ClientModal({
     }
   };
 
-  const handleSubmit = async (values: ClientFormData, { setSubmitting, resetForm }: any) => {
+  const handleSubmit = async (
+    values: ClientFormData,
+    { setSubmitting, resetForm }: any
+  ) => {
     setLoading(true);
     try {
       const clientData = {
@@ -297,12 +297,23 @@ export default function ClientModal({
         onSubmit={handleSubmit}
         enableReinitialize
       >
-        {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isSubmitting }) => (
+        {({
+          values,
+          errors,
+          touched,
+          handleChange,
+          handleBlur,
+          setFieldValue,
+          isSubmitting,
+        }) => (
           <Form>
             <DialogContent sx={{ pt: 0 }}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {/* Company Information */}
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "#374151" }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "#374151" }}
+                >
                   Company Information
                 </Typography>
 
@@ -319,7 +330,9 @@ export default function ClientModal({
                     onChange={handleChange}
                     onBlur={handleBlur}
                     InputProps={{
-                      startAdornment: <BusinessIcon sx={{ mr: 1, color: "#9ca3af" }} />,
+                      startAdornment: (
+                        <BusinessIcon sx={{ mr: 1, color: "#9ca3af" }} />
+                      ),
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
@@ -337,12 +350,16 @@ export default function ClientModal({
                     fullWidth
                     variant="outlined"
                     size="small"
-                    error={touched.contactPerson && Boolean(errors.contactPerson)}
+                    error={
+                      touched.contactPerson && Boolean(errors.contactPerson)
+                    }
                     helperText={touched.contactPerson && errors.contactPerson}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     InputProps={{
-                      startAdornment: <PersonIcon sx={{ mr: 1, color: "#9ca3af" }} />,
+                      startAdornment: (
+                        <PersonIcon sx={{ mr: 1, color: "#9ca3af" }} />
+                      ),
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
@@ -368,7 +385,9 @@ export default function ClientModal({
                     onChange={handleChange}
                     onBlur={handleBlur}
                     InputProps={{
-                      startAdornment: <EmailIcon sx={{ mr: 1, color: "#9ca3af" }} />,
+                      startAdornment: (
+                        <EmailIcon sx={{ mr: 1, color: "#9ca3af" }} />
+                      ),
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
@@ -384,13 +403,18 @@ export default function ClientModal({
                     value={values.phone}
                     onChange={(value) => setFieldValue("phone", value)}
                     error={touched.phone && Boolean(errors.phone)}
-                    helperText={touched.phone && errors.phone ? errors.phone : undefined}
+                    helperText={
+                      touched.phone && errors.phone ? errors.phone : undefined
+                    }
                     required
                   />
                 </Box>
 
                 {/* Location Information */}
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "#374151", mt: 2 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "#374151", mt: 2 }}
+                >
                   Location Information
                 </Typography>
 
@@ -416,8 +440,12 @@ export default function ClientModal({
                       pattern: "\\d{5}",
                     }}
                     InputProps={{
-                      startAdornment: <LocationIcon sx={{ mr: 1, color: "#9ca3af" }} />,
-                      endAdornment: locationLoading && <CircularProgress size={16} />,
+                      startAdornment: (
+                        <LocationIcon sx={{ mr: 1, color: "#9ca3af" }} />
+                      ),
+                      endAdornment: locationLoading && (
+                        <CircularProgress size={16} />
+                      ),
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
@@ -498,12 +526,19 @@ export default function ClientModal({
                 </Box>
 
                 {/* Business Information */}
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "#374151", mt: 2 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "#374151", mt: 2 }}
+                >
                   Business Information
                 </Typography>
 
                 <Box sx={{ display: "flex", gap: 2 }}>
-                  <FormControl fullWidth size="small" error={touched.industry && Boolean(errors.industry)}>
+                  <FormControl
+                    fullWidth
+                    size="small"
+                    error={touched.industry && Boolean(errors.industry)}
+                  >
                     <InputLabel>Industry *</InputLabel>
                     <Field
                       as={Select}
@@ -524,13 +559,21 @@ export default function ClientModal({
                       ))}
                     </Field>
                     {touched.industry && errors.industry && (
-                      <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        sx={{ mt: 0.5, display: "block" }}
+                      >
                         {errors.industry}
                       </Typography>
                     )}
                   </FormControl>
 
-                  <FormControl fullWidth size="small" error={touched.companySize && Boolean(errors.companySize)}>
+                  <FormControl
+                    fullWidth
+                    size="small"
+                    error={touched.companySize && Boolean(errors.companySize)}
+                  >
                     <InputLabel>Company Size *</InputLabel>
                     <Field
                       as={Select}
@@ -551,7 +594,11 @@ export default function ClientModal({
                       ))}
                     </Field>
                     {touched.companySize && errors.companySize && (
-                      <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        sx={{ mt: 0.5, display: "block" }}
+                      >
                         {errors.companySize}
                       </Typography>
                     )}
@@ -559,7 +606,10 @@ export default function ClientModal({
                 </Box>
 
                 {/* Contract Information */}
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "#374151", mt: 2 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "#374151", mt: 2 }}
+                >
                   Contract Information
                 </Typography>
 
@@ -572,12 +622,16 @@ export default function ClientModal({
                     fullWidth
                     variant="outlined"
                     size="small"
-                    error={touched.contractValue && Boolean(errors.contractValue)}
+                    error={
+                      touched.contractValue && Boolean(errors.contractValue)
+                    }
                     helperText={touched.contractValue && errors.contractValue}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     InputProps={{
-                      startAdornment: <MoneyIcon sx={{ mr: 1, color: "#9ca3af" }} />,
+                      startAdornment: (
+                        <MoneyIcon sx={{ mr: 1, color: "#9ca3af" }} />
+                      ),
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
@@ -588,7 +642,11 @@ export default function ClientModal({
                     }}
                   />
 
-                  <FormControl fullWidth size="small" error={touched.paymentTerms && Boolean(errors.paymentTerms)}>
+                  <FormControl
+                    fullWidth
+                    size="small"
+                    error={touched.paymentTerms && Boolean(errors.paymentTerms)}
+                  >
                     <InputLabel>Payment Terms *</InputLabel>
                     <Field
                       as={Select}
@@ -609,7 +667,11 @@ export default function ClientModal({
                       ))}
                     </Field>
                     {touched.paymentTerms && errors.paymentTerms && (
-                      <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        sx={{ mt: 0.5, display: "block" }}
+                      >
                         {errors.paymentTerms}
                       </Typography>
                     )}
@@ -625,12 +687,19 @@ export default function ClientModal({
                     fullWidth
                     variant="outlined"
                     size="small"
-                    error={touched.contractStartDate && Boolean(errors.contractStartDate)}
-                    helperText={touched.contractStartDate && errors.contractStartDate}
+                    error={
+                      touched.contractStartDate &&
+                      Boolean(errors.contractStartDate)
+                    }
+                    helperText={
+                      touched.contractStartDate && errors.contractStartDate
+                    }
                     onChange={handleChange}
                     onBlur={handleBlur}
                     InputProps={{
-                      startAdornment: <CalendarToday sx={{ mr: 1, color: "#9ca3af" }} />,
+                      startAdornment: (
+                        <CalendarToday sx={{ mr: 1, color: "#9ca3af" }} />
+                      ),
                     }}
                     InputLabelProps={{
                       shrink: true,
@@ -652,12 +721,18 @@ export default function ClientModal({
                     fullWidth
                     variant="outlined"
                     size="small"
-                    error={touched.contractEndDate && Boolean(errors.contractEndDate)}
-                    helperText={touched.contractEndDate && errors.contractEndDate}
+                    error={
+                      touched.contractEndDate && Boolean(errors.contractEndDate)
+                    }
+                    helperText={
+                      touched.contractEndDate && errors.contractEndDate
+                    }
                     onChange={handleChange}
                     onBlur={handleBlur}
                     InputProps={{
-                      startAdornment: <CalendarToday sx={{ mr: 1, color: "#9ca3af" }} />,
+                      startAdornment: (
+                        <CalendarToday sx={{ mr: 1, color: "#9ca3af" }} />
+                      ),
                     }}
                     InputLabelProps={{
                       shrink: true,
@@ -672,7 +747,11 @@ export default function ClientModal({
                   />
                 </Box>
 
-                <FormControl fullWidth size="small" error={touched.status && Boolean(errors.status)}>
+                <FormControl
+                  fullWidth
+                  size="small"
+                  error={touched.status && Boolean(errors.status)}
+                >
                   <InputLabel>Status *</InputLabel>
                   <Field
                     as={Select}
@@ -693,7 +772,11 @@ export default function ClientModal({
                     ))}
                   </Field>
                   {touched.status && errors.status && (
-                    <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ mt: 0.5, display: "block" }}
+                    >
                       {errors.status}
                     </Typography>
                   )}
@@ -714,7 +797,9 @@ export default function ClientModal({
                   onChange={handleChange}
                   onBlur={handleBlur}
                   InputProps={{
-                    startAdornment: <DescriptionIcon sx={{ mr: 1, color: "#9ca3af" }} />,
+                    startAdornment: (
+                      <DescriptionIcon sx={{ mr: 1, color: "#9ca3af" }} />
+                    ),
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
@@ -741,7 +826,11 @@ export default function ClientModal({
                   "&:hover": { bgcolor: "#2563eb" },
                 }}
               >
-                {loading ? "Saving..." : client ? "Update Client" : "Add Client"}
+                {loading
+                  ? "Saving..."
+                  : client
+                  ? "Update Client"
+                  : "Add Client"}
               </Button>
             </DialogActions>
           </Form>
@@ -749,4 +838,4 @@ export default function ClientModal({
       </Formik>
     </Dialog>
   );
-} 
+}

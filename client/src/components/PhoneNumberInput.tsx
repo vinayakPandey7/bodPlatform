@@ -23,6 +23,7 @@ interface PhoneNumberInputProps {
   fullWidth?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  className?: string;
 }
 
 const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
@@ -35,6 +36,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   fullWidth = true,
   disabled = false,
   placeholder = "(555) 123-4567",
+  className,
 }) => {
   const [internalError, setInternalError] = useState("");
   const [isValid, setIsValid] = useState<boolean | null>(null);
@@ -55,7 +57,10 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
     } else if (limitedValue.length <= 6) {
       return `(${limitedValue.slice(0, 3)}) ${limitedValue.slice(3)}`;
     } else {
-      return `(${limitedValue.slice(0, 3)}) ${limitedValue.slice(3, 6)}-${limitedValue.slice(6)}`;
+      return `(${limitedValue.slice(0, 3)}) ${limitedValue.slice(
+        3,
+        6
+      )}-${limitedValue.slice(6)}`;
     }
   };
 
@@ -89,11 +94,13 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const cursorPosition = e.target.selectionStart || 0;
-    
+
     // Count non-numeric characters before cursor
-    const nonNumericBeforeCursor = inputValue.slice(0, cursorPosition).replace(/\d/g, '').length;
+    const nonNumericBeforeCursor = inputValue
+      .slice(0, cursorPosition)
+      .replace(/\d/g, "").length;
     const numericBeforeCursor = cursorPosition - nonNumericBeforeCursor;
-    
+
     // Format the number
     const formattedValue = formatPhoneNumber(inputValue);
     const validation = validatePhoneNumber(formattedValue);
@@ -108,12 +115,15 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
       const input = e.target;
       if (input) {
         // Count non-numeric characters in formatted value up to the numeric position
-        const numericValue = formattedValue.replace(/\D/g, '');
-        const targetNumericPosition = Math.min(numericBeforeCursor, numericValue.length);
-        
+        const numericValue = formattedValue.replace(/\D/g, "");
+        const targetNumericPosition = Math.min(
+          numericBeforeCursor,
+          numericValue.length
+        );
+
         let newPosition = 0;
         let numericCount = 0;
-        
+
         for (let i = 0; i < formattedValue.length; i++) {
           if (/\d/.test(formattedValue[i])) {
             numericCount++;
@@ -123,10 +133,10 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
           }
           newPosition = i + 1;
         }
-        
+
         // Ensure cursor position is within bounds
         newPosition = Math.min(newPosition, formattedValue.length);
-        
+
         input.setSelectionRange(newPosition, newPosition);
       }
     }, 0);
@@ -139,7 +149,9 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   };
 
   // Determine if there's an error
-  const hasError = Boolean(externalError || (internalError && isValid === false));
+  const hasError = Boolean(
+    externalError || (internalError && isValid === false)
+  );
   const errorMessage: string | undefined =
     externalHelperText || internalError || undefined;
 
@@ -155,6 +167,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
         required={required}
         fullWidth={fullWidth}
         disabled={disabled}
+        className={className}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -203,7 +216,24 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
             fontFamily: "monospace",
             fontSize: "1rem",
             letterSpacing: "0.05em",
+            paddingTop: "9px",
+            paddingBottom: "8px",
           },
+          // Apply custom padding from className if provided
+          ...(className?.includes('py-') && {
+            "& .MuiInputBase-input": {
+              paddingTop: className.includes('py-5') ? "20px" : 
+                         className.includes('py-4') ? "16px" :
+                         className.includes('py-3') ? "12px" :
+                         className.includes('py-2') ? "8px" :
+                         className.includes('py-1') ? "4px" : "9px",
+              paddingBottom: className.includes('py-5') ? "20px" : 
+                            className.includes('py-4') ? "16px" :
+                            className.includes('py-3') ? "12px" :
+                            className.includes('py-2') ? "8px" :
+                            className.includes('py-1') ? "4px" : "8px",
+            }
+          }),
         }}
       />
 

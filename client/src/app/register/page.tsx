@@ -860,9 +860,19 @@ function RegisterPageContent() {
                               <PhoneNumberInput
                                 label="Phone Number"
                                 value={values.phoneNumber}
-                                onChange={(value) => setFieldValue("phoneNumber", value)}
-                                error={touched.phoneNumber && Boolean(errors.phoneNumber)}
-                                helperText={touched.phoneNumber && errors.phoneNumber ? errors.phoneNumber : undefined}
+                                onChange={(value) =>
+                                  setFieldValue("phoneNumber", value)
+                                }
+                                error={
+                                  touched.phoneNumber &&
+                                  Boolean(errors.phoneNumber)
+                                }
+                                helperText={
+                                  touched.phoneNumber && errors.phoneNumber
+                                    ? errors.phoneNumber
+                                    : undefined
+                                }
+                                className="!py-5"
                                 required
                               />
 
@@ -954,9 +964,19 @@ function RegisterPageContent() {
                               <PhoneNumberInput
                                 label="Phone"
                                 value={values.partnerPhone}
-                                onChange={(value) => setFieldValue("partnerPhone", value)}
-                                error={touched.partnerPhone && Boolean(errors.partnerPhone)}
-                                helperText={touched.partnerPhone && errors.partnerPhone ? errors.partnerPhone : undefined}
+                                onChange={(value) =>
+                                  setFieldValue("partnerPhone", value)
+                                }
+                                error={
+                                  touched.partnerPhone &&
+                                  Boolean(errors.partnerPhone)
+                                }
+                                helperText={
+                                  touched.partnerPhone && errors.partnerPhone
+                                    ? errors.partnerPhone
+                                    : undefined
+                                }
+                                className="py-3"
                                 required
                               />
 
@@ -1023,9 +1043,20 @@ function RegisterPageContent() {
                               <PhoneNumberInput
                                 label="Phone"
                                 value={values.candidatePhone}
-                                onChange={(value) => setFieldValue("candidatePhone", value)}
-                                error={touched.candidatePhone && Boolean(errors.candidatePhone)}
-                                helperText={touched.candidatePhone && errors.candidatePhone ? errors.candidatePhone : undefined}
+                                onChange={(value) =>
+                                  setFieldValue("candidatePhone", value)
+                                }
+                                error={
+                                  touched.candidatePhone &&
+                                  Boolean(errors.candidatePhone)
+                                }
+                                helperText={
+                                  touched.candidatePhone &&
+                                  errors.candidatePhone
+                                    ? errors.candidatePhone
+                                    : undefined
+                                }
+                                className="py-3"
                                 required
                               />
                             </>

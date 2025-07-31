@@ -538,30 +538,30 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             current: pathname === "/recruitment-partner/jobs",
             icon: Briefcase,
           },
-          {
-            name: "Placements",
-            href: "/recruitment-partner/placements",
-            current: pathname === "/recruitment-partner/placements",
-            icon: Award,
-          },
+          // {
+          //   name: "Placements",
+          //   href: "/recruitment-partner/placements",
+          //   current: pathname === "/recruitment-partner/placements",
+          //   icon: Award,
+          // },
           {
             name: "Applications",
             href: "/recruitment-partner/applications",
             current: pathname === "/recruitment-partner/applications",
             icon: FileText,
           },
-          {
-            name: "Interviews",
-            href: "/recruitment-partner/interviews",
-            current: pathname === "/recruitment-partner/interviews",
-            icon: Calendar,
-          },
-          {
-            name: "Reports",
-            href: "/recruitment-partner/reports",
-            current: pathname === "/recruitment-partner/reports",
-            icon: BarChart3,
-          },
+          // {
+          //   name: "Interviews",
+          //   href: "/recruitment-partner/interviews",
+          //   current: pathname === "/recruitment-partner/interviews",
+          //   icon: Calendar,
+          // },
+          // {
+          //   name: "Reports",
+          //   href: "/recruitment-partner/reports",
+          //   current: pathname === "/recruitment-partner/reports",
+          //   icon: BarChart3,
+          // },
           // {
           //   name: "Notifications",
           //   href: "/recruitment-partner/notifications",
