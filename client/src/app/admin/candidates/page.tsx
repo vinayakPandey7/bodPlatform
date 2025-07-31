@@ -234,6 +234,7 @@ export default function AdminCandidatesPage() {
   const [filter, setFilter] = useState<
     "all" | "approved" | "pending" | "active"
   >("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
     null
   );
@@ -257,25 +258,45 @@ export default function AdminCandidatesPage() {
   const candidates = candidatesData?.candidates || [];
 
   const filteredCandidates = candidates.filter((candidate: Candidate) => {
+    // First apply status filter
+    let statusMatch = false;
     switch (filter) {
       case "approved":
-        return candidate.status === "selected";
+        statusMatch = candidate.status === "selected";
+        break;
       case "pending":
-        return [
+        statusMatch = [
           "shortlist",
           "assessment",
           "phone_interview",
           "in_person_interview",
           "background_check",
         ].includes(candidate.status);
+        break;
       case "active":
-        return (
+        statusMatch =
           candidate.status === "selected" ||
-          candidate.status === "background_check"
-        );
+          candidate.status === "background_check";
+        break;
       default:
-        return true;
+        statusMatch = true;
     }
+
+    // Then apply search filter
+    const searchMatch =
+      searchTerm === "" ||
+      candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.job?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.job?.employer?.companyName
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      candidate.recruitmentPartner?.name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+    return statusMatch && searchMatch;
   });
 
   const getStatusBadge = (candidate: Candidate) => {
@@ -712,6 +733,60 @@ export default function AdminCandidatesPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+              <div className="relative max-w-md ">
+                <input
+                  type="text"
+                  placeholder="Search candidates by name, email, phone, job title, company, or partner..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gradient-to-r from-gray-50 to-white shadow-sm hover:shadow-md transition-all duration-300"
+                />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              {searchTerm && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Showing {filteredCandidates.length} of {candidates.length}{" "}
+                  candidates
+                </p>
+              )}
             </div>
 
             {/* Candidates Table - Celestial Style */}
