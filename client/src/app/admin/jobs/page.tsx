@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { adminFetchers } from "@/lib/fetchers";
+import { adminFetchers, jobFetchers } from "@/lib/fetchers";
 import { toast } from "sonner";
 
 interface Job {
@@ -657,263 +657,11 @@ export default function AdminJobsPage() {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  const generateMockJobs = () => {
-    console.log("Generating mock jobs...");
-    const mockJobs: Job[] = [];
 
-    const jobTitles = [
-      "Software Engineer",
-      "Data Scientist",
-      "Product Manager",
-      "UX Designer",
-      "Marketing Manager",
-      "Sales Representative",
-      "Customer Success Manager",
-      "HR Manager",
-      "Financial Analyst",
-      "Operations Manager",
-      "DevOps Engineer",
-      "Full Stack Developer",
-      "Frontend Developer",
-      "Backend Developer",
-      "Mobile Developer",
-      "Quality Assurance Engineer",
-      "Business Analyst",
-      "Project Manager",
-      "Scrum Master",
-      "Technical Writer",
-      "Database Administrator",
-      "Network Engineer",
-      "Security Analyst",
-      "Cloud Architect",
-      "Machine Learning Engineer",
-      "Content Writer",
-      "Social Media Manager",
-      "SEO Specialist",
-      "Graphic Designer",
-      "Video Editor",
-      "Accountant",
-      "Legal Counsel",
-      "Recruiter",
-      "Training Specialist",
-      "Supply Chain Manager",
-      "Warehouse Manager",
-      "Customer Service Representative",
-      "IT Support Specialist",
-      "System Administrator",
-      "Research Analyst",
-      "Nurse",
-      "Physical Therapist",
-      "Pharmacist",
-      "Medical Assistant",
-      "Lab Technician",
-      "Teacher",
-      "Professor",
-      "Instructional Designer",
-      "Tutor",
-      "Academic Advisor",
-    ];
-
-    const locations = [
-      "New York, NY",
-      "Los Angeles, CA",
-      "Chicago, IL",
-      "Houston, TX",
-      "Phoenix, AZ",
-      "Philadelphia, PA",
-      "San Antonio, TX",
-      "San Diego, CA",
-      "Dallas, TX",
-      "San Jose, CA",
-      "Austin, TX",
-      "Jacksonville, FL",
-      "Fort Worth, TX",
-      "Columbus, OH",
-      "San Francisco, CA",
-      "Charlotte, NC",
-      "Indianapolis, IN",
-      "Seattle, WA",
-      "Denver, CO",
-      "Washington, DC",
-      "Boston, MA",
-      "El Paso, TX",
-      "Nashville, TN",
-      "Detroit, MI",
-      "Oklahoma City, OK",
-      "Portland, OR",
-      "Las Vegas, NV",
-      "Memphis, TN",
-      "Louisville, KY",
-      "Baltimore, MD",
-      "Milwaukee, WI",
-      "Albuquerque, NM",
-      "Tucson, AZ",
-      "Fresno, CA",
-      "Sacramento, CA",
-      "Mesa, AZ",
-      "Kansas City, MO",
-      "Atlanta, GA",
-      "Long Beach, CA",
-      "Colorado Springs, CO",
-      "Raleigh, NC",
-      "Miami, FL",
-      "Virginia Beach, VA",
-      "Omaha, NE",
-      "Oakland, CA",
-      "Minneapolis, MN",
-      "Tulsa, OK",
-      "Arlington, TX",
-      "Tampa, FL",
-      "New Orleans, LA",
-    ];
-
-    const companies = [
-      "TechCorp",
-      "InnovateSoft",
-      "DataFlow Inc",
-      "CloudTech Solutions",
-      "NextGen Systems",
-      "Digital Dynamics",
-      "SmartWorks",
-      "FutureTech",
-      "ProSolutions",
-      "TechVision",
-      "DataStream",
-      "CyberSoft",
-      "InfoTech",
-      "NetSolutions",
-      "CodeCraft",
-      "WebWorks",
-      "AppDev Inc",
-      "TechFlow",
-      "DigitalEdge",
-      "SoftwareHub",
-      "TechPioneer",
-      "InnovateNow",
-      "DataTech",
-      "CloudFlow",
-      "SmartSoft",
-      "FutureSoft",
-      "ProTech",
-      "TechStream",
-      "DigitalWorks",
-      "NetFlow",
-      "CodeWorks",
-      "WebTech",
-      "AppFlow",
-      "TechCraft",
-      "DigitalSoft",
-      "SoftwareTech",
-      "TechHub",
-      "InnovateFlow",
-      "DataWorks",
-      "CloudCraft",
-      "SmartTech",
-      "FutureFlow",
-      "ProSoft",
-      "TechWorks",
-      "DigitalFlow",
-      "NetCraft",
-      "CodeFlow",
-      "WebSoft",
-      "AppTech",
-      "TechSoft",
-    ];
-
-    const descriptions = [
-      "Join our dynamic team and contribute to cutting-edge projects that shape the future of technology.",
-      "We are looking for passionate individuals who want to make a real impact in their field.",
-      "Exciting opportunity to work with industry leaders and innovative technologies.",
-      "Be part of a collaborative team environment where your ideas and expertise are valued.",
-      "Great opportunity for career growth and professional development in a supportive environment.",
-      "Work on challenging projects that push the boundaries of what's possible.",
-      "Join a company culture that values innovation, creativity, and continuous learning.",
-      "Opportunity to work with cutting-edge tools and technologies in a fast-paced environment.",
-      "Make a difference in our mission to deliver exceptional products and services.",
-      "Join our team of experts and contribute to meaningful projects that impact thousands of users.",
-    ];
-
-    const jobRoles = ["full_time", "part_time", "contract", "freelance"];
-    const jobTypes = ["work_from_office", "work_from_home", "hybrid"];
-    const payStructures = ["monthly", "hourly", "yearly", "project_based"];
-    const licenses = ["Required", "Not Required", "Preferred", "Optional"];
-
-    for (let i = 1; i <= 50; i++) {
-      const title = jobTitles[Math.floor(Math.random() * jobTitles.length)];
-      const location = locations[Math.floor(Math.random() * locations.length)];
-      const company = companies[Math.floor(Math.random() * companies.length)];
-      const description =
-        descriptions[Math.floor(Math.random() * descriptions.length)];
-      const isApproved = Math.random() > 0.2; // 80% approved
-      const isActive = Math.random() > 0.3; // 70% active
-
-      const startDate = new Date(
-        Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000
-      );
-      const expiryDate = new Date(
-        startDate.getTime() + Math.random() * 60 * 24 * 60 * 60 * 1000
-      );
-
-      mockJobs.push({
-        _id: i.toString(),
-        title: title,
-        description: description,
-        location: location,
-        jobRole: jobRoles[Math.floor(Math.random() * jobRoles.length)],
-        jobType: jobTypes[Math.floor(Math.random() * jobTypes.length)],
-        payStructure:
-          payStructures[Math.floor(Math.random() * payStructures.length)],
-        serviceSalesFocus: `Focus on ${
-          ["B2B", "B2C", "Enterprise", "SMB"][Math.floor(Math.random() * 4)]
-        } sales`,
-        licenseRequirement:
-          licenses[Math.floor(Math.random() * licenses.length)],
-        numberOfPositions: Math.floor(Math.random() * 10) + 1,
-        recruitmentDuration: `${Math.floor(Math.random() * 8) + 2} weeks`,
-        startDate: startDate.toISOString().split("T")[0],
-        expires: expiryDate.toISOString().split("T")[0],
-        isApproved: isApproved,
-        isActive: isActive,
-        createdAt: new Date(
-          Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        employer: {
-          companyName: company,
-          ownerName: `${
-            ["John", "Jane", "Mike", "Sarah", "David", "Lisa"][
-              Math.floor(Math.random() * 6)
-            ]
-          } ${
-            ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia"][
-              Math.floor(Math.random() * 6)
-            ]
-          }`,
-        },
-        salary: `$${Math.floor(Math.random() * 100000) + 40000} - $${
-          Math.floor(Math.random() * 150000) + 60000
-        }`,
-        requirements:
-          "Bachelor's degree preferred, 2+ years experience, strong communication skills",
-        benefits:
-          "Health insurance, 401k, paid time off, flexible schedule, remote work options",
-      });
-    }
-
-    console.log("Generated", mockJobs.length, "mock jobs");
-    setJobs(mockJobs);
-  };
 
   useEffect(() => {
-    generateMockJobs();
     fetchJobs();
   }, []);
-
-  useEffect(() => {
-    if (jobs.length === 0 && !loading) {
-      console.log("No jobs found, generating mock data...");
-      generateMockJobs();
-    }
-  }, [jobs, loading]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -939,21 +687,39 @@ export default function AdminJobsPage() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
+      setError("");
       const response = await adminFetchers.getAdminJobs();
 
-      if (response.data && response.data.length > 0) {
-        console.log("API returned data:", response.data.length, "jobs");
-        setJobs(response.data);
+      console.log("Raw API response:", response);
+      console.log("Response type:", typeof response);
+      console.log("Response keys:", response ? Object.keys(response) : "No response");
+
+      // Handle different response structures
+      let jobsData = [];
+      if (response && Array.isArray(response)) {
+        jobsData = response;
+      } else if (response && response.jobs && Array.isArray(response.jobs)) {
+        jobsData = response.jobs;
+      } else if (response && response.data && Array.isArray(response.data)) {
+        jobsData = response.data;
+      } else if (response && response.results && Array.isArray(response.results)) {
+        jobsData = response.results;
+      }
+
+      console.log("Processed jobs data:", jobsData);
+      console.log("Number of jobs:", jobsData.length);
+
+      if (jobsData.length > 0) {
+        console.log("First job sample:", jobsData[0]);
+        setJobs(jobsData);
       } else {
-        console.log("API returned empty data, generating mock data...");
-        generateMockJobs();
+        console.log("No jobs data found");
+        setJobs([]);
       }
     } catch (err: any) {
       console.error("Error fetching jobs:", err);
       setError(err.response?.data?.message || "Failed to fetch jobs");
-
-      console.log("API error, generating mock data...");
-      generateMockJobs();
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -965,14 +731,20 @@ export default function AdminJobsPage() {
       if (!job) return;
 
       const newApprovalStatus = !job.isApproved;
+      const status = newApprovalStatus ? "approved" : "pending";
+
+      await adminFetchers.updateJobStatus(jobId, status);
 
       setJobs(
         jobs.map((j) =>
           j._id === jobId ? { ...j, isApproved: newApprovalStatus } : j
         )
       );
+
+      toast.success(`Job ${newApprovalStatus ? "approved" : "rejected"} successfully!`);
     } catch (err: any) {
       console.error("Error updating job approval:", err);
+      toast.error("Failed to update job approval status");
     }
   };
 
@@ -982,14 +754,20 @@ export default function AdminJobsPage() {
       if (!job) return;
 
       const newActiveStatus = !job.isActive;
+      const status = newActiveStatus ? "active" : "inactive";
+
+      await adminFetchers.updateJobStatus(jobId, status);
 
       setJobs(
         jobs.map((j) =>
           j._id === jobId ? { ...j, isActive: newActiveStatus } : j
         )
       );
+
+      toast.success(`Job ${newActiveStatus ? "activated" : "deactivated"} successfully!`);
     } catch (err: any) {
       console.error("Error updating job status:", err);
+      toast.error("Failed to update job status");
     }
   };
 
@@ -997,9 +775,12 @@ export default function AdminJobsPage() {
     if (!confirm("Are you sure you want to delete this job?")) return;
 
     try {
+      await jobFetchers.deleteJob(jobId);
       setJobs(jobs.filter((j) => j._id !== jobId));
+      toast.success("Job deleted successfully!");
     } catch (err: any) {
       console.error("Error deleting job:", err);
+      toast.error("Failed to delete job");
     }
   };
 
@@ -1020,51 +801,46 @@ export default function AdminJobsPage() {
   const handleSaveJob = async (jobData: JobFormData) => {
     try {
       if (isEditModalOpen && editingJob) {
-        const updatedJob = {
-          ...editingJob,
-          ...jobData,
-          createdAt: editingJob.createdAt,
-          employer: editingJob.employer,
-        };
-
-        setJobs(jobs.map((j) => (j._id === editingJob._id ? updatedJob : j)));
+        // Update existing job via API
+        await jobFetchers.updateJob(editingJob._id, jobData);
+        
+        // Refresh the jobs list to get the latest data
+        fetchJobs();
 
         setIsEditModalOpen(false);
         setEditingJob(null);
         toast.success("Job updated successfully!");
       } else if (isAddModalOpen) {
-        const newJob: Job = {
-          _id: (jobs.length + 1).toString(),
-          ...jobData,
-          createdAt: new Date().toISOString(),
-          employer: {
-            companyName: "Admin Company",
-            ownerName: "Admin User",
-          },
-        };
+        // Add new job via API
+        await jobFetchers.createJob(jobData);
+        
+        // Refresh the jobs list to get the latest data
+        fetchJobs();
 
-        setJobs([...jobs, newJob]);
         setIsAddModalOpen(false);
         toast.success("Job added successfully!");
       }
     } catch (err: any) {
       console.error("Error saving job:", err);
-      alert("Error saving job. Please try again.");
+      const errorMessage = err.response?.data?.message || "Error saving job. Please try again.";
+      toast.error(errorMessage);
     }
   };
 
   const filteredJobs = jobs.filter(
     (job) =>
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.employer.companyName
-        .toLowerCase()
+      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.employer?.companyName
+        ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase())
+      job.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   console.log("Total jobs:", jobs.length);
   console.log("Filtered jobs:", filteredJobs.length);
   console.log("Search term:", searchTerm);
+  console.log("Jobs array:", jobs);
+  console.log("Filtered jobs array:", filteredJobs);
 
   if (loading) {
     return (
@@ -1105,8 +881,8 @@ export default function AdminJobsPage() {
             </div>
 
             {error && (
-              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-                API connection failed. Showing demo data. Error: {error}
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {error}
               </div>
             )}
 
@@ -1172,11 +948,16 @@ export default function AdminJobsPage() {
                           colSpan={7}
                           className="px-6 py-4 text-center text-gray-500"
                         >
-                          No jobs found matching your search.
+                          {jobs.length === 0 
+                            ? "No jobs found. Please check the API response or add some jobs." 
+                            : "No jobs found matching your search."
+                          }
                         </td>
                       </tr>
                     ) : (
-                      filteredJobs.map((job, index) => (
+                      filteredJobs.map((job, index) => {
+                        console.log("Rendering job:", job);
+                        return (
                         <tr key={job._id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {index + 1}
@@ -1370,7 +1151,8 @@ export default function AdminJobsPage() {
                             </div>
                           </td>
                         </tr>
-                      ))
+                      );
+                      })
                     )}
                   </tbody>
                 </table>
