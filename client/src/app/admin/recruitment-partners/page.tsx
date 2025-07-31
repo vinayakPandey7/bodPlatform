@@ -24,7 +24,7 @@ interface RecruitmentPartner {
   website?: string;
   description?: string;
   specializations?: string[];
-  createdAt: string;
+  createdAt:string
 }
 
 interface PartnerFormModalProps {
@@ -88,7 +88,6 @@ const PartnerFormModal = ({
   });
 
   useEffect(() => {
-    console.log("dvxcvxvc", partner);
     if (mode === "edit" && partner) {
       setFormData({
         ownerName: partner.ownerName,
@@ -106,6 +105,7 @@ const PartnerFormModal = ({
         isApproved: partner.isApproved,
       });
     } else if (mode === "add") {
+      
       setFormData({
         ownerName: "",
         companyName: "",
@@ -554,7 +554,7 @@ const ProfileModal = ({ partner, isOpen, onClose }: ProfileModalProps) => {
                 Registered Date
               </label>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(partner.createdAt).toLocaleDateString()}
+                {new Date(partner?.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -1102,26 +1102,22 @@ export default function AdminRecruitmentPartnersPage() {
         />
 
         {/* Add Employer Modal */}
-        {selectedPartner && (
-          <PartnerFormModal
-            partner={selectedPartner}
-            isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-            onSave={() => {}}
-            mode="add"
-          />
-        )}
+        <PartnerFormModal
+          partner={null}
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={handleSavePartner}
+          mode="add"
+        />
 
         {/* Edit Employer Modal */}
-        {selectedPartner && (
-          <PartnerFormModal
-            partner={selectedPartner}
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onSave={handleSavePartner}
-            mode="edit"
-          />
-        )}
+       <PartnerFormModal
+          partner={editingPartner}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSavePartner}
+          mode="edit"
+        />
       </DashboardLayout>
     </ProtectedRoute>
   );

@@ -220,7 +220,7 @@ exports.approveRecruitmentPartner = async (req, res) => {
     if (!recruitmentPartner) {
       return res.status(404).json({ message: "Recruitment partner not found" });
     }
-    console.log("******************",recruitmentPartner)
+
     recruitmentPartner.isApproved = true;
     await recruitmentPartner.save();
 
@@ -333,7 +333,7 @@ exports.createRecruitmentPartner = async (req, res) => {
       zipCode,
       website,
       description,
-      specializations: specializations ? specializations.split(',').map(s => s.trim()) : [],
+      specializations: specializations ? specializations?.join(',').split(',').map(s => s.trim()) : [],
       isApproved,
     });
 
