@@ -24,7 +24,7 @@ interface RecruitmentPartner {
   website?: string;
   description?: string;
   specializations?: string[];
-  createdAt?:string
+  createdAt: string;
 }
 
 interface PartnerFormModalProps {
@@ -70,8 +70,7 @@ const PartnerFormModal = ({
   onSave,
   mode,
 }: PartnerFormModalProps) => {
-
-  console.log("cvbbcvb",partner)
+  console.log("cvbbcvb", partner);
   const [formData, setFormData] = useState({
     ownerName: "",
     companyName: "",
@@ -89,10 +88,8 @@ const PartnerFormModal = ({
   });
 
   useEffect(() => {
-
-     console.log("dvxcvxvc",partner)
+    console.log("dvxcvxvc", partner);
     if (mode === "edit" && partner) {
-     
       setFormData({
         ownerName: partner.ownerName,
         companyName: partner.companyName,
@@ -149,7 +146,7 @@ const PartnerFormModal = ({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const zipCode = e.target.value;
-    
+
     // Update the zipCode field first
     setFormData((prev) => ({
       ...prev,
@@ -160,9 +157,9 @@ const PartnerFormModal = ({
     if (zipCode.length === 5 && /^\d{5}$/.test(zipCode)) {
       try {
         const response = await fetch(`/api/location/lookup-zipcode`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ zipCode }),
         });
@@ -177,7 +174,7 @@ const PartnerFormModal = ({
           }));
         }
       } catch (error) {
-        console.error('Error looking up zip code:', error);
+        console.error("Error looking up zip code:", error);
         // Don't show error to user, just silently fail
       }
     }
@@ -185,14 +182,16 @@ const PartnerFormModal = ({
 
   if (!isOpen) return null;
 
-  console.log("cxvxc",formData)
+  console.log("cxvxc", formData);
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div className="fixed inset-0 bg-black/50 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
         <div className="mt-3">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900">
-              {mode === "add" ? "Add New Recruitment Partner" : "Edit Recruitment Partner"}
+              {mode === "add"
+                ? "Add New Recruitment Partner"
+                : "Edit Recruitment Partner"}
             </h3>
             <button
               onClick={onClose}
@@ -428,12 +427,12 @@ const PartnerFormModal = ({
 };
 
 const ProfileModal = ({ partner, isOpen, onClose }: ProfileModalProps) => {
-  console.log("xvxvxcv",partner)
+  console.log("xvxvxcv", partner);
   if (!isOpen || !partner) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <div className="fixed inset-0 bg-black/50 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900">
@@ -579,13 +578,13 @@ export default function AdminRecruitmentPartnersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPartner, setSelectedPartner] = useState<RecruitmentPartner | null>(
-    null
-  );
+  const [selectedPartner, setSelectedPartner] =
+    useState<RecruitmentPartner | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingPartner, setEditingPartner] = useState<RecruitmentPartner | null>(null);
+  const [editingPartner, setEditingPartner] =
+    useState<RecruitmentPartner | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   useEffect(() => {
@@ -620,7 +619,11 @@ export default function AdminRecruitmentPartnersPage() {
       const response = await adminFetchers.getAdminRecruitmentPartners();
 
       if (response.recruitmentPartners) {
-        console.log("API returned data:", response.recruitmentPartners.length, "recruitment partners");
+        console.log(
+          "API returned data:",
+          response.recruitmentPartners.length,
+          "recruitment partners"
+        );
         setPartners(response.recruitmentPartners);
       } else {
         console.log("API returned no data");
@@ -628,7 +631,9 @@ export default function AdminRecruitmentPartnersPage() {
       }
     } catch (err: any) {
       console.error("Error fetching recruitment partners:", err);
-      setError(err.response?.data?.message || "Failed to fetch recruitment partners");
+      setError(
+        err.response?.data?.message || "Failed to fetch recruitment partners"
+      );
       setPartners([]);
     } finally {
       setLoading(false);
@@ -641,12 +646,14 @@ export default function AdminRecruitmentPartnersPage() {
       if (!partner) return;
 
       const newStatus = !partner.isApproved;
-      
+
       if (newStatus) {
         await adminFetchers.approveRecruitmentPartner(partnerId);
       } else {
         // For deactivating, we'll update the partner directly
-        await adminFetchers.updateRecruitmentPartner(partnerId, { isApproved: false });
+        await adminFetchers.updateRecruitmentPartner(partnerId, {
+          isApproved: false,
+        });
       }
 
       setPartners(
@@ -655,7 +662,11 @@ export default function AdminRecruitmentPartnersPage() {
         )
       );
 
-      toast.success(`Recruitment Partner ${newStatus ? 'approved' : 'deactivated'} successfully!`);
+      toast.success(
+        `Recruitment Partner ${
+          newStatus ? "approved" : "deactivated"
+        } successfully!`
+      );
     } catch (err: any) {
       console.error("Error updating recruitment partner status:", err);
       toast.error("Failed to update recruitment partner status");
@@ -663,7 +674,8 @@ export default function AdminRecruitmentPartnersPage() {
   };
 
   const handleDeletePartner = async (partnerId: string) => {
-    if (!confirm("Are you sure you want to delete this recruitment partner?")) return;
+    if (!confirm("Are you sure you want to delete this recruitment partner?"))
+      return;
 
     try {
       await adminFetchers.deleteRecruitmentPartner(partnerId);
@@ -706,10 +718,16 @@ export default function AdminRecruitmentPartnersPage() {
           isApproved: partnerData.isApproved,
           website: partnerData.website,
           description: partnerData.description,
-          specializations: partnerData.specializations.split(',').map(s => s.trim()).filter(s => s),
+          specializations: partnerData.specializations
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s),
         };
 
-        await adminFetchers.updateRecruitmentPartner(editingPartner._id, updateData);
+        await adminFetchers.updateRecruitmentPartner(
+          editingPartner._id,
+          updateData
+        );
 
         const updatedPartner = {
           ...editingPartner,
@@ -744,10 +762,15 @@ export default function AdminRecruitmentPartnersPage() {
           isApproved: partnerData.isApproved,
           website: partnerData.website,
           description: partnerData.description,
-          specializations: partnerData.specializations.split(',').map(s => s.trim()).filter(s => s),
+          specializations: partnerData.specializations
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s),
         };
 
-        const response = await adminFetchers.createRecruitmentPartner(createData);
+        const response = await adminFetchers.createRecruitmentPartner(
+          createData
+        );
 
         // Refresh the partners list to get the latest data
         fetchPartners();
@@ -757,25 +780,23 @@ export default function AdminRecruitmentPartnersPage() {
       }
     } catch (err: any) {
       console.error("Error saving recruitment partner:", err);
-      const errorMessage = err.response?.data?.message || "Error saving recruitment partner. Please try again.";
+      const errorMessage =
+        err.response?.data?.message ||
+        "Error saving recruitment partner. Please try again.";
       toast.error(errorMessage);
     }
   };
- 
+
   const filteredPartners = partners?.filter(
     (partner) =>
       partner.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       partner.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       partner.user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
-   
 
   // Debug logging
   console.log("Total partners:", partners);
   console.log("Filtered partners:", filteredPartners.length);
-
- 
 
   if (loading) {
     return (
@@ -856,11 +877,8 @@ export default function AdminRecruitmentPartnersPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="hidden sm:table-cell w-12 px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300"
-                        />
+                      <th className="w-16 px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        S.No
                       </th>
                       <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Owner Name
@@ -886,20 +904,20 @@ export default function AdminRecruitmentPartnersPage() {
                     {filteredPartners.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={6}
                           className="px-6 py-4 text-center text-gray-500"
                         >
-                          No employers found matching your search.
+                          No recruitment partners found matching your search.
                         </td>
                       </tr>
                     ) : (
-                      filteredPartners.map((recruitmentPartner) => (
-                        <tr key={recruitmentPartner._id} className="hover:bg-gray-50">
-                          <td className="w-12 px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              className="rounded border-gray-300"
-                            />
+                      filteredPartners.map((recruitmentPartner, index) => (
+                        <tr
+                          key={recruitmentPartner._id}
+                          className="hover:bg-gray-50"
+                        >
+                          <td className="w-16 px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                            {index + 1}
                           </td>
                           <td className="w-48 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
                             {recruitmentPartner.ownerName}
@@ -922,9 +940,10 @@ export default function AdminRecruitmentPartnersPage() {
                                     : "bg-red-100 text-red-800"
                                 }`}
                               >
-                                {recruitmentPartner.isApproved ? "Active" : "Deactivated"}
+                                {recruitmentPartner.isApproved
+                                  ? "Active"
+                                  : "Deactivated"}
                               </span>
-                              
                             </div>
                           </td>
                           <td className="w-40 px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -1009,7 +1028,9 @@ export default function AdminRecruitmentPartnersPage() {
 
                                     <button
                                       onClick={() => {
-                                        handleToggleStatus(recruitmentPartner._id);
+                                        handleToggleStatus(
+                                          recruitmentPartner._id
+                                        );
                                         setActiveDropdown(null);
                                       }}
                                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
@@ -1036,7 +1057,9 @@ export default function AdminRecruitmentPartnersPage() {
 
                                     <button
                                       onClick={() => {
-                                        handleDeletePartner(recruitmentPartner._id);
+                                        handleDeletePartner(
+                                          recruitmentPartner._id
+                                        );
                                         setActiveDropdown(null);
                                       }}
                                       className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -1079,22 +1102,26 @@ export default function AdminRecruitmentPartnersPage() {
         />
 
         {/* Add Employer Modal */}
-        {selectedPartner && <PartnerFormModal
-          partner={selectedPartner}
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSave={() => {}}
-          mode="add"
-        />}
+        {selectedPartner && (
+          <PartnerFormModal
+            partner={selectedPartner}
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onSave={() => {}}
+            mode="add"
+          />
+        )}
 
         {/* Edit Employer Modal */}
-         {selectedPartner &&<PartnerFormModal
-          partner={selectedPartner}
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleSavePartner}
-          mode="edit"
-        />}
+        {selectedPartner && (
+          <PartnerFormModal
+            partner={selectedPartner}
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onSave={handleSavePartner}
+            mode="edit"
+          />
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );

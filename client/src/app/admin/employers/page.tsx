@@ -137,7 +137,7 @@ const EmployerFormModal = ({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const zipCode = e.target.value;
-    
+
     // Update the zipCode field first
     setFormData((prev) => ({
       ...prev,
@@ -148,9 +148,9 @@ const EmployerFormModal = ({
     if (zipCode.length === 5 && /^\d{5}$/.test(zipCode)) {
       try {
         const response = await fetch(`/api/location/lookup-zipcode`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ zipCode }),
         });
@@ -165,7 +165,7 @@ const EmployerFormModal = ({
           }));
         }
       } catch (error) {
-        console.error('Error looking up zip code:', error);
+        console.error("Error looking up zip code:", error);
         // Don't show error to user, just silently fail
       }
     }
@@ -175,7 +175,7 @@ const EmployerFormModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div className="fixed inset-0 bg-black/50 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
         <div className="mt-3">
           <div className="flex items-center justify-between mb-4">
@@ -421,8 +421,8 @@ const ProfileModal = ({ employer, isOpen, onClose }: ProfileModalProps) => {
   if (!isOpen || !employer) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <div className="fixed inset-0 bg-black/50 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900">
@@ -606,7 +606,11 @@ export default function AdminEmployersPage() {
       const response = await adminFetchers.getAdminEmployers();
 
       if (response.employers) {
-        console.log("API returned data:", response.employers.length, "employers");
+        console.log(
+          "API returned data:",
+          response.employers.length,
+          "employers"
+        );
         setEmployers(response.employers);
       } else {
         console.log("API returned no data");
@@ -627,7 +631,7 @@ export default function AdminEmployersPage() {
       if (!employer) return;
 
       const newStatus = !employer.isApproved;
-      
+
       if (newStatus) {
         await adminFetchers.approveEmployer(employerId);
       } else {
@@ -641,7 +645,9 @@ export default function AdminEmployersPage() {
         )
       );
 
-      toast.success(`Employer ${newStatus ? 'approved' : 'deactivated'} successfully!`);
+      toast.success(
+        `Employer ${newStatus ? "approved" : "deactivated"} successfully!`
+      );
     } catch (err: any) {
       console.error("Error updating employer status:", err);
       toast.error("Failed to update employer status");
@@ -742,13 +748,15 @@ export default function AdminEmployersPage() {
       }
     } catch (err: any) {
       console.error("Error saving employer:", err);
-      const errorMessage = err.response?.data?.message || "Error saving employer. Please try again.";
+      const errorMessage =
+        err.response?.data?.message ||
+        "Error saving employer. Please try again.";
       toast.error(errorMessage);
     }
   };
 
-    // Debug logging
- 
+  // Debug logging
+
   // console.log("Filtered employers:", filteredEmployers.length);
 
   const filteredEmployers = employers.filter(
@@ -757,8 +765,6 @@ export default function AdminEmployersPage() {
       employer.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employer.user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-
 
   if (loading) {
     return (
@@ -839,11 +845,8 @@ export default function AdminEmployersPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="hidden sm:table-cell w-12 px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300"
-                        />
+                      <th className="w-16 px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        S.No
                       </th>
                       <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Owner Name
@@ -860,7 +863,7 @@ export default function AdminEmployersPage() {
                       <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1 sm:px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -876,13 +879,10 @@ export default function AdminEmployersPage() {
                         </td>
                       </tr>
                     ) : (
-                      filteredEmployers.map((employer) => (
+                      filteredEmployers.map((employer, index) => (
                         <tr key={employer._id} className="hover:bg-gray-50">
-                          <td className="w-12 px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              className="rounded border-gray-300"
-                            />
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {index + 1}
                           </td>
                           <td className="w-48 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
                             {employer.ownerName}
