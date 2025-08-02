@@ -530,18 +530,49 @@ function RegisterPageContent() {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Left side - Steps Process */}
-      <div className="w-2/6 bg-white p-8 flex flex-col">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
+      {/* Steps Process - Top on mobile, Left on desktop */}
+      <div className="w-full lg:w-2/6 bg-white p-4 lg:p-8 flex flex-col">
         {/* Logo */}
-        <div className="mb-12">
+        <div className="mb-6 lg:mb-12">
           <Logo size="md" showText={false} />
         </div>
 
         {/* Steps */}
         <div className="flex-1 relative">
-          <div className="space-y-8 relative z-10">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="lg:space-y-8 relative z-10">
+            {/* Mobile horizontal stepper */}
+            <div className="lg:hidden flex items-center justify-between mb-6">
+              {steps.map((step, index) => (
+                <div key={step.number} className="flex items-center">
+                  {/* Step indicator */}
+                  <div className="flex-shrink-0">
+                    {step.isCompleted ? (
+                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                          step.isActive
+                            ? "bg-gray-900 text-white"
+                            : "bg-gray-100 text-gray-400"
+                        }`}
+                      >
+                        {step.number}
+                      </div>
+                    )}
+                  </div>
+                  {/* Connector line for mobile */}
+                  {index < steps.length - 1 && (
+                    <div className="h-px w-8 bg-gray-200 mx-2" />
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Desktop vertical stepper */}
+            <div className="hidden lg:block absolute inset-0 overflow-hidden pointer-events-none">
               {/* Floating circles */}
               <div className="absolute top-20 right-20 w-32 h-32 bg-blue-100/640 rounded-full animate-float"></div>
               <div className="absolute top-60 left-10 w-24 h-24 bg-purple-100/30 rounded-full animate-float-delayed"></div>
@@ -571,53 +602,55 @@ function RegisterPageContent() {
               <div className="absolute top-0 right-1/4 w-px h-16 bg-gradient-to-b from-purple-200/20 to-transparent animate-pulse"></div>
               <div className="absolute bottom-0 left-1/4 w-px h-24 bg-gradient-to-t from-pink-200/25 to-transparent animate-pulse"></div>
             </div>
-            {steps.map((step, index) => (
-              <div key={step.number} className="flex items-start space-x-4">
-                {/* Step indicator */}
-                <div className="flex-shrink-0">
-                  {step.isCompleted ? (
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                  ) : (
+            <div className="hidden lg:block">
+              {steps.map((step, index) => (
+                <div key={step.number} className="flex items-start space-x-4 mb-8">
+                  {/* Step indicator */}
+                  <div className="flex-shrink-0">
+                    {step.isCompleted ? (
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check className="w-4 h-4 text-white" />
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          step.isActive
+                            ? "bg-gray-900 text-white"
+                            : "bg-gray-100 text-gray-400"
+                        }`}
+                      >
+                        {step.icon}
+                      </div>
+                    )}
+                    {/* Connector line */}
+                    {index < steps.length - 1 && (
+                      <div className="w-px h-12 bg-gray-200 ml-4 mt-2" />
+                    )}
+                  </div>
+
+                  {/* Step content */}
+                  <div className="flex-1 min-w-0">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        step.isActive
-                          ? "bg-gray-900 text-white"
-                          : "bg-gray-100 text-gray-400"
+                      className={`font-medium ${
+                        step.isActive || step.isCompleted
+                          ? "text-gray-900"
+                          : "text-gray-400"
                       }`}
                     >
-                      {step.icon}
+                      {step.title}
                     </div>
-                  )}
-                  {/* Connector line */}
-                  {index < steps.length - 1 && (
-                    <div className="w-px h-12 bg-gray-200 ml-4 mt-2" />
-                  )}
-                </div>
-
-                {/* Step content */}
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`font-medium ${
-                      step.isActive || step.isCompleted
-                        ? "text-gray-900"
-                        : "text-gray-400"
-                    }`}
-                  >
-                    {step.title}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {step.description}
+                    <div className="text-sm text-gray-500 mt-1">
+                      {step.description}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Bottom navigation */}
-        <div className="pt-8 border-t border-gray-200 relative z-20">
+        <div className="pt-4 lg:pt-8 border-t border-gray-200 relative z-20">
           <div className="flex items-center justify-between">
             <Link
               href="/"
@@ -635,14 +668,12 @@ function RegisterPageContent() {
         </div>
       </div>
 
-      {/* Right side - Welcome section and Form */}
+      {/* Form section - Right on desktop, Bottom on mobile */}
       <div className="flex-1 flex">
-        {/* Welcome section with professional image */}
-
         {/* Form section */}
-        <div className="w-full bg-gradient-to-br from-blue-50/30 via-white to-purple-50/20 border-l border-gray-200 overflow-y-auto relative">
-          {/* Background Animation Elements */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="w-full bg-gradient-to-br from-blue-50/30 via-white to-purple-50/20 lg:border-l border-gray-200 overflow-y-auto relative">
+          {/* Background Animation Elements - Hidden on mobile for performance */}
+          <div className="hidden lg:block absolute inset-0 overflow-hidden pointer-events-none">
             {/* Floating circles */}
             <div className="absolute top-20 right-20 w-32 h-32 bg-blue-100/40 rounded-full animate-float"></div>
             <div className="absolute top-60 left-10 w-24 h-24 bg-purple-100/30 rounded-full animate-float-delayed"></div>
@@ -673,7 +704,7 @@ function RegisterPageContent() {
             <div className="absolute bottom-0 left-1/4 w-px h-24 bg-gradient-to-t from-pink-200/25 to-transparent animate-pulse"></div>
           </div>
 
-          <div className="p-8 mx-auto w-1/2 h-full relative z-10">
+          <div className="p-4 md:p-6 lg:p-8 mx-auto w-full md:w-3/4 lg:w-1/2 h-full relative z-10">
             <Formik
               initialValues={initialValues}
               validationSchema={getValidationSchema()}
@@ -704,9 +735,9 @@ function RegisterPageContent() {
                     <div className="">
                       {/* Step 1: Email and Password */}
                       {currentStep === 1 && (
-                        <div className="flex flex-col gap-10">
+                        <div className="flex flex-col gap-6 lg:gap-10">
                           <div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
                               Create your account
                             </h2>
                             <p className="text-gray-600">
@@ -783,9 +814,9 @@ function RegisterPageContent() {
 
                       {/* Step 2: Account Details */}
                       {currentStep === 2 && (
-                        <div className="space-y-6">
+                        <div className="space-y-4 lg:space-y-6">
                           <div className="flex flex-col">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
                               Account details
                             </h2>
                             <p className="text-gray-600">
@@ -1066,9 +1097,9 @@ function RegisterPageContent() {
 
                       {/* Step 3: Address Information */}
                       {currentStep === 3 && (
-                        <div className="space-y-6">
+                        <div className="space-y-4 lg:space-y-6">
                           <div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
                               Address information
                             </h2>
                             <p className="text-gray-600">
@@ -1281,9 +1312,9 @@ function RegisterPageContent() {
                     </div>
 
                     {/* Navigation buttons */}
-                    <div className="pt-6">
+                    <div className="pt-4 lg:pt-6">
                       {currentStep < 3 ? (
-                        <div className="flex space-x-3">
+                        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                           {currentStep > 1 && (
                             <button
                               type="button"
@@ -1307,7 +1338,7 @@ function RegisterPageContent() {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex space-x-3">
+                        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                           <button
                             type="button"
                             onClick={() => setCurrentStep(currentStep - 1)}
@@ -1327,10 +1358,14 @@ function RegisterPageContent() {
                             {isSubmitting || loading ? (
                               <div className="flex items-center justify-center gap-2">
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                Creating...
+                                <span className="hidden sm:inline">Creating...</span>
+                                <span className="sm:hidden">Creating...</span>
                               </div>
                             ) : (
-                              "Create account"
+                              <span>
+                                <span className="hidden sm:inline">Create account</span>
+                                <span className="sm:hidden">Create</span>
+                              </span>
                             )}
                           </button>
                         </div>

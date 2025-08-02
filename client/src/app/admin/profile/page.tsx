@@ -150,7 +150,7 @@ export default function AdminProfilePage() {
         updatedAt: new Date().toISOString(),
       });
       setEditing(false);
-              toast.success("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     } catch (err: any) {
       console.error("Error updating profile:", err);
       setError(err.response?.data?.message || "Failed to update profile");
@@ -161,7 +161,7 @@ export default function AdminProfilePage() {
         updatedAt: new Date().toISOString(),
       });
       setEditing(false);
-              toast.success("Profile updated successfully! (Demo mode)");
+      toast.success("Profile updated successfully! (Demo mode)");
     }
   };
 
@@ -282,7 +282,7 @@ export default function AdminProfilePage() {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      
+
       toast.success("Password changed successfully");
       setShowPasswordForm(false);
       setPasswordForm({
@@ -366,7 +366,8 @@ export default function AdminProfilePage() {
                 Admin Profile
               </h1>
               <p className="mt-1 text-gray-600">
-                Manage your administrative account settings and system preferences
+                Manage your administrative account settings and system
+                preferences
               </p>
             </div>
             <div className="mt-4 sm:mt-0 flex space-x-3">
@@ -438,202 +439,202 @@ export default function AdminProfilePage() {
                   </div>
 
                   <div className="bg-white shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Profile Picture and Basic Info */}
-                <div className="lg:col-span-1">
-                  <div className="text-center">
-                    <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-4xl font-bold text-indigo-600">
-                        {(
-                          profile.firstName?.[0] || profile.email[0]
-                        ).toUpperCase()}
-                        {(profile.lastName?.[0] || "").toUpperCase()}
-                      </span>
+                    <div className="px-4 py-5 sm:p-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Profile Picture and Basic Info */}
+                        <div className="lg:col-span-1">
+                          <div className="text-center">
+                            <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <span className="text-4xl font-bold text-indigo-600">
+                                {(
+                                  profile.firstName?.[0] || profile.email[0]
+                                ).toUpperCase()}
+                                {(profile.lastName?.[0] || "").toUpperCase()}
+                              </span>
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900">
+                              {profile.firstName || profile.lastName
+                                ? `${profile.firstName || ""} ${
+                                    profile.lastName || ""
+                                  }`.trim()
+                                : "Admin User"}
+                            </h3>
+                            <div className="mt-2">
+                              {getRoleBadge(profile.role)}
+                            </div>
+                            <div className="mt-2">
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  profile.isActive
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {profile.isActive ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Profile Details */}
+                        <div className="lg:col-span-2">
+                          {editing ? (
+                            <form className="space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    First Name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    name="firstName"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    Last Name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    name="lastName"
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">
+                                  Email Address
+                                </label>
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={formData.email}
+                                  onChange={handleChange}
+                                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">
+                                  Phone Number
+                                </label>
+                                <input
+                                  type="tel"
+                                  name="phoneNumber"
+                                  value={formData.phoneNumber}
+                                  onChange={handleChange}
+                                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">
+                                  Department
+                                </label>
+                                <input
+                                  type="text"
+                                  name="department"
+                                  value={formData.department}
+                                  onChange={handleChange}
+                                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                              </div>
+
+                              <div className="flex space-x-3 pt-4">
+                                <button
+                                  type="button"
+                                  onClick={handleSave}
+                                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                                >
+                                  Save Changes
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleCancel}
+                                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-500">
+                                    First Name
+                                  </label>
+                                  <p className="mt-1 text-sm text-gray-900">
+                                    {profile.firstName || "Not provided"}
+                                  </p>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-500">
+                                    Last Name
+                                  </label>
+                                  <p className="mt-1 text-sm text-gray-900">
+                                    {profile.lastName || "Not provided"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-500">
+                                  Email Address
+                                </label>
+                                <p className="mt-1 text-sm text-gray-900">
+                                  {profile.email}
+                                </p>
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-500">
+                                  Phone Number
+                                </label>
+                                <p className="mt-1 text-sm text-gray-900">
+                                  {profile.phoneNumber || "Not provided"}
+                                </p>
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-500">
+                                  Department
+                                </label>
+                                <p className="mt-1 text-sm text-gray-900">
+                                  {profile.department || "Not specified"}
+                                </p>
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-500">
+                                  Account Created
+                                </label>
+                                <p className="mt-1 text-sm text-gray-900">
+                                  {formatDate(profile.createdAt)}
+                                </p>
+                              </div>
+
+                              {profile.lastLogin && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-500">
+                                    Last Login
+                                  </label>
+                                  <p className="mt-1 text-sm text-gray-900">
+                                    {formatDate(profile.lastLogin)}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">
-                      {profile.firstName || profile.lastName
-                        ? `${profile.firstName || ""} ${
-                            profile.lastName || ""
-                          }`.trim()
-                        : "Admin User"}
-                    </h3>
-                    <div className="mt-2">{getRoleBadge(profile.role)}</div>
-                    <div className="mt-2">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          profile.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {profile.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Profile Details */}
-                <div className="lg:col-span-2">
-                  {editing ? (
-                    <form className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            First Name
-                          </label>
-                          <input
-                            type="text"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Last Name
-                          </label>
-                          <input
-                            type="text"
-                            name="lastName"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Phone Number
-                        </label>
-                        <input
-                          type="tel"
-                          name="phoneNumber"
-                          value={formData.phoneNumber}
-                          onChange={handleChange}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Department
-                        </label>
-                        <input
-                          type="text"
-                          name="department"
-                          value={formData.department}
-                          onChange={handleChange}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        />
-                      </div>
-
-                      <div className="flex space-x-3 pt-4">
-                        <button
-                          type="button"
-                          onClick={handleSave}
-                          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                        >
-                          Save Changes
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleCancel}
-                          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-500">
-                            First Name
-                          </label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {profile.firstName || "Not provided"}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-500">
-                            Last Name
-                          </label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {profile.lastName || "Not provided"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-500">
-                          Email Address
-                        </label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {profile.email}
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-500">
-                          Phone Number
-                        </label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {profile.phoneNumber || "Not provided"}
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-500">
-                          Department
-                        </label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {profile.department || "Not specified"}
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-500">
-                          Account Created
-                        </label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {formatDate(profile.createdAt)}
-                        </p>
-                      </div>
-
-                      {profile.lastLogin && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-500">
-                            Last Login
-                          </label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {formatDate(profile.lastLogin)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
                   </div>
 
                   {/* Permissions */}
@@ -882,7 +883,8 @@ export default function AdminProfilePage() {
                             onClick={() =>
                               setSecuritySettings({
                                 ...securitySettings,
-                                loginNotifications: !securitySettings.loginNotifications,
+                                loginNotifications:
+                                  !securitySettings.loginNotifications,
                               })
                             }
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -914,7 +916,8 @@ export default function AdminProfilePage() {
                             onClick={() =>
                               setSecuritySettings({
                                 ...securitySettings,
-                                suspiciousActivityAlerts: !securitySettings.suspiciousActivityAlerts,
+                                suspiciousActivityAlerts:
+                                  !securitySettings.suspiciousActivityAlerts,
                               })
                             }
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -983,7 +986,8 @@ export default function AdminProfilePage() {
                             onClick={() =>
                               setPrivacySettings({
                                 ...privacySettings,
-                                emailNotifications: !privacySettings.emailNotifications,
+                                emailNotifications:
+                                  !privacySettings.emailNotifications,
                               })
                             }
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -1199,7 +1203,8 @@ export default function AdminProfilePage() {
                         Still Need Help?
                       </h3>
                       <p className="text-gray-600 mb-4">
-                        Can't find what you're looking for? Our support team is here to help.
+                        Can't find what you're looking for? Our support team is
+                        here to help.
                       </p>
                       <div className="flex flex-col sm:flex-row gap-3 justify-center">
                         <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
