@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
       "recruitment_partner",
       "sub_admin",
       "candidate",
+      "sales_person",
     ],
     required: true,
   },

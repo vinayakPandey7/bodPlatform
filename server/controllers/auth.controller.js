@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const User = require("../models/user.model");
 const Employer = require("../models/employer.model");
 const RecruitmentPartner = require("../models/recruitmentPartner.model");
+const SalesPerson = require("../models/salesPerson.model");
 const { sendPasswordResetEmail } = require("../utils/email");
 const {
   getCoordinatesFromZipCode,
@@ -120,6 +121,8 @@ exports.login = async (req, res) => {
       profile = await Employer.findOne({ user: user._id });
     } else if (user.role === "recruitment_partner") {
       profile = await RecruitmentPartner.findOne({ user: user._id });
+    } else if (user.role === "sales_person") {
+      profile = await SalesPerson.findOne({ user: user._id });
     }
 
     res.json({
@@ -243,6 +246,8 @@ exports.getMe = async (req, res) => {
       profile = await Employer.findOne({ user: user._id });
     } else if (user.role === "recruitment_partner") {
       profile = await RecruitmentPartner.findOne({ user: user._id });
+    } else if (user.role === "sales_person") {
+      profile = await SalesPerson.findOne({ user: user._id });
     }
 
     // For candidates, include applications to check applied jobs
@@ -771,6 +776,142 @@ exports.registerCandidate = async (req, res) => {
 
     res.status(500).json({
       message: "Server error during candidate registration",
+      error: error.message,
+    });
+  }
+};
+
+// Dedicated Sales Person Registration
+exports.registerSalesPerson = async (req, res) => {
+  let user = null;
+
+  try {
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      phoneNumber,
+      employeeId,
+      department = "sales",
+      territory,
+      managerId,
+    } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !firstName || !lastName || !phoneNumber || !employeeId) {
+      return res.status(400).json({
+        message: "All required fields must be filled: email, password, first name, last name, phone number, and employee ID",
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User with this email already exists",
+        error: "USER_EXISTS",
+      });
+    }
+
+    // Check if employee ID already exists
+    const existingSalesPerson = await SalesPerson.findOne({ employeeId });
+    if (existingSalesPerson) {
+      return res.status(400).json({
+        message: "Employee ID already exists",
+        error: "EMPLOYEE_ID_EXISTS",
+      });
+    }
+
+    // Validate manager if provided
+    let manager = null;
+    if (managerId) {
+      manager = await User.findById(managerId);
+      if (!manager || (manager.role !== "admin" && manager.role !== "sales_person")) {
+        return res.status(400).json({
+          message: "Invalid manager ID. Manager must be an admin or sales person.",
+          error: "INVALID_MANAGER",
+        });
+      }
+    }
+
+    // Create user account
+    user = new User({
+      email,
+      password,
+      role: "sales_person",
+      isActive: false, // Requires admin approval
+    });
+
+    await user.save();
+
+    // Create sales person profile
+    const salesPersonData = {
+      user: user._id,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      employeeId,
+      department,
+      territory,
+      managerId,
+      isApproved: false, // Requires admin approval
+    };
+
+    const salesPerson = new SalesPerson(salesPersonData);
+    await salesPerson.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Sales person registration successful! Your account is pending approval.",
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        profile: {
+          firstName: salesPerson.firstName,
+          lastName: salesPerson.lastName,
+          employeeId: salesPerson.employeeId,
+          department: salesPerson.department,
+          isApproved: salesPerson.isApproved,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Sales person registration error:", error);
+
+    // Clean up user if it was created but sales person creation failed
+    if (user && user._id) {
+      try {
+        await User.findByIdAndDelete(user._id);
+        console.log("Cleaned up user after sales person creation failure");
+      } catch (cleanupError) {
+        console.error("Error during user cleanup:", cleanupError);
+      }
+    }
+
+    // Handle specific validation errors
+    if (error.name === "ValidationError") {
+      const validationErrors = Object.values(error.errors).map(
+        (err) => err.message
+      );
+      return res.status(400).json({
+        message: "Validation error",
+        errors: validationErrors,
+      });
+    }
+
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        message: `${duplicateField} already exists`,
+        error: "DUPLICATE_VALUE",
+      });
+    }
+
+    res.status(500).json({
+      message: "Server error during sales person registration",
       error: error.message,
     });
   }
