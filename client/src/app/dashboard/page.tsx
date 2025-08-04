@@ -46,6 +46,9 @@ export default function DashboardRedirect() {
         case "recruitment_partner":
           router.push("/recruitment-partner/dashboard");
           break;
+        case "sales_person":
+          router.push("/sales/dashboard");
+          break;
         case "admin":
         case "sub_admin":
           router.push("/admin/dashboard");

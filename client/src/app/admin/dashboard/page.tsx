@@ -9,6 +9,8 @@ interface DashboardStats {
   totalRecruitmentPartners: number;
   totalJobs: number;
   totalCandidates: number;
+  totalSalesPersons: number;
+  totalInsuranceAgents: number;
 }
 
 export default function AdminDashboard() {
@@ -26,6 +28,8 @@ export default function AdminDashboard() {
     totalRecruitmentPartners: 0,
     totalJobs: 0,
     totalCandidates: 0,
+    totalSalesPersons: 0,
+    totalInsuranceAgents: 0,
   };
 
   const handleEmployersClick = () => {
@@ -44,6 +48,13 @@ export default function AdminDashboard() {
     router.push("/admin/candidates");
   };
 
+  const handleSalesExecuteClick = () => {
+    router.push("/admin/sales-execute");
+  };
+
+  const handleInsuranceAgentsClick = () => {
+    router.push("/admin/insurance-agents");
+  };
 
   if (loading) {
     return (
@@ -57,7 +68,7 @@ export default function AdminDashboard() {
     );
   }
 
-  console.log("xcvxcvx",stats.totalJobs)
+  console.log("xcvxcvx", stats.totalJobs);
 
   return (
     <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
@@ -68,7 +79,8 @@ export default function AdminDashboard() {
               Admin Dashboard
             </h1>
             <p className="text-gray-600">
-              Manage employers, recruitment partners, and job postings
+              Manage employers, recruitment partners, job postings, sales
+              execute, and insurance agents
             </p>
           </div>
 
@@ -81,7 +93,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div
               onClick={handleEmployersClick}
               className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow"
@@ -171,7 +183,10 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6 cursor-pointer"  onClick={handleCandidateClick}>
+            <div
+              className="bg-white rounded-lg shadow p-6 cursor-pointer"
+              onClick={handleCandidateClick}
+            >
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-yellow-500 bg-opacity-10">
                   <svg
@@ -198,6 +213,68 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+
+            <div
+              onClick={handleSalesExecuteClick}
+              className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-indigo-500 bg-opacity-10">
+                  <svg
+                    className="w-6 h-6 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Sales Execute
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.totalSalesPersons}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              onClick={handleInsuranceAgentsClick}
+              className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-teal-500 bg-opacity-10">
+                  <svg
+                    className="w-6 h-6 text-teal-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Insurance Agents
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.totalInsuranceAgents}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -205,7 +282,7 @@ export default function AdminDashboard() {
             <h2 className="text-lg font-medium text-gray-900 mb-4">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               <button
                 onClick={() => router.push("/admin/employers")}
                 className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
@@ -233,6 +310,24 @@ export default function AdminDashboard() {
                 <h3 className="font-medium text-gray-900">Manage Jobs</h3>
                 <p className="text-sm text-gray-600">
                   Review and approve job postings
+                </p>
+              </button>
+              <button
+                onClick={() => router.push("/admin/sales-execute")}
+                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+              >
+                <h3 className="font-medium text-gray-900">Sales Execute</h3>
+                <p className="text-sm text-gray-600">
+                  Manage sales persons and assign agents
+                </p>
+              </button>
+              <button
+                onClick={() => router.push("/admin/insurance-agents")}
+                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+              >
+                <h3 className="font-medium text-gray-900">Insurance Agents</h3>
+                <p className="text-sm text-gray-600">
+                  Manage insurance agents and their clients
                 </p>
               </button>
             </div>

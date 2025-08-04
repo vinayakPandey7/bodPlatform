@@ -29,6 +29,8 @@ import {
   ChevronDown,
   Award,
   Calendar,
+  Shield,
+  TrendingUp,
 } from "lucide-react";
 import LocationDetector from "./LocationDetector";
 import LocationBanner from "./LocationBanner";
@@ -576,6 +578,33 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             icon: User,
           },
         ];
+      } else if (user?.role === "sales_person") {
+        return [
+          {
+            name: "Dashboard",
+            href: "/sales/dashboard",
+            current: pathname === "/sales/dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            name: "My Agents",
+            href: "/sales/dashboard",
+            current: pathname.startsWith("/sales/agents"),
+            icon: Shield,
+          },
+          {
+            name: "Reports",
+            href: "/sales/reports",
+            current: pathname === "/sales/reports",
+            icon: BarChart3,
+          },
+          {
+            name: "Profile",
+            href: "/sales/profile",
+            current: pathname === "/sales/profile",
+            icon: User,
+          },
+        ];
       } else if (user?.role === "admin" || user?.role === "sub_admin") {
         return [
           {
@@ -607,6 +636,18 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             href: "/admin/candidates",
             current: pathname === "/admin/candidates",
             icon: Users,
+          },
+          {
+            name: "Sales Execute",
+            href: "/admin/sales-execute",
+            current: pathname.startsWith("/admin/sales-execute"),
+            icon: TrendingUp,
+          },
+          {
+            name: "Insurance Agents",
+            href: "/admin/insurance-agents",
+            current: pathname.startsWith("/admin/insurance-agents"),
+            icon: Shield,
           },
           // {
           //   name: "Notifications",
@@ -667,6 +708,8 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
         return "/employer/profile";
       case "recruitment_partner":
         return "/recruitment-partner/profile";
+      case "sales_person":
+        return "/sales/profile";
       case "admin":
       case "sub_admin":
         return "/admin/profile";
