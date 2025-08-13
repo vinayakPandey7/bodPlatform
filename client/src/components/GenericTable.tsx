@@ -67,6 +67,8 @@ export interface GenericTableProps<T = any> {
   filterButtons?: FilterButton[];
   activeFilter?: string;
   statCards?: StatCard[];
+  tableHeight?: string; // Configurable table height
+  enableTableScroll?: boolean; // Enable/disable table internal scrolling
 }
 
 // Action Dropdown Component
@@ -397,6 +399,8 @@ export function GenericTable<T extends Record<string, any>>({
   filterButtons,
   activeFilter,
   statCards,
+  tableHeight = "auto",
+  enableTableScroll = false,
 }: GenericTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -618,7 +622,13 @@ export function GenericTable<T extends Record<string, any>>({
 
         {/* Table */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <div 
+            className={`overflow-x-auto ${enableTableScroll ? 'overflow-y-auto' : ''}`}
+            style={{ 
+              maxHeight: enableTableScroll && tableHeight !== "auto" ? tableHeight : undefined,
+              height: tableHeight !== "auto" && !enableTableScroll ? tableHeight : undefined
+            }}
+          >
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>

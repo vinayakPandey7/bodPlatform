@@ -46,6 +46,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ResumePreviewModal from "@/components/ResumePreviewModal";
+import { toast } from "sonner";
 
 export default function CandidateProfilePage() {
   const router = useRouter();
@@ -91,6 +92,11 @@ export default function CandidateProfilePage() {
   const [skillForm, setSkillForm] = useState<any>({});
   const [socialLinksForm, setSocialLinksForm] = useState<any>({});
   const [preferencesForm, setPreferencesForm] = useState<any>({});
+
+  // Referral/Appraisal state
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [referralForm, setReferralForm] = useState<any>({});
+  const [referralRequests, setReferralRequests] = useState<any[]>([]);
 
   // New features state
   const [activeTab, setActiveTab] = useState("profile");
@@ -538,6 +544,75 @@ export default function CandidateProfilePage() {
         },
       }
     );
+  };
+
+  // Referral/Appraisal handlers
+  const handleRequestReferral = (experienceId: string) => {
+    const experience = profile.experience?.find((exp: any) => exp.id === experienceId);
+    if (experience) {
+      setReferralForm({
+        experienceId,
+        jobTitle: experience.title,
+        company: experience.company,
+        managerName: "",
+        managerEmail: "",
+        managerPosition: "",
+        relationshipToManager: "",
+        workDescription: "",
+        keyAchievements: "",
+        requestStatus: "pending",
+        requestDate: new Date().toISOString(),
+      });
+      setShowReferralModal(true);
+    }
+  };
+
+  const handleSubmitReferralRequest = async () => {
+    try {
+      // Make API call to send referral request
+      const response = await fetch('/api/candidates/referral-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...referralForm,
+          candidateName: `${profile.personalInfo?.firstName || ''} ${profile.personalInfo?.lastName || ''}`.trim(),
+          candidateEmail: profile.email || user?.email || '',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send referral request');
+      }
+
+      const result = await response.json();
+      
+      // Add to local state for immediate UI update
+      const newRequest = {
+        ...referralForm,
+        id: result.referralRequest.id,
+        status: 'pending',
+      };
+      
+      setReferralRequests(prev => [...prev, newRequest]);
+      
+      // Reset form and close modal
+      setReferralForm({});
+      setShowReferralModal(false);
+      
+      // Show success message
+      toast.success("Referral request submitted successfully! We've sent a Google form to your previous manager.");
+      
+    } catch (error) {
+      console.error("Failed to submit referral request:", error);
+      toast.error("Failed to submit referral request. Please try again.");
+    }
+  };
+
+  const getReferralStatus = (experienceId: string) => {
+    const request = referralRequests.find(req => req.experienceId === experienceId);
+    return request?.requestStatus || null;
   };
 
   const handleAddEducation = () => {
@@ -1446,6 +1521,49 @@ export default function CandidateProfilePage() {
                                   {exp.description}
                                 </p>
                               )}
+                              
+                              {/* Referral/Appraisal Section */}
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <h4 className="text-sm font-medium text-gray-700">
+                                      Professional Reference
+                                    </h4>
+                                    {getReferralStatus(exp.id) && (
+                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                        getReferralStatus(exp.id) === 'pending' 
+                                          ? 'bg-yellow-100 text-yellow-800'
+                                          : getReferralStatus(exp.id) === 'completed'
+                                          ? 'bg-green-100 text-green-800'
+                                          : 'bg-red-100 text-red-800'
+                                      }`}>
+                                        {getReferralStatus(exp.id) === 'pending' && 'Appraisal Pending'}
+                                        {getReferralStatus(exp.id) === 'completed' && 'Reference Received'}
+                                        {getReferralStatus(exp.id) === 'failed' && 'Request Failed'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {!getReferralStatus(exp.id) && !exp.current && (
+                                    <button
+                                      onClick={() => handleRequestReferral(exp.id)}
+                                      className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors"
+                                    >
+                                      <Users className="h-3 w-3 mr-1" />
+                                      Request Reference
+                                    </button>
+                                  )}
+                                </div>
+                                {getReferralStatus(exp.id) === 'pending' && (
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    We've sent a Google form to your previous manager. You'll be notified when they respond.
+                                  </p>
+                                )}
+                                {getReferralStatus(exp.id) === 'completed' && (
+                                  <p className="text-xs text-green-600 mt-1">
+                                    ✓ Your previous manager has provided a positive reference for this role.
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -2048,23 +2166,26 @@ export default function CandidateProfilePage() {
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Proficiency Level
                                   </label>
-                                  <select
-                                    value={skillForm.level || "beginner"}
-                                    onChange={(e) =>
-                                      setSkillForm({
-                                        ...skillForm,
-                                        level: e.target.value,
-                                      })
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  >
-                                    <option value="beginner">Beginner</option>
-                                    <option value="intermediate">
-                                      Intermediate
-                                    </option>
-                                    <option value="advanced">Advanced</option>
-                                    <option value="expert">Expert</option>
-                                  </select>
+                                  <div className="relative">
+                                    <select
+                                      value={skillForm.level || "beginner"}
+                                      onChange={(e) =>
+                                        setSkillForm({
+                                          ...skillForm,
+                                          level: e.target.value,
+                                        })
+                                      }
+                                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white appearance-none cursor-pointer"
+                                    >
+                                      <option value="beginner">Beginner</option>
+                                      <option value="intermediate">
+                                        Intermediate
+                                      </option>
+                                      <option value="advanced">Advanced</option>
+                                      <option value="expert">Expert</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2186,23 +2307,26 @@ export default function CandidateProfilePage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Proficiency Level
                                 </label>
-                                <select
-                                  value={skillForm.level || "beginner"}
-                                  onChange={(e) =>
-                                    setSkillForm({
-                                      ...skillForm,
-                                      level: e.target.value,
-                                    })
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                  <option value="beginner">Beginner</option>
-                                  <option value="intermediate">
-                                    Intermediate
-                                  </option>
-                                  <option value="advanced">Advanced</option>
-                                  <option value="expert">Expert</option>
-                                </select>
+                                <div className="relative">
+                                  <select
+                                    value={skillForm.level || "beginner"}
+                                    onChange={(e) =>
+                                      setSkillForm({
+                                        ...skillForm,
+                                        level: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white appearance-none cursor-pointer"
+                                  >
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">
+                                      Intermediate
+                                    </option>
+                                    <option value="advanced">Advanced</option>
+                                    <option value="expert">Expert</option>
+                                  </select>
+                                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                </div>
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2779,6 +2903,186 @@ export default function CandidateProfilePage() {
           onDownload={handleDownloadResume}
           downloadFileName={profile.resume?.originalName || "resume.pdf"}
         />
+
+        {/* Referral Request Modal */}
+        {showReferralModal && (
+          <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Request Professional Reference
+                  </h2>
+                  <button
+                    onClick={() => setShowReferralModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Job Details */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      Request Reference For:
+                    </h3>
+                    <p className="text-blue-600 font-medium">{referralForm.jobTitle}</p>
+                    <p className="text-gray-600">{referralForm.company}</p>
+                  </div>
+
+                  {/* Manager Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Manager/Supervisor Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={referralForm.managerName || ""}
+                        onChange={(e) =>
+                          setReferralForm({
+                            ...referralForm,
+                            managerName: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g., John Smith"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Manager's Email *
+                      </label>
+                      <input
+                        type="email"
+                        value={referralForm.managerEmail || ""}
+                        onChange={(e) =>
+                          setReferralForm({
+                            ...referralForm,
+                            managerEmail: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="manager@company.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Manager's Position
+                      </label>
+                      <input
+                        type="text"
+                        value={referralForm.managerPosition || ""}
+                        onChange={(e) =>
+                          setReferralForm({
+                            ...referralForm,
+                            managerPosition: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g., Senior Manager, Team Lead"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Your Relationship *
+                      </label>
+                      <select
+                        value={referralForm.relationshipToManager || ""}
+                        onChange={(e) =>
+                          setReferralForm({
+                            ...referralForm,
+                            relationshipToManager: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select relationship</option>
+                        <option value="direct_report">Direct Report</option>
+                        <option value="colleague">Colleague</option>
+                        <option value="project_team">Project Team Member</option>
+                        <option value="cross_functional">Cross-functional Partner</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Work Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Brief Work Description *
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={referralForm.workDescription || ""}
+                      onChange={(e) =>
+                        setReferralForm({
+                          ...referralForm,
+                          workDescription: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Briefly describe your role and responsibilities in this position..."
+                    />
+                  </div>
+
+                  {/* Key Achievements */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Key Achievements *
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={referralForm.keyAchievements || ""}
+                      onChange={(e) =>
+                        setReferralForm({
+                          ...referralForm,
+                          keyAchievements: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="List your key achievements and accomplishments in this role..."
+                    />
+                  </div>
+
+                  {/* Info Box */}
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <HelpCircle className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-blue-700">
+                          <strong>What happens next:</strong> We'll send a professional Google form to your manager 
+                          asking them to verify your work and provide feedback. This helps potential employers 
+                          validate your experience and achievements.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Actions */}
+                <div className="flex space-x-3 mt-6 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowReferralModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmitReferralRequest}
+                    disabled={!referralForm.managerName || !referralForm.managerEmail || !referralForm.relationshipToManager || !referralForm.workDescription || !referralForm.keyAchievements}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Send Request
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );

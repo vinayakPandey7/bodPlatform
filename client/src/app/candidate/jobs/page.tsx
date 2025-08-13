@@ -15,6 +15,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import LocationModal from "@/components/LocationModal";
 
 interface JobSearchFilters {
   zipCode: string;
@@ -105,6 +106,7 @@ function CandidateJobsPageContent() {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   // Helper function to check if user has already applied to a job
   const hasAppliedToJob = (jobId: string) => {
@@ -112,6 +114,86 @@ function CandidateJobsPageContent() {
     return currentUser.applications.some(
       (app: any) => app.job === jobId || app.job._id === jobId
     );
+  };
+
+  // Helper function to check if user has relevant appraisals for a job
+  const getAppraisalStatus = (job: Job) => {
+    // In a real implementation, this would check:
+    // 1. If the job requirements match candidate's experience
+    // 2. If candidate has appraisals from previous managers for relevant roles
+    // 3. The status of those appraisals (pending/completed)
+    
+    // For demo purposes, let's simulate some candidates having appraisals
+    const candidateId = currentUser?.id;
+    if (!candidateId) return null;
+
+    // Mock logic: If job title contains certain keywords and candidate has relevant experience
+    const jobTitleKeywords = job.title.toLowerCase();
+    const hasRelevantExperience = jobTitleKeywords.includes('manager') || 
+                                  jobTitleKeywords.includes('senior') || 
+                                  jobTitleKeywords.includes('lead') ||
+                                  jobTitleKeywords.includes('developer') ||
+                                  jobTitleKeywords.includes('analyst');
+
+    if (hasRelevantExperience) {
+      // Simulate random appraisal status for demo
+      const random = Math.random();
+      if (random > 0.7) {
+        return { status: 'completed', count: Math.floor(Math.random() * 3) + 1 };
+      } else if (random > 0.4) {
+        return { status: 'pending', count: Math.floor(Math.random() * 2) + 1 };
+      }
+    }
+    
+    return null;
+  };
+
+  // Handle location selection from modal
+  const handleLocationSelected = async (locationData: {
+    zipCode: string;
+    address: string;
+    city: string;
+    state: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    // Update the zip code filter
+    setFilters(prev => ({
+      ...prev,
+      zipCode: locationData.zipCode
+    }));
+
+    // Clear any zip code errors
+    setZipCodeError("");
+
+    // Here you would typically save the location data to the database
+    try {
+      // Update user's location in database
+      const response = await fetch('/api/candidates/update-location', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          zipCode: locationData.zipCode,
+          address: locationData.address,
+          city: locationData.city,
+          state: locationData.state,
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success(`Location updated: ${locationData.address}`);
+      } else {
+        console.error('Failed to save location to database');
+        toast.warning('Location set locally, but failed to save to your profile');
+      }
+    } catch (error) {
+      console.error('Error saving location:', error);
+      toast.warning('Location set locally, but failed to save to your profile');
+    }
   };
 
   // Auto-populate zip code if user is logged in and has zip code
@@ -332,24 +414,41 @@ function CandidateJobsPageContent() {
           {/* Search Filters */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <TextField
-                label="Your Zip Code *"
-                name="zipCode"
-                value={filters.zipCode}
-                onChange={(e) =>
-                  handleFilterChange(
-                    e as
-                      | React.ChangeEvent<HTMLInputElement>
-                      | { target: { name: string; value: unknown } }
-                  )
-                }
-                placeholder="e.g., 90210"
-                inputProps={{ maxLength: 5 }}
-                error={!!zipCodeError}
-                helperText={zipCodeError}
-                fullWidth
-                size="small"
-              />
+              <div className="relative">
+                <TextField
+                  label="Your Zip Code *"
+                  name="zipCode"
+                  value={filters.zipCode}
+                  onChange={(e) =>
+                    handleFilterChange(
+                      e as
+                        | React.ChangeEvent<HTMLInputElement>
+                        | { target: { name: string; value: unknown } }
+                    )
+                  }
+                  placeholder="e.g., 90210"
+                  inputProps={{ maxLength: 5 }}
+                  error={!!zipCodeError}
+                  helperText={zipCodeError}
+                  fullWidth
+                  size="small"
+                  InputProps={{
+                    endAdornment: (
+                      <button
+                        type="button"
+                        onClick={() => setShowLocationModal(true)}
+                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Use my location"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </button>
+                    ),
+                  }}
+                />
+              </div>
 
               <TextField
                 label="Search Keywords"
@@ -463,6 +562,26 @@ function CandidateJobsPageContent() {
                             Applied
                           </span>
                         )}
+                        {(() => {
+                          const appraisalStatus = getAppraisalStatus(job);
+                          if (!appraisalStatus) return null;
+                          
+                          return (
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              appraisalStatus.status === 'completed' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              {appraisalStatus.status === 'completed' 
+                                ? `${appraisalStatus.count} Reference${appraisalStatus.count > 1 ? 's' : ''} Verified`
+                                : `${appraisalStatus.count} Reference${appraisalStatus.count > 1 ? 's' : ''} Pending`
+                              }
+                            </span>
+                          );
+                        })()}
                       </div>
                       <p className="text-gray-600">
                         {job?.employer?.companyName}
@@ -727,6 +846,13 @@ function CandidateJobsPageContent() {
             onClose={handleCloseModal}
           />
         )}
+
+        {/* Location Modal */}
+        <LocationModal
+          isOpen={showLocationModal}
+          onClose={() => setShowLocationModal(false)}
+          onLocationSelected={handleLocationSelected}
+        />
       </DashboardLayout>
     </ProtectedRoute>
   );

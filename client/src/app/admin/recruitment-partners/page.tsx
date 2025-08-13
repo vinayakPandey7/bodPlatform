@@ -25,7 +25,7 @@ interface RecruitmentPartner {
   website?: string;
   description?: string;
   specializations?: string[];
-  createdAt:string
+  createdAt: string;
 }
 
 interface PartnerFormModalProps {
@@ -106,7 +106,6 @@ const PartnerFormModal = ({
         isApproved: partner.isApproved,
       });
     } else if (mode === "add") {
-      
       setFormData({
         ownerName: "",
         companyName: "",
@@ -262,7 +261,9 @@ const PartnerFormModal = ({
                 <PhoneNumberInput
                   label="Phone Number"
                   value={formData.phoneNumber}
-                  onChange={(value) => setFormData((prev) => ({ ...prev, phoneNumber: value }))}
+                  onChange={(value) =>
+                    setFormData((prev) => ({ ...prev, phoneNumber: value }))
+                  }
                   required
                   className="!py-2"
                 />
@@ -280,6 +281,7 @@ const PartnerFormModal = ({
                   required
                   pattern="^\d{5}(-\d{4})?$"
                   placeholder="12345 or 12345-6789"
+                  maxLength={5}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -799,16 +801,27 @@ export default function AdminRecruitmentPartnersPage() {
     return (
       <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
         <DashboardLayout>
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="bg-white shadow rounded-lg">
-              <div className="h-16 bg-gray-200 rounded-t-lg mb-4"></div>
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-12 bg-gray-100 border-b border-gray-200"
-                ></div>
-              ))}
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="relative">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
+                  <div
+                    className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.1s" }}
+                  ></div>
+                  <div
+                    className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                </div>
+              </div>
+              <p className="text-lg font-medium text-gray-600 mt-4">
+                Loading Recruitment Partners...
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Please wait while we fetch partner data
+              </p>
             </div>
           </div>
         </DashboardLayout>
@@ -1108,7 +1121,7 @@ export default function AdminRecruitmentPartnersPage() {
         />
 
         {/* Edit Employer Modal */}
-       <PartnerFormModal
+        <PartnerFormModal
           partner={editingPartner}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}

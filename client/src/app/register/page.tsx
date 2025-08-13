@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import PhoneNumberInput from "@/components/PhoneNumberInput";
+import TermsAndConditionsModal from "@/components/TermsAndConditionsModal";
+import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
 
 // Compact Input Component
 interface InputProps {
@@ -53,6 +55,7 @@ interface InputProps {
   endIcon?: React.ReactNode;
   placeholder?: string;
   disabled?: boolean;
+  maxLength?: number;
 }
 
 const CompactInput: React.FC<InputProps> = ({
@@ -69,6 +72,7 @@ const CompactInput: React.FC<InputProps> = ({
   endIcon,
   placeholder,
   disabled,
+  maxLength,
 }) => {
   return (
     <div className="w-full">
@@ -87,6 +91,9 @@ const CompactInput: React.FC<InputProps> = ({
         disabled={disabled}
         variant="outlined"
         size="medium"
+        inputProps={{
+          maxLength: maxLength,
+        }}
         InputProps={{
           startAdornment: icon && (
             <InputAdornment position="start">{icon}</InputAdornment>
@@ -196,6 +203,9 @@ const step2ValidationSchema = Yup.object({
 
 const step3ValidationSchema = Yup.object({
   // Address validations will be added based on role
+  agreeToTerms: Yup.boolean()
+    .oneOf([true], "You must agree to the terms and conditions")
+    .required("You must agree to the terms and conditions"),
 });
 
 export default function RegisterPage() {
@@ -216,6 +226,8 @@ function RegisterPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [currentRole, setCurrentRole] = useState(
     roleParam === "employer"
       ? "employer"
@@ -243,7 +255,6 @@ function RegisterPageContent() {
     ownerName: "",
     phoneNumber: "",
     website: "",
-    industry: "",
     companySize: "",
     address: "",
     city: "",
@@ -268,6 +279,8 @@ function RegisterPageContent() {
     candidateCity: "",
     candidateState: "",
     candidateZipCode: "",
+    // Terms and Conditions
+    agreeToTerms: false,
   });
 
   // Handle ZIP code change for auto-population
@@ -325,7 +338,6 @@ function RegisterPageContent() {
             ownerName: values.ownerName,
             phoneNumber: values.phoneNumber,
             website: values.website,
-            industry: values.industry,
             companySize: values.companySize,
             address: values.address,
             city: values.city,
@@ -907,30 +919,7 @@ function RegisterPageContent() {
                                 required
                               />
 
-                              <CompactSelect
-                                label="Industry"
-                                name="industry"
-                                value={values.industry}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                error={errors.industry}
-                                touched={touched.industry}
-                                required
-                              >
-                                <MenuItem value="technology">
-                                  Technology
-                                </MenuItem>
-                                <MenuItem value="healthcare">
-                                  Healthcare
-                                </MenuItem>
-                                <MenuItem value="finance">Finance</MenuItem>
-                                <MenuItem value="education">Education</MenuItem>
-                                <MenuItem value="manufacturing">
-                                  Manufacturing
-                                </MenuItem>
-                                <MenuItem value="retail">Retail</MenuItem>
-                                <MenuItem value="other">Other</MenuItem>
-                              </CompactSelect>
+
 
                               <CompactSelect
                                 label="Company Size"
@@ -1125,6 +1114,7 @@ function RegisterPageContent() {
                                 error={errors.zipCode}
                                 touched={touched.zipCode}
                                 required
+                                maxLength={5}
                                 icon={
                                   <MapPin size={20} className="text-gray-400" />
                                 }
@@ -1192,6 +1182,7 @@ function RegisterPageContent() {
                                 error={errors.partnerZipCode}
                                 touched={touched.partnerZipCode}
                                 required
+                                maxLength={5}
                                 icon={
                                   <MapPin size={20} className="text-gray-400" />
                                 }
@@ -1259,6 +1250,7 @@ function RegisterPageContent() {
                                 error={errors.candidateZipCode}
                                 touched={touched.candidateZipCode}
                                 required
+                                maxLength={5}
                                 icon={
                                   <MapPin size={20} className="text-gray-400" />
                                 }
@@ -1311,6 +1303,55 @@ function RegisterPageContent() {
                       )}
                     </div>
 
+                    {/* Terms and Conditions */}
+                    {currentStep === 3 && (
+                      <div className="pt-4 lg:pt-6 border-t border-gray-200">
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="checkbox"
+                              id="agreeToTerms"
+                              name="agreeToTerms"
+                              checked={values.agreeToTerms}
+                              onChange={handleChange}
+                              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <div className="flex-1">
+                              <label htmlFor="agreeToTerms" className="text-sm text-gray-700 cursor-pointer">
+                                I agree to the{" "}
+                                <button
+                                  type="button"
+                                  onClick={() => setShowTermsModal(true)}
+                                  className="text-blue-600 hover:text-blue-800 underline focus:outline-none"
+                                >
+                                  Terms and Conditions
+                                </button>{" "}
+                                and{" "}
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPrivacyModal(true)}
+                                  className="text-blue-600 hover:text-blue-800 underline focus:outline-none"
+                                >
+                                  Privacy Policy
+                                </button>
+                              </label>
+                              {touched.agreeToTerms && errors.agreeToTerms && (
+                                <p className="mt-1 text-sm text-red-600">{errors.agreeToTerms}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-3 text-xs text-gray-600">
+                            <p>
+                              By creating an account, you agree to our terms of service and acknowledge that you have read our privacy policy. 
+                              {values.role === 'candidate' && " As a job seeker, you consent to having your profile information shared with potential employers."}
+                              {values.role === 'recruitment_partner' && " As a recruitment partner, you agree to follow our guidelines for candidate placement and commission structures."}
+                              {values.role === 'employer' && " As an employer, you agree to our hiring guidelines and anti-discrimination policies."}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Navigation buttons */}
                     <div className="pt-4 lg:pt-6">
                       {currentStep < 3 ? (
@@ -1351,7 +1392,8 @@ function RegisterPageContent() {
                             disabled={
                               isSubmitting ||
                               loading ||
-                              !isStepValid(values, errors)
+                              !isStepValid(values, errors) ||
+                              !values.agreeToTerms
                             }
                             className="flex-1 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -1378,6 +1420,18 @@ function RegisterPageContent() {
           </div>
         </div>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
     </div>
   );
 }

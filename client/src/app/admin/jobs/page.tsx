@@ -657,8 +657,6 @@ export default function AdminJobsPage() {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-
-
   useEffect(() => {
     fetchJobs();
   }, []);
@@ -692,7 +690,10 @@ export default function AdminJobsPage() {
 
       console.log("Raw API response:", response);
       console.log("Response type:", typeof response);
-      console.log("Response keys:", response ? Object.keys(response) : "No response");
+      console.log(
+        "Response keys:",
+        response ? Object.keys(response) : "No response"
+      );
 
       // Handle different response structures
       let jobsData = [];
@@ -702,7 +703,11 @@ export default function AdminJobsPage() {
         jobsData = response.jobs;
       } else if (response && response.data && Array.isArray(response.data)) {
         jobsData = response.data;
-      } else if (response && response.results && Array.isArray(response.results)) {
+      } else if (
+        response &&
+        response.results &&
+        Array.isArray(response.results)
+      ) {
         jobsData = response.results;
       }
 
@@ -741,7 +746,9 @@ export default function AdminJobsPage() {
         )
       );
 
-      toast.success(`Job ${newApprovalStatus ? "approved" : "rejected"} successfully!`);
+      toast.success(
+        `Job ${newApprovalStatus ? "approved" : "rejected"} successfully!`
+      );
     } catch (err: any) {
       console.error("Error updating job approval:", err);
       toast.error("Failed to update job approval status");
@@ -764,7 +771,9 @@ export default function AdminJobsPage() {
         )
       );
 
-      toast.success(`Job ${newActiveStatus ? "activated" : "deactivated"} successfully!`);
+      toast.success(
+        `Job ${newActiveStatus ? "activated" : "deactivated"} successfully!`
+      );
     } catch (err: any) {
       console.error("Error updating job status:", err);
       toast.error("Failed to update job status");
@@ -803,7 +812,7 @@ export default function AdminJobsPage() {
       if (isEditModalOpen && editingJob) {
         // Update existing job via API
         await jobFetchers.updateJob(editingJob._id, jobData);
-        
+
         // Refresh the jobs list to get the latest data
         fetchJobs();
 
@@ -813,7 +822,7 @@ export default function AdminJobsPage() {
       } else if (isAddModalOpen) {
         // Add new job via API
         await jobFetchers.createJob(jobData);
-        
+
         // Refresh the jobs list to get the latest data
         fetchJobs();
 
@@ -822,7 +831,8 @@ export default function AdminJobsPage() {
       }
     } catch (err: any) {
       console.error("Error saving job:", err);
-      const errorMessage = err.response?.data?.message || "Error saving job. Please try again.";
+      const errorMessage =
+        err.response?.data?.message || "Error saving job. Please try again.";
       toast.error(errorMessage);
     }
   };
@@ -846,16 +856,27 @@ export default function AdminJobsPage() {
     return (
       <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
         <DashboardLayout>
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="bg-white shadow rounded-lg">
-              <div className="h-16 bg-gray-200 rounded-t-lg mb-4"></div>
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-12 bg-gray-100 border-b border-gray-200"
-                ></div>
-              ))}
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="relative">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
+                  <div
+                    className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.1s" }}
+                  ></div>
+                  <div
+                    className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                </div>
+              </div>
+              <p className="text-lg font-medium text-gray-600 mt-4">
+                Loading Jobs...
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Please wait while we fetch job data
+              </p>
             </div>
           </div>
         </DashboardLayout>
@@ -948,210 +969,213 @@ export default function AdminJobsPage() {
                           colSpan={7}
                           className="px-6 py-4 text-center text-gray-500"
                         >
-                          {jobs.length === 0 
-                            ? "No jobs found. Please check the API response or add some jobs." 
-                            : "No jobs found matching your search."
-                          }
+                          {jobs.length === 0
+                            ? "No jobs found. Please check the API response or add some jobs."
+                            : "No jobs found matching your search."}
                         </td>
                       </tr>
                     ) : (
                       filteredJobs.map((job, index) => {
                         console.log("Rendering job:", job);
                         return (
-                        <tr key={job._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {index + 1}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
-                            {job.title}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                            {job?.employer?.companyName}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                            {job.location}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                            {job.jobRole.replace("_", " ")} •{" "}
-                            {job.jobType.replace("_", " ")}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-wrap gap-1">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  job.isApproved
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-yellow-100 text-yellow-800"
-                                }`}
-                              >
-                                {job.isApproved ? "Approved" : "Pending"}
-                              </span>
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  job.isActive
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-gray-100 text-gray-800"
-                                }`}
-                              >
-                                {job.isActive ? "Active" : "Inactive"}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="w-40 px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div
-                              className="relative"
-                              data-dropdown-id={job._id}
-                            >
-                              <button
-                                onClick={() =>
-                                  setActiveDropdown(
-                                    activeDropdown === job._id ? null : job._id
-                                  )
-                                }
-                                className="text-gray-400 hover:text-gray-600 p-2 rounded hover:bg-gray-50 transition-colors"
-                                title="Actions"
-                              >
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
+                          <tr key={job._id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {index + 1}
+                            </td>
+                            <td className="w-48 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
+                              {job.title}
+                            </td>
+                            <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
+                              {job?.employer?.companyName}
+                            </td>
+                            <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
+                              {job.location}
+                            </td>
+                            <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
+                              {job.jobRole.replace("_", " ")} •{" "}
+                              {job.jobType.replace("_", " ")}
+                            </td>
+                            <td className="w-48 px-6 py-4 whitespace-nowrap">
+                              <div className="flex flex-wrap gap-1">
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    job.isApproved
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-yellow-100 text-yellow-800"
+                                  }`}
                                 >
-                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                </svg>
-                              </button>
+                                  {job.isApproved ? "Approved" : "Pending"}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    job.isActive
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {job.isActive ? "Active" : "Inactive"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="w-40 px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div
+                                className="relative"
+                                data-dropdown-id={job._id}
+                              >
+                                <button
+                                  onClick={() =>
+                                    setActiveDropdown(
+                                      activeDropdown === job._id
+                                        ? null
+                                        : job._id
+                                    )
+                                  }
+                                  className="text-gray-400 hover:text-gray-600 p-2 rounded hover:bg-gray-50 transition-colors"
+                                  title="Actions"
+                                >
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                  </svg>
+                                </button>
 
-                              {activeDropdown === job._id && (
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                                  <div className="py-1">
-                                    <button
-                                      onClick={() => {
-                                        handleEditJob(job);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-blue-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                {activeDropdown === job._id && (
+                                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                                    <div className="py-1">
+                                      <button
+                                        onClick={() => {
+                                          handleEditJob(job);
+                                          setActiveDropdown(null);
+                                        }}
+                                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                       >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                        />
-                                      </svg>
-                                      Edit Job
-                                    </button>
+                                        <svg
+                                          className="w-4 h-4 mr-3 text-blue-500"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                          />
+                                        </svg>
+                                        Edit Job
+                                      </button>
 
-                                    <button
-                                      onClick={() => {
-                                        handleViewProfile(job);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-green-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                      <button
+                                        onClick={() => {
+                                          handleViewProfile(job);
+                                          setActiveDropdown(null);
+                                        }}
+                                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                       >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                        />
-                                      </svg>
-                                      View Details
-                                    </button>
+                                        <svg
+                                          className="w-4 h-4 mr-3 text-green-500"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                          />
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                          />
+                                        </svg>
+                                        View Details
+                                      </button>
 
-                                    <button
-                                      onClick={() => {
-                                        handleToggleApproval(job._id);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-purple-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                      <button
+                                        onClick={() => {
+                                          handleToggleApproval(job._id);
+                                          setActiveDropdown(null);
+                                        }}
+                                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                       >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                      </svg>
-                                      {job.isApproved ? "Reject" : "Approve"}
-                                    </button>
+                                        <svg
+                                          className="w-4 h-4 mr-3 text-purple-500"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                          />
+                                        </svg>
+                                        {job.isApproved ? "Reject" : "Approve"}
+                                      </button>
 
-                                    <button
-                                      onClick={() => {
-                                        handleToggleActive(job._id);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-yellow-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                      <button
+                                        onClick={() => {
+                                          handleToggleActive(job._id);
+                                          setActiveDropdown(null);
+                                        }}
+                                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                       >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                        />
-                                      </svg>
-                                      {job.isActive ? "Deactivate" : "Activate"}
-                                    </button>
+                                        <svg
+                                          className="w-4 h-4 mr-3 text-yellow-500"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                          />
+                                        </svg>
+                                        {job.isActive
+                                          ? "Deactivate"
+                                          : "Activate"}
+                                      </button>
 
-                                    <div className="border-t border-gray-100 my-1"></div>
+                                      <div className="border-t border-gray-100 my-1"></div>
 
-                                    <button
-                                      onClick={() => {
-                                        handleDeleteJob(job._id);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-red-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                      <button
+                                        onClick={() => {
+                                          handleDeleteJob(job._id);
+                                          setActiveDropdown(null);
+                                        }}
+                                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                       >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                        />
-                                      </svg>
-                                      Delete Job
-                                    </button>
+                                        <svg
+                                          className="w-4 h-4 mr-3 text-red-500"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                          />
+                                        </svg>
+                                        Delete Job
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
                       })
                     )}
                   </tbody>

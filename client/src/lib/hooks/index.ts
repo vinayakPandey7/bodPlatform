@@ -6,3 +6,4 @@ export * from "./recruitmentPartner.hooks";
 export * from "./admin.hooks";
 export * from "./notification.hooks";
 export * from "./upload.hooks";
+export * from './salesPerson.hooks';
