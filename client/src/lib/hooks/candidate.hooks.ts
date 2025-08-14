@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { candidateFetchers } from "@/lib/fetchers";
 import { QUERY_KEYS } from "@/lib/constants";
+import { toast } from "sonner";
 
 export const useCandidates = (params?: any) => {
   return useQuery({
@@ -79,6 +80,11 @@ export const useUpdateCandidateProfile = () => {
       queryClient.setQueryData(QUERY_KEYS.CANDIDATES.PROFILE, data);
       // Invalidate dashboard to refresh stats
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANDIDATES.DASHBOARD });
+      toast.success("Profile updated successfully!");
+    },
+    onError: (error: any) => {
+      console.error("Profile update error:", error);
+      toast.error(error.response?.data?.message || "Failed to update profile. Please try again.");
     },
   });
 };

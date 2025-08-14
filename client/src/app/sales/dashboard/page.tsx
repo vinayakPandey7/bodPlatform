@@ -14,6 +14,7 @@ import {
 } from "@/components/table/tableUtils";
 import { toast } from "sonner";
 import { Building2 } from "lucide-react";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface AssignedInsuranceAgent {
   _id: string;
@@ -164,8 +165,9 @@ export default function SalesDashboard() {
     totalClients > 0 ? ((totalCompleted / totalClients) * 100).toFixed(1) : 0;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <ProtectedRoute allowedRoles={["sales_person"]}>
+      <DashboardLayout>
+        <div className="space-y-6">
         {/* Header Section */}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">Sales Dashboard</h1>
@@ -325,7 +327,8 @@ export default function SalesDashboard() {
           tableHeight="auto"
           enableTableScroll={false}
         />
-      </div>
-    </DashboardLayout>
+        </div>
+      </DashboardLayout>
+    </ProtectedRoute>
   );
 }

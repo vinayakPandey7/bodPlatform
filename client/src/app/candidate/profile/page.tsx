@@ -500,9 +500,38 @@ export default function CandidateProfilePage() {
     };
     setExperienceForm(newExperience);
     setEditingExperience("new");
+    
+    // Scroll to the form after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      const formElement = document.getElementById("new-experience-form");
+      if (formElement) {
+        formElement.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "start" 
+        });
+      }
+    }, 100);
   };
 
   const handleSaveExperience = () => {
+    // Validate required fields
+    if (!experienceForm.title?.trim()) {
+      toast.error("Job title is required");
+      return;
+    }
+    if (!experienceForm.company?.trim()) {
+      toast.error("Company name is required");
+      return;
+    }
+    if (!experienceForm.startDate?.trim()) {
+      toast.error("Start date is required");
+      return;
+    }
+    if (!experienceForm.current && !experienceForm.endDate?.trim()) {
+      toast.error("End date is required for past positions");
+      return;
+    }
+
     const updatedExperience =
       editingExperience === "new"
         ? [...(profile.experience || []), experienceForm]
@@ -1334,14 +1363,15 @@ export default function CandidateProfilePage() {
                           className="border border-gray-200 rounded-lg p-4 bg-gray-50"
                         >
                           {editingExperience === exp.id ? (
-                            <div className="space-y-4">
+                            <div id={`experience-form-${exp.id}`} className="space-y-4">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Job Title
+                                    Job Title <span className="text-red-500">*</span>
                                   </label>
                                   <input
                                     type="text"
+                                    placeholder="e.g. Software Engineer"
                                     value={experienceForm.title || ""}
                                     onChange={(e) =>
                                       setExperienceForm({
@@ -1354,10 +1384,11 @@ export default function CandidateProfilePage() {
                                 </div>
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Company
+                                    Company <span className="text-red-500">*</span>
                                   </label>
                                   <input
                                     type="text"
+                                    placeholder="e.g. Google Inc."
                                     value={experienceForm.company || ""}
                                     onChange={(e) =>
                                       setExperienceForm({
@@ -1374,6 +1405,7 @@ export default function CandidateProfilePage() {
                                   </label>
                                   <input
                                     type="text"
+                                    placeholder="e.g. San Francisco, CA"
                                     value={experienceForm.location || ""}
                                     onChange={(e) =>
                                       setExperienceForm({
@@ -1386,7 +1418,7 @@ export default function CandidateProfilePage() {
                                 </div>
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Start Date
+                                    Start Date <span className="text-red-500">*</span>
                                   </label>
                                   <input
                                     type="month"
@@ -1403,7 +1435,7 @@ export default function CandidateProfilePage() {
                                 {!experienceForm.current && (
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      End Date
+                                      End Date <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                       type="month"
@@ -1501,6 +1533,17 @@ export default function CandidateProfilePage() {
                                     onClick={() => {
                                       setExperienceForm(exp);
                                       setEditingExperience(exp.id);
+                                      
+                                      // Scroll to the editing form
+                                      setTimeout(() => {
+                                        const formElement = document.getElementById(`experience-form-${exp.id}`);
+                                        if (formElement) {
+                                          formElement.scrollIntoView({ 
+                                            behavior: "smooth", 
+                                            block: "start" 
+                                          });
+                                        }
+                                      }, 100);
                                     }}
                                     className="text-blue-600 hover:text-blue-700"
                                   >
@@ -1570,15 +1613,20 @@ export default function CandidateProfilePage() {
                       ))}
 
                       {editingExperience === "new" && (
-                        <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
+                        <div id="new-experience-form" className="border border-gray-200 rounded-lg p-4 bg-blue-50">
                           <div className="space-y-4">
+                            <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+                              <AlertCircle className="h-4 w-4" />
+                              <span>Fields marked with <span className="text-red-500">*</span> are required</span>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Job Title
+                                  Job Title <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                   type="text"
+                                  placeholder="e.g. Software Engineer"
                                   value={experienceForm.title || ""}
                                   onChange={(e) =>
                                     setExperienceForm({
@@ -1591,10 +1639,11 @@ export default function CandidateProfilePage() {
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Company
+                                  Company <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                   type="text"
+                                  placeholder="e.g. Google Inc."
                                   value={experienceForm.company || ""}
                                   onChange={(e) =>
                                     setExperienceForm({
@@ -1611,6 +1660,7 @@ export default function CandidateProfilePage() {
                                 </label>
                                 <input
                                   type="text"
+                                  placeholder="e.g. San Francisco, CA"
                                   value={experienceForm.location || ""}
                                   onChange={(e) =>
                                     setExperienceForm({
@@ -1623,7 +1673,7 @@ export default function CandidateProfilePage() {
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Start Date
+                                  Start Date <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                   type="month"
@@ -1640,7 +1690,7 @@ export default function CandidateProfilePage() {
                               {!experienceForm.current && (
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    End Date
+                                    End Date <span className="text-red-500">*</span>
                                   </label>
                                   <input
                                     type="month"

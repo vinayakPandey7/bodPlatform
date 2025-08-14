@@ -38,6 +38,7 @@ import {
   Download,
   Plus,
 } from "lucide-react";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface InsuranceAgent {
   _id: string;
@@ -436,8 +437,9 @@ export default function MyAgentsPage() {
   ];
 
   return (
-    <DashboardLayout>
-      <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+    <ProtectedRoute allowedRoles={["sales_person"]}>
+      <DashboardLayout>
+        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
         {/* Breadcrumbs */}
         <BreadcrumbNavigation items={breadcrumbItems} />
 
@@ -583,7 +585,8 @@ export default function MyAgentsPage() {
           tableHeight="auto"
           enableTableScroll={false}
         />
-      </Box>
-    </DashboardLayout>
+        </Box>
+      </DashboardLayout>
+    </ProtectedRoute>
   );
 }

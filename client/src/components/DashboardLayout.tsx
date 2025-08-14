@@ -588,16 +588,16 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           },
           {
             name: "My Agents",
-            href: "/sales/dashboard",
+            href: "/sales/agents",
             current: pathname.startsWith("/sales/agents"),
             icon: Shield,
           },
-          {
-            name: "Reports",
-            href: "/sales/reports",
-            current: pathname === "/sales/reports",
-            icon: BarChart3,
-          },
+          // {
+          //   name: "Reports",
+          //   href: "/sales/reports",
+          //   current: pathname === "/sales/reports",s
+          //   icon: BarChart3,
+          // },
           {
             name: "Profile",
             href: "/sales/profile",
