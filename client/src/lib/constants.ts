@@ -87,6 +87,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/admin/sales-persons/${id}`,
     DELETE: (id: string) => `/admin/sales-persons/${id}`,
     ASSIGN_AGENTS: (id: string) => `/admin/sales-persons/${id}/assign-agents`,
+    MY_AGENTS: "/sales-person/agents/me",
+    MY_PROFILE: "/sales-person/profile/me",
   },
 
   // Insurance Agent endpoints
@@ -97,6 +99,16 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/insurance-agents/${id}`,
     DELETE: (id: string) => `/insurance-agents/${id}`,
     TOGGLE_STATUS: (id: string) => `/insurance-agents/${id}/toggle-status`,
+  },
+
+  // Insurance Client endpoints
+  INSURANCE_CLIENTS: {
+    LIST: "/insurance-clients",
+    BY_AGENT: (agentId: string) => `/insurance-clients/agent/${agentId}`,
+    DETAIL: (id: string) => `/insurance-clients/${id}`,
+    CREATE: "/insurance-clients",
+    UPDATE: (id: string) => `/insurance-clients/${id}`,
+    DELETE: (id: string) => `/insurance-clients/${id}`,
   },
 
   // Notification endpoints

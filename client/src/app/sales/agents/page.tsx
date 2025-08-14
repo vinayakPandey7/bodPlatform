@@ -18,6 +18,7 @@ import {
   TableAction,
 } from "@/components/GenericTable";
 import { toast } from "sonner";
+import { adminFetchers } from "@/lib/fetchers";
 import {
   Users,
   Phone,
@@ -68,88 +69,35 @@ export default function MyAgentsPage() {
   const fetchAgents = async () => {
     try {
       setLoading(true);
-      // Mock data for assigned agents - replace with actual API call
-      setAgents([
-        {
-          _id: "agent_001",
-          name: "Alice Johnson",
-          email: "alice.johnson@insurance.com",
-          phone: "+1-555-1001",
-          specialization: ["Auto Insurance", "Home Insurance"],
-          isActive: true,
-          clientsCount: 45,
-          pendingClients: 8,
-          completedClients: 37,
-          assignedDate: "2024-01-15",
-          lastContactDate: "2024-01-20",
-          territory: "San Francisco Bay Area",
-        },
-        {
-          _id: "agent_002",
-          name: "Bob Smith",
-          email: "bob.smith@insurance.com",
-          phone: "+1-555-1002",
-          specialization: [
-            "Life Insurance",
-            "Health Insurance",
-            "Business Insurance",
-          ],
-          isActive: true,
-          clientsCount: 32,
-          pendingClients: 12,
-          completedClients: 20,
-          assignedDate: "2024-02-01",
-          lastContactDate: "2024-01-19",
-          territory: "Los Angeles Area",
-        },
-        {
-          _id: "agent_003",
-          name: "Carol Davis",
-          email: "carol.davis@insurance.com",
-          phone: "+1-555-1003",
-          specialization: ["Auto Insurance", "Motorcycle Insurance"],
-          isActive: false,
-          clientsCount: 28,
-          pendingClients: 5,
-          completedClients: 23,
-          assignedDate: "2023-11-20",
-          lastContactDate: "2024-01-10",
-          territory: "San Diego Area",
-        },
-        {
-          _id: "agent_004",
-          name: "David Wilson",
-          email: "david.wilson@insurance.com",
-          phone: "+1-555-1004",
-          specialization: ["Commercial Insurance", "Liability Insurance"],
-          isActive: true,
-          clientsCount: 52,
-          pendingClients: 15,
-          completedClients: 37,
-          assignedDate: "2023-12-01",
-          lastContactDate: "2024-01-21",
-          territory: "Sacramento Area",
-        },
-        {
-          _id: "agent_005",
-          name: "Emily Brown",
-          email: "emily.brown@insurance.com",
-          phone: "+1-555-1005",
-          specialization: ["Health Insurance", "Dental Insurance"],
-          isActive: true,
-          clientsCount: 39,
-          pendingClients: 9,
-          completedClients: 30,
-          assignedDate: "2024-01-10",
-          lastContactDate: "2024-01-18",
-          territory: "Fresno Area",
-        },
-      ]);
+      console.log("Fetching assigned agents for current sales person...");
+      
+      // Fetch assigned agents from the API
+      const response = await adminFetchers.getMyAssignedAgents();
+      console.log("Agents response:", response);
+      
+      // Transform the backend data to match frontend interface
+      const transformedAgents: InsuranceAgent[] = (response.agents || []).map((agent: any) => ({
+        _id: agent.agentId,
+        name: agent.agentName,
+        email: agent.agentEmail,
+        phone: agent.phone || "N/A",
+        specialization: agent.specialization || [],
+        isActive: agent.isActive || true,
+        clientsCount: agent.clientsCount || 0,
+        pendingClients: agent.pendingClients || 0,
+        completedClients: agent.completedClients || 0,
+        assignedDate: agent.assignedDate || new Date().toISOString(),
+        lastContactDate: agent.lastContactDate || new Date().toISOString(),
+        territory: agent.territory || "Not specified",
+      }));
+      
+      console.log("Transformed agents:", transformedAgents);
+      setAgents(transformedAgents);
       setError("");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching agents:", err);
-      setError("Failed to load agents");
-      toast.error("Failed to load agents");
+      setError("Failed to load assigned agents");
+      toast.error("Failed to load assigned agents");
     } finally {
       setLoading(false);
     }

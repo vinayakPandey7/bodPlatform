@@ -5,6 +5,28 @@ const csv = require('csv-parser');
 const multer = require('multer');
 const fs = require('fs');
 
+// Get all clients (admin only)
+const getAllClients = async (req, res) => {
+  try {
+    const clients = await InsuranceClient.find()
+      .populate('agentId', 'name email')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      data: clients,
+      total: clients.length,
+      message: 'All clients retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Error fetching all clients:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch clients'
+    });
+  }
+};
+
 // Get all clients for a specific agent
 const getClientsByAgent = async (req, res) => {
   try {
@@ -390,6 +412,7 @@ const importClientsCSV = async (req, res) => {
 };
 
 module.exports = {
+  getAllClients,
   getClientsByAgent,
   getClient,
   createClient,

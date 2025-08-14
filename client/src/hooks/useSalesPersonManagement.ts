@@ -9,13 +9,21 @@ interface Agent {
   isActive: boolean;
 }
 
+interface AssignedAgent {
+  agentId: string;
+  agentName: string;
+  agentEmail: string;
+  assignedDate: string;
+  isActive: boolean;
+}
+
 interface SalesPerson {
   _id: string;
   name: string;
   email: string;
   phone: string;
   isActive: boolean;
-  assignedAgents: Agent[];
+  assignedAgents: AssignedAgent[];
   createdAt: string;
 }
 
@@ -57,27 +65,26 @@ export const useSalesPersonManagement = () => {
       const salesPersonsData = salesPersonsResponse.salesPersons || salesPersonsResponse.data || [];
       setSalesPersons(salesPersonsData);
       
-      // Mock agents data for now
-      setAgents([
-        {
-          _id: "a1",
-          name: "Agent Alice Johnson",
-          email: "alice@company.com",
-          isActive: true,
-        },
-        {
-          _id: "a2",
-          name: "Agent Bob Smith",
-          email: "bob@company.com",
-          isActive: true,
-        },
-        {
-          _id: "a3",
-          name: "Agent Charlie Brown",
-          email: "charlie@company.com",
-          isActive: false,
-        },
-      ]);
+      // Fetch insurance agents dynamically
+      try {
+        const agentsResponse = await adminFetchers.getInsuranceAgents();
+        const agentsData = agentsResponse.data || [];
+        
+        // Map insurance agents to the expected Agent interface
+        const mappedAgents = agentsData.map((agent: any) => ({
+          _id: agent._id,
+          name: agent.name,
+          email: agent.email,
+          isActive: agent.isActive || true,
+        }));
+        
+        setAgents(mappedAgents);
+      } catch (agentsError) {
+        console.error("Failed to fetch agents:", agentsError);
+        // Fallback to empty array if agents fetch fails
+        setAgents([]);
+        toast.error("Failed to load agents list");
+      }
       
     } catch (err: any) {
       console.error("Fetch data error:", err);
@@ -167,7 +174,8 @@ export const useSalesPersonManagement = () => {
 
   const handleAssignAgents = useCallback((salesPerson: SalesPerson) => {
     setSelectedSalesPerson(salesPerson);
-    setSelectedAgentIds(salesPerson.assignedAgents.map((agent) => agent._id));
+    // Map AssignedAgent[] to agent IDs for the selection
+    setSelectedAgentIds(salesPerson.assignedAgents.map((assignedAgent) => assignedAgent.agentId));
     setIsAssignModalOpen(true);
   }, []);
 
@@ -179,23 +187,64 @@ export const useSalesPersonManagement = () => {
     }
   }, []);
 
-  const handleAssignAgentsSubmit = useCallback(() => {
+  const handleAssignAgentsSubmit = useCallback(async () => {
     if (!selectedSalesPerson) return;
 
-    const assignedAgents = agents.filter((agent) =>
-      selectedAgentIds.includes(agent._id)
-    );
-    setSalesPersons((prev) =>
-      prev.map((sp) =>
-        sp._id === selectedSalesPerson._id ? { ...sp, assignedAgents } : sp
-      )
-    );
+    try {
+      console.log("Starting agent assignment...");
+      console.log("Selected Sales Person:", selectedSalesPerson.name);
+      console.log("Selected Agent IDs:", selectedAgentIds);
+      
+      // Call the API to assign agents to the sales person
+      const selectedAgents = agents.filter((agent) =>
+        selectedAgentIds.includes(agent._id)
+      );
 
-    toast.success("Agents assigned successfully");
-    setIsAssignModalOpen(false);
-    setSelectedSalesPerson(null);
-    setSelectedAgentIds([]);
-  }, [selectedSalesPerson, agents, selectedAgentIds]);
+      console.log("Selected Agents:", selectedAgents);
+
+      // Map the agents data to the format expected by the backend
+      const agentsToAssign = selectedAgents.map((agent) => ({
+        agentId: agent._id,
+        agentName: agent.name,
+        agentEmail: agent.email,
+      }));
+
+      console.log("Agents to assign (backend format):", agentsToAssign);
+
+      const response = await adminFetchers.assignAgentsToSalesPerson(selectedSalesPerson._id, agentsToAssign);
+      console.log("Backend response:", response);
+
+      // Update local state with the response data from backend
+      const updatedAssignedAgents: AssignedAgent[] = response.assignedAgents || agentsToAssign.map(agent => ({
+        agentId: agent.agentId,
+        agentName: agent.agentName,
+        agentEmail: agent.agentEmail,
+        assignedDate: new Date().toISOString(),
+        isActive: true,
+      }));
+
+      console.log("Updated assigned agents:", updatedAssignedAgents);
+
+      setSalesPersons((prev) =>
+        prev.map((sp) =>
+          sp._id === selectedSalesPerson._id 
+            ? { ...sp, assignedAgents: updatedAssignedAgents } 
+            : sp
+        )
+      );
+
+      toast.success(`Successfully assigned ${updatedAssignedAgents.length} agent(s)`);
+      setIsAssignModalOpen(false);
+      setSelectedSalesPerson(null);
+      setSelectedAgentIds([]);
+      
+      // Refresh the data to ensure consistency
+      await fetchData();
+    } catch (error: any) {
+      console.error("Assign agents error:", error);
+      toast.error(error.response?.data?.message || error.message || "Failed to assign agents");
+    }
+  }, [selectedSalesPerson, agents, selectedAgentIds, fetchData]);
 
   const handleCloseAssignModal = useCallback(() => {
     setIsAssignModalOpen(false);

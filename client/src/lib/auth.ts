@@ -8,7 +8,7 @@ export interface LoginData {
 export interface User {
   id: string;
   email: string;
-  role: "employer" | "recruitment_partner" | "admin" | "sub_admin";
+  role: "employer" | "recruitment_partner" | "admin" | "sub_admin" | "sales_person";
   profile: any;
 }
 

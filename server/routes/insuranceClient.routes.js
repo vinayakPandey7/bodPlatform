@@ -3,6 +3,7 @@ const { body, param } = require('express-validator');
 const multer = require('multer');
 const path = require('path');
 const {
+  getAllClients,
   getClientsByAgent,
   getClient,
   createClient,
@@ -149,6 +150,7 @@ router.use(auth);
 router.use(authorizeRoles('admin', 'sub_admin'));
 
 // Routes
+router.get('/', getAllClients);
 router.get('/agent/:agentId', agentIdValidation, getClientsByAgent);
 router.get('/:id', getClient);
 router.post('/', createClientValidation, createClient);

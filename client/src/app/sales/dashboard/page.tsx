@@ -13,6 +13,7 @@ import {
   createActionsColumn,
 } from "@/components/table/tableUtils";
 import { toast } from "sonner";
+import { adminFetchers } from "@/lib/fetchers";
 import { Building2 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -28,49 +29,73 @@ interface AssignedInsuranceAgent {
   assignedDate: string;
 }
 
+interface SalesPersonProfile {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  department: string;
+  territory: string;
+  isActive: boolean;
+  assignedAgents: any[];
+}
+
 export default function SalesDashboard() {
   const router = useRouter();
 
   const [assignedAgents, setAssignedAgents] = useState<
     AssignedInsuranceAgent[]
   >([]);
+  const [profile, setProfile] = useState<SalesPersonProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchAssignedAgents();
+    fetchDashboardData();
   }, []);
 
-  const fetchAssignedAgents = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // Mock data for assigned agents - replace with actual API call
-      setAssignedAgents([
-        {
-          _id: "1",
-          name: "Michael Chen",
-          email: "michael.chen@insurance.com",
-          phone: "+1-555-1001",
-          isActive: true,
-          clientsCount: 45,
-          pendingClients: 12,
-          completedClients: 33,
-          assignedDate: "2024-01-15",
-        },
-        {
-          _id: "2",
-          name: "Emily Rodriguez",
-          email: "emily.rodriguez@insurance.com",
-          phone: "+1-555-1002",
-          isActive: true,
-          clientsCount: 32,
-          pendingClients: 8,
-          completedClients: 24,
-          assignedDate: "2024-02-01",
-        },
+      console.log("Fetching sales dashboard data...");
+      
+      // Fetch both profile and assigned agents
+      const [profileResponse, agentsResponse] = await Promise.all([
+        adminFetchers.getMySalesPersonProfile(),
+        adminFetchers.getMyAssignedAgents()
       ]);
+      
+      console.log("Profile response:", profileResponse);
+      console.log("Agents response:", agentsResponse);
+      
+      // Set profile data
+      if (profileResponse.salesPerson) {
+        setProfile(profileResponse.salesPerson);
+      }
+      
+      // Transform and set agents data
+      const transformedAgents: AssignedInsuranceAgent[] = (agentsResponse.agents || []).map((agent: any) => ({
+        _id: agent.agentId,
+        name: agent.agentName || "N/A",
+        email: agent.agentEmail || "N/A",
+        phone: agent.phone || "N/A",
+        isActive: agent.isActive || true,
+        clientsCount: agent.clientsCount || 0,
+        pendingClients: agent.pendingClients || 0,
+        completedClients: agent.completedClients || 0,
+        assignedDate: agent.assignedDate || new Date().toISOString(),
+      }));
+      
+      console.log("Transformed dashboard agents:", transformedAgents);
+      setAssignedAgents(transformedAgents);
+      setError("");
     } catch (err: any) {
-      setError("Failed to fetch assigned agents");
+      console.error("Error fetching dashboard data:", err);
+      setError("Failed to fetch dashboard data");
+      toast.error("Failed to load dashboard data");
+      // Set empty data on error
+      setAssignedAgents([]);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -170,9 +195,14 @@ export default function SalesDashboard() {
         <div className="space-y-6">
         {/* Header Section */}
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Sales Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome, {profile?.name || "Sales Person"}!
+          </h1>
           <p className="text-gray-600">
-            Manage your assigned insurance agents and their clients
+            {profile ? 
+              `${profile.department || "Sales"} • ${profile.territory || "Territory not assigned"}` 
+              : "Manage your assigned insurance agents and their clients"
+            }
           </p>
         </div>
 

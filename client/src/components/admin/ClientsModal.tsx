@@ -214,7 +214,7 @@ const ClientsModal: React.FC<ClientsModalProps> = ({
       </DialogTitle>
       <DialogContent sx={{ overflow: 'auto' }}>
         {/* CSV Upload/Download Section */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        {/* <div className="mb-6 p-4 bg-gray-50 rounded-lg">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">Client Management</h3>
@@ -253,7 +253,7 @@ const ClientsModal: React.FC<ClientsModalProps> = ({
             </div>
           </div>
           
-          {/* CSV Format Info */}
+       
           {clients.length === 0 && (
             <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
               <div className="flex">
@@ -273,7 +273,7 @@ const ClientsModal: React.FC<ClientsModalProps> = ({
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Hidden file input */}
         <input

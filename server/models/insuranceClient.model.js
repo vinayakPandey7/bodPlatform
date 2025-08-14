@@ -41,7 +41,37 @@ const insuranceClientSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+  // Sales tracking fields
+  callStatus: {
+    type: String,
+    enum: ['not_called', 'called', 'skipped', 'unpicked'],
+    default: 'not_called'
+  },
+  lastCallDate: {
+    type: Date
+  },
+  salesRemarks: [{
+    message: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    },
+    callOutcome: {
+      type: String,
+      enum: ['answered', 'no_answer', 'callback_requested', 'not_interested', 'interested'],
+      required: true
+    }
+  }]
 }, {
   timestamps: true
 });

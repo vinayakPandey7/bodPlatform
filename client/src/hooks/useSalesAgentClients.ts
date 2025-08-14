@@ -1,19 +1,25 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { salesPersonFetchers } from '@/lib/fetchers';
 
 export interface SalesClient {
   _id: string;
   name: string;
   email: string;
   phone: string;
-  address: string;
-  premium: number;
+  address?: string;
+  premium?: number;
   isActive: boolean;
-  joinedDate: string;
-  lastPayment: string;
+  joinedDate?: string;
+  lastPayment?: string;
   callStatus: "not_called" | "called" | "skipped" | "unpicked";
   lastCallDate?: string;
   salesRemarks: SalesRemark[];
+  // Additional fields from insurance client model
+  status?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SalesRemark {
@@ -28,7 +34,12 @@ export interface InsuranceAgent {
   _id: string;
   name: string;
   email: string;
-  licenseNumber: string;
+  phone?: string;
+  licenseNumber?: string;
+  specialization?: string;
+  dateOfBirth?: string;
+  address?: string;
+  isActive?: boolean;
 }
 
 export interface StatusForm {
@@ -59,82 +70,58 @@ export const useSalesAgentClients = (agentId: string) => {
     try {
       setLoading(true);
 
-      // Mock data for now - replace with actual API calls
-      const mockAgent: InsuranceAgent = {
-        _id: agentId,
-        name: agentId === "1" ? "Michael Chen" : "Emily Rodriguez",
-        email:
-          agentId === "1"
-            ? "michael.chen@insurance.com"
-            : "emily.rodriguez@insurance.com",
-        licenseNumber: `INS-2024-00${agentId}`,
-      };
+      // Fetch agent and clients data using the new sales person specific endpoint
+      const response = await salesPersonFetchers.getAgentClients(agentId);
 
-      const mockClients: SalesClient[] = [
-        {
-          _id: "c1",
-          name: "John Williams",
-          email: "john.williams@email.com",
-          phone: "+1-555-2001",
-          address: "123 Main St, New York, NY 10001",
-          premium: 250.0,
-          isActive: true,
-          joinedDate: "2024-01-15",
-          lastPayment: "2024-01-01",
-          callStatus: "not_called",
-          salesRemarks: [],
-        },
-        {
-          _id: "c2",
-          name: "Sarah Davis",
-          email: "sarah.davis@email.com",
-          phone: "+1-555-2002",
-          address: "456 Oak Ave, Los Angeles, CA 90210",
-          premium: 150.0,
-          isActive: true,
-          joinedDate: "2024-02-20",
-          lastPayment: "2024-02-01",
-          callStatus: "called",
-          lastCallDate: "2024-02-25",
-          salesRemarks: [
-            {
-              _id: "r1",
-              message:
-                "Client interested in upgrading policy. Scheduled follow-up call for next week.",
-              addedBy: "Sales Person John",
-              addedAt: "2024-02-25",
-              callOutcome: "interested",
-            },
-          ],
-        },
-        {
-          _id: "c3",
-          name: "Robert Brown",
-          email: "robert.brown@email.com",
-          phone: "+1-555-2003",
-          address: "789 Pine Rd, Chicago, IL 60601",
-          premium: 300.0,
-          isActive: false,
-          joinedDate: "2023-12-10",
-          lastPayment: "2023-12-01",
-          callStatus: "unpicked",
-          lastCallDate: "2024-01-10",
-          salesRemarks: [
-            {
-              _id: "r2",
-              message: "No answer after 3 attempts. Will try again next week.",
-              addedBy: "Sales Person John",
-              addedAt: "2024-01-10",
-              callOutcome: "no_answer",
-            },
-          ],
-        },
-      ];
+      if (response.success) {
+        // Set agent data
+        if (response.agent) {
+          setAgent({
+            _id: response.agent._id,
+            name: response.agent.name,
+            email: response.agent.email,
+            phone: response.agent.phone,
+            licenseNumber: response.agent.licenseNumber,
+            specialization: response.agent.specialization,
+            isActive: response.agent.isActive,
+          });
+        }
 
-      setAgent(mockAgent);
-      setClients(mockClients);
+        // Set clients data
+        const clientsData = response.data || [];
+        
+        // Transform insurance client data to sales client format
+        const transformedClients: SalesClient[] = clientsData.map((client: any) => ({
+          _id: client._id,
+          name: client.name,
+          email: client.email,
+          phone: client.phone,
+          address: client.address || "",
+          premium: client.premium || 0,
+          isActive: client.isActive !== false, // Default to true if not specified
+          joinedDate: client.createdAt ? new Date(client.createdAt).toISOString().split('T')[0] : "",
+          lastPayment: client.lastPayment ? new Date(client.lastPayment).toISOString().split('T')[0] : "",
+          callStatus: client.callStatus || "not_called", // Default to not_called
+          lastCallDate: client.lastCallDate,
+          salesRemarks: client.salesRemarks || [], // Use existing remarks or empty array
+          status: client.status,
+          notes: client.notes,
+          createdAt: client.createdAt,
+          updatedAt: client.updatedAt,
+        }));
+
+        setClients(transformedClients);
+      } else {
+        setAgent(null);
+        setClients([]);
+        setError(response.message || "Failed to fetch data");
+      }
     } catch (err: any) {
-      setError("Failed to fetch agent and clients data");
+      console.error("Error fetching agent and clients:", err);
+      setError(`Failed to fetch agent and clients data: ${err.message || err}`);
+      // Set empty defaults on error
+      setAgent(null);
+      setClients([]);
     } finally {
       setLoading(false);
     }
@@ -160,36 +147,49 @@ export const useSalesAgentClients = (agentId: string) => {
     if (!selectedClient) return;
 
     try {
-      const newRemark: SalesRemark = {
-        _id: Date.now().toString(),
-        message: statusForm.remarks.trim(),
-        addedBy: "Current Sales Person", // In real app, get from authenticated user
-        addedAt: new Date().toISOString().split("T")[0],
-        callOutcome: statusForm.callOutcome,
+      // Prepare the status update data
+      const statusData = {
+        callStatus: statusForm.callStatus,
+        ...(statusForm.remarks.trim() && {
+          remarks: statusForm.remarks.trim(),
+          callOutcome: statusForm.callOutcome
+        })
       };
 
-      setClients((prev) =>
-        prev.map((client) =>
-          client._id === selectedClient._id
-            ? {
-                ...client,
-                callStatus: statusForm.callStatus,
-                lastCallDate:
-                  statusForm.callStatus === "called"
-                    ? new Date().toISOString().split("T")[0]
-                    : client.lastCallDate,
-                salesRemarks: statusForm.remarks.trim()
-                  ? [...client.salesRemarks, newRemark]
-                  : client.salesRemarks,
-              }
-            : client
-        )
+      // Call the API to update client status
+      const response = await salesPersonFetchers.updateClientCallStatus(
+        agentId,
+        selectedClient._id,
+        statusData
       );
 
-      toast.success("Client status updated successfully");
-      closeUpdateStatusModal();
-    } catch (err) {
-      toast.error("Failed to update client status");
+      if (response.success) {
+        // Update local state with the response data
+        const updatedClient = response.data;
+        
+        setClients((prev) =>
+          prev.map((client) =>
+            client._id === selectedClient._id
+              ? {
+                  ...client,
+                  callStatus: updatedClient.callStatus,
+                  lastCallDate: updatedClient.lastCallDate ? 
+                    new Date(updatedClient.lastCallDate).toISOString().split("T")[0] : 
+                    client.lastCallDate,
+                  salesRemarks: updatedClient.salesRemarks || client.salesRemarks,
+                }
+              : client
+          )
+        );
+
+        toast.success("Client status updated successfully");
+        closeUpdateStatusModal();
+      } else {
+        toast.error(response.message || "Failed to update client status");
+      }
+    } catch (err: any) {
+      console.error("Error updating client status:", err);
+      toast.error(`Failed to update client status: ${err.message || err}`);
     }
   };
 
