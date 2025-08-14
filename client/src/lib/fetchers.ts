@@ -504,6 +504,67 @@ export const adminFetchers = {
     );
     return response.data;
   },
+
+  // Sales Person Management
+  getAdminSalesPersons: async (params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.SALES_PERSONS.LIST, {
+      params,
+    });
+    return response.data;
+  },
+
+  createSalesPerson: async (data: any) => {
+    const response = await Client.post(API_ENDPOINTS.SALES_PERSONS.CREATE, data);
+    return response.data;
+  },
+
+  updateSalesPerson: async (id: string, data: any) => {
+    const response = await Client.put(API_ENDPOINTS.SALES_PERSONS.UPDATE(id), data);
+    return response.data;
+  },
+
+  deleteSalesPerson: async (id: string) => {
+    const response = await Client.delete(API_ENDPOINTS.SALES_PERSONS.DELETE(id));
+    return response.data;
+  },
+
+  assignAgentsToSalesPerson: async (id: string, agents: any[]) => {
+    const response = await Client.post(API_ENDPOINTS.SALES_PERSONS.ASSIGN_AGENTS(id), { agents });
+    return response.data;
+  },
+
+  // Insurance Agent Management
+  getInsuranceAgents: async (params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.INSURANCE_AGENTS.LIST, {
+      params,
+    });
+    return response.data;
+  },
+
+  getInsuranceAgent: async (id: string) => {
+    const response = await Client.get(API_ENDPOINTS.INSURANCE_AGENTS.DETAIL(id));
+    return response.data;
+  },
+
+  createInsuranceAgent: async (data: any) => {
+    const response = await Client.post(API_ENDPOINTS.INSURANCE_AGENTS.CREATE, data);
+    return response.data;
+  },
+
+  updateInsuranceAgent: async (id: string, data: any) => {
+    const response = await Client.put(API_ENDPOINTS.INSURANCE_AGENTS.UPDATE(id), data);
+    return response.data;
+  },
+
+  deleteInsuranceAgent: async (id: string) => {
+    const response = await Client.delete(API_ENDPOINTS.INSURANCE_AGENTS.DELETE(id));
+    return response.data;
+  },
+
+  toggleInsuranceAgentStatus: async (id: string) => {
+    const response = await Client.patch(API_ENDPOINTS.INSURANCE_AGENTS.TOGGLE_STATUS(id));
+    return response.data;
+  },
 };
 
 // Notification fetchers

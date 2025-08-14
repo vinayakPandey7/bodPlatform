@@ -33,17 +33,25 @@ import {
   createDeleteAction,
 } from "@/components/table/tableUtils";
 import { toast } from "sonner";
+import { adminFetchers } from "@/lib/fetchers";
 
 interface Client {
   _id: string;
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address?: string;
+  agentId: string;
+  status: "pending" | "contacted" | "converted" | "declined";
+  notes?: string;
+  lastPayment?: string;
   isActive: boolean;
-  joinedDate: string;
-  lastPayment: string;
-  feedback: ClientFeedback[];
+  createdAt: string;
+  updatedAt: string;
+  // Keep feedback for UI compatibility
+  feedback?: ClientFeedback[];
+  // Map backend fields to UI expected fields
+  joinedDate?: string;
 }
 
 interface ClientFeedback {
@@ -58,6 +66,10 @@ interface InsuranceAgent {
   _id: string;
   name: string;
   email: string;
+  phone: string;
+  isActive: boolean;
+  clientsCount: number;
+  joinedDate: string;
 }
 
 interface ClientFormData {
@@ -65,6 +77,8 @@ interface ClientFormData {
   email: string;
   phone: string;
   address: string;
+  status?: "pending" | "contacted" | "converted" | "declined";
+  notes?: string;
 }
 
 export default function AgentClientsPage() {
@@ -94,128 +108,39 @@ export default function AgentClientsPage() {
     try {
       setLoading(true);
 
-      // Mock data for now - replace with actual API calls
-      const mockAgent: InsuranceAgent = {
-        _id: agentId,
-        name:
-          agentId === "1"
-            ? "Michael Chen"
-            : agentId === "2"
-            ? "Emily Rodriguez"
-            : agentId === "3"
-            ? "David Thompson"
-            : "Lisa Wang",
-        email:
-          agentId === "1"
-            ? "michael.chen@insurance.com"
-            : agentId === "2"
-            ? "emily.rodriguez@insurance.com"
-            : agentId === "3"
-            ? "david.thompson@insurance.com"
-            : "lisa.wang@insurance.com",
-      };
+      // Fetch agent details
+      const agentResponse = await adminFetchers.getInsuranceAgent(agentId);
+      setAgent(agentResponse.data);
 
-      const mockClients: Client[] = [
-        {
-          _id: "c1",
-          name: "John Williams",
-          email: "john.williams@email.com",
-          phone: "+1-555-2001",
-          address: "123 Main St, New York, NY 10001",
-          isActive: true,
-          joinedDate: "2024-01-15",
-          lastPayment: "2024-01-01",
-          feedback: [
-            {
-              _id: "f1",
-              message:
-                "Client is very satisfied with the service. Always pays on time.",
-              addedBy: "Agent John Doe",
-              addedAt: "2024-01-20",
-              type: "positive",
-            },
-            {
-              _id: "f2",
-              message:
-                "Requesting policy review due to change in circumstances.",
-              addedBy: "Admin Sarah",
-              addedAt: "2024-02-15",
-              type: "neutral",
-            },
-          ],
+      // Fetch clients for this agent
+      const clientsResponse = await fetch(`/api/insurance-clients/agent/${agentId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        {
-          _id: "c2",
-          name: "Sarah Davis",
-          email: "sarah.davis@email.com",
-          phone: "+1-555-2002",
-          address: "456 Oak Ave, Los Angeles, CA 90210",
-          isActive: true,
-          joinedDate: "2024-02-20",
-          lastPayment: "2024-02-01",
-          feedback: [
-            {
-              _id: "f3",
-              message:
-                "Had concerns about claim process but resolved satisfactorily.",
-              addedBy: "Customer Service",
-              addedAt: "2024-02-25",
-              type: "neutral",
-            },
-          ],
-        },
-        {
-          _id: "c3",
-          name: "Robert Brown",
-          email: "robert.brown@email.com",
-          phone: "+1-555-2003",
-          address: "789 Pine Rd, Chicago, IL 60601",
-          isActive: false,
-          joinedDate: "2023-12-10",
-          lastPayment: "2023-12-01",
-          feedback: [
-            {
-              _id: "f4",
-              message:
-                "Client requested policy cancellation due to financial constraints.",
-              addedBy: "Agent Mike",
-              addedAt: "2024-01-10",
-              type: "important",
-            },
-            {
-              _id: "f5",
-              message: "Multiple late payments before cancellation.",
-              addedBy: "Billing Department",
-              addedAt: "2023-12-25",
-              type: "negative",
-            },
-          ],
-        },
-        {
-          _id: "c4",
-          name: "Jennifer Martinez",
-          email: "jennifer.martinez@email.com",
-          phone: "+1-555-2004",
-          address: "321 Elm St, Miami, FL 33101",
-          isActive: true,
-          joinedDate: "2024-03-05",
-          lastPayment: "2024-03-01",
-          feedback: [
-            {
-              _id: "f6",
-              message: "Excellent client, referred 3 new customers.",
-              addedBy: "Agent Lisa",
-              addedAt: "2024-03-10",
-              type: "positive",
-            },
-          ],
-        },
-      ];
-
-      setAgent(mockAgent);
-      setClients(mockClients);
+      });
+      
+      if (clientsResponse.ok) {
+        const clientsData = await clientsResponse.json();
+        const formattedClients = clientsData.data?.map((client: any) => ({
+          ...client,
+          // Map backend fields to UI expected fields for compatibility
+          joinedDate: client.createdAt?.split('T')[0] || '',
+          lastPayment: client.lastPayment || client.updatedAt?.split('T')[0] || '',
+          feedback: client.notes ? [{
+            _id: 'note_' + client._id,
+            message: client.notes,
+            addedBy: 'System',
+            addedAt: client.updatedAt || client.createdAt,
+            type: 'neutral' as const
+          }] : [],
+        })) || [];
+        setClients(formattedClients);
+      } else {
+        throw new Error('Failed to fetch clients');
+      }
     } catch (err: any) {
-      setError("Failed to fetch agent and clients data");
+      setError(err.message || "Failed to fetch agent and clients data");
+      toast.error("Failed to load agent and clients");
     } finally {
       setLoading(false);
     }
@@ -241,52 +166,128 @@ export default function AgentClientsPage() {
     setIsFeedbackModalOpen(true);
   };
 
-  const handleDeleteClient = (client: Client) => {
-    if (confirm(`Are you sure you want to delete ${client.name}?`)) {
-      setClients((prev) => prev.filter((c) => c._id !== client._id));
-      toast.success("Client deleted successfully");
+  const handleDeleteClient = async (client: Client) => {
+    if (!confirm(`Are you sure you want to delete ${client.name}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/insurance-clients/${client._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (response.ok) {
+        setClients((prev) => prev.filter((c) => c._id !== client._id));
+        toast.success("Client deleted successfully");
+        
+        // Update agent client count
+        if (agent) {
+          setAgent(prev => prev ? { ...prev, clientsCount: prev.clientsCount - 1 } : null);
+        }
+      } else {
+        throw new Error('Failed to delete client');
+      }
+    } catch (error) {
+      toast.error("Failed to delete client");
     }
   };
 
   const handleSubmitClient = async (data: ClientFormData, isEdit: boolean) => {
     try {
+      const clientData = {
+        ...data,
+        agentId,
+        status: data.status || 'pending',
+      };
+
+      let response;
       if (isEdit && editingClient) {
         // Update existing client
-        setClients((prev) =>
-          prev.map((client) =>
-            client._id === editingClient._id
-              ? { ...client, ...data }
-              : client
-          )
-        );
+        response = await fetch(`/api/insurance-clients/${editingClient._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify(clientData),
+        });
       } else {
-        // Add new client
-        const newClient: Client = {
-          _id: Date.now().toString(),
-          ...data,
-          isActive: true,
-          joinedDate: new Date().toISOString().split("T")[0],
-          lastPayment: new Date().toISOString().split("T")[0],
-          feedback: [],
-        };
-        setClients((prev) => [...prev, newClient]);
+        // Create new client
+        response = await fetch('/api/insurance-clients', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify(clientData),
+        });
       }
-    } catch (error) {
+
+      if (response.ok) {
+        const result = await response.json();
+        const formattedClient = {
+          ...result.data,
+          joinedDate: result.data.createdAt?.split('T')[0] || '',
+          lastPayment: result.data.lastPayment || result.data.updatedAt?.split('T')[0] || '',
+          feedback: result.data.notes ? [{
+            _id: 'note_' + result.data._id,
+            message: result.data.notes,
+            addedBy: 'System',
+            addedAt: result.data.updatedAt || result.data.createdAt,
+            type: 'neutral' as const
+          }] : [],
+        };
+        
+        if (isEdit && editingClient) {
+          setClients(prev => prev.map(c => c._id === editingClient._id ? formattedClient : c));
+          toast.success("Client updated successfully");
+        } else {
+          setClients(prev => [formattedClient, ...prev]);
+          toast.success("Client added successfully");
+          
+          // Update agent client count
+          if (agent) {
+            setAgent(prev => prev ? { ...prev, clientsCount: prev.clientsCount + 1 } : null);
+          }
+        }
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save client');
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save client");
       throw error; // Let the modal handle the error display
     }
   };
 
-  const handleCSVUpload = async (newClients: Omit<Client, '_id' | 'feedback'>[]) => {
+  const handleCSVUpload = async (file: File) => {
     try {
-      const clientsWithIds: Client[] = newClients.map(client => ({
-        ...client,
-        _id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        feedback: [],
-      }));
-      
-      setClients(prev => [...prev, ...clientsWithIds]);
-      toast.success(`Successfully imported ${newClients.length} clients`);
-    } catch (error) {
+      const formData = new FormData();
+      formData.append('csv', file);
+
+      const response = await fetch(`/api/insurance-clients/agent/${agentId}/import-csv`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(result.message);
+        
+        // Refresh the clients list
+        await fetchAgentAndClients();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to import CSV');
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to import CSV");
       throw error; // Let the modal handle the error display
     }
   };
@@ -340,6 +341,28 @@ export default function AgentClientsPage() {
       type: "text",
       responsive: "md",
       searchable: true,
+    },
+    {
+      key: "status",
+      label: "Status",
+      type: "text",
+      responsive: "sm",
+      render: (value: string) => {
+        const getStatusColor = (status: string) => {
+          switch (status) {
+            case 'pending': return 'bg-yellow-100 text-yellow-800';
+            case 'contacted': return 'bg-blue-100 text-blue-800';
+            case 'converted': return 'bg-green-100 text-green-800';
+            case 'declined': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+          }
+        };
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(value || 'pending')}`}>
+            {(value || 'pending').charAt(0).toUpperCase() + (value || 'pending').slice(1)}
+          </span>
+        );
+      },
     },
     {
       key: "feedback",
@@ -473,6 +496,7 @@ export default function AgentClientsPage() {
             onClose={() => setIsCSVUploadModalOpen(false)}
             onUpload={handleCSVUpload}
             agentName={agent?.name}
+            agentId={agentId}
           />
         </Box>
       </DashboardLayout>

@@ -1,5 +1,6 @@
 const SalesPerson = require("../models/salesPerson.model");
 const User = require("../models/user.model");
+const bcrypt = require("bcryptjs");
 
 // Get all sales persons (admin only)
 exports.getAllSalesPersons = async (req, res) => {
@@ -10,8 +11,7 @@ exports.getAllSalesPersons = async (req, res) => {
     let filter = {};
     if (search) {
       filter.$or = [
-        { firstName: { $regex: search, $options: "i" } },
-        { lastName: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
         { employeeId: { $regex: search, $options: "i" } },
       ];
@@ -21,7 +21,7 @@ exports.getAllSalesPersons = async (req, res) => {
 
     const salesPersons = await SalesPerson.find(filter)
       .populate("user", "email isActive")
-      .populate("managerId", "firstName lastName email")
+      .populate("managerId", "name email")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -41,12 +41,66 @@ exports.getAllSalesPersons = async (req, res) => {
   }
 };
 
+// Create a new sales person (admin only)
+exports.createSalesPerson = async (req, res) => {
+  try {
+    const { name, email, phone, password } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !password) {
+      return res.status(400).json({ 
+        message: "Name, email, and password are required"
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User with this email already exists" });
+    }
+
+    // Create user account with password
+    const user = await User.create({
+      email,
+      password,
+      role: "sales_person",
+      isActive: true,
+    });
+
+    // Create sales person profile
+    const employeeId = "SP" + Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+    const salesPersonData = {
+      user: user._id,
+      name,
+      email,
+      phone: phone || "",
+      employeeId,
+      isActive: true,
+      isApproved: true,
+    };
+
+    const salesPerson = await SalesPerson.create(salesPersonData);
+
+    // Populate user data before sending response
+    const populatedSalesPerson = await SalesPerson.findById(salesPerson._id)
+      .populate("user", "email isActive");
+
+    res.status(201).json({
+      message: "Sales person created successfully",
+      salesPerson: populatedSalesPerson,
+    });
+  } catch (error) {
+    console.error("Create sales person error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 // Get sales person by ID
 exports.getSalesPersonById = async (req, res) => {
   try {
     const salesPerson = await SalesPerson.findById(req.params.id)
       .populate("user", "email isActive lastLogin")
-      .populate("managerId", "firstName lastName email");
+      .populate("managerId", "name email");
 
     if (!salesPerson) {
       return res.status(404).json({ message: "Sales person not found" });
@@ -64,7 +118,7 @@ exports.getMyProfile = async (req, res) => {
   try {
     const salesPerson = await SalesPerson.findOne({ user: req.user.id })
       .populate("user", "email lastLogin")
-      .populate("managerId", "firstName lastName email");
+      .populate("managerId", "name email");
 
     if (!salesPerson) {
       return res.status(404).json({ message: "Sales person profile not found" });
@@ -229,6 +283,45 @@ exports.updateApprovalStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Update approval status error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Update sales person (admin only)
+exports.updateSalesPerson = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, phone } = req.body;
+
+    const salesPerson = await SalesPerson.findById(id).populate("user");
+    if (!salesPerson) {
+      return res.status(404).json({ message: "Sales person not found" });
+    }
+
+    // Update sales person profile
+    if (name) salesPerson.name = name;
+    if (phone) salesPerson.phone = phone;
+
+    await salesPerson.save();
+
+    // Update user account if password is provided
+    if (password && password.trim() !== "") {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await User.findByIdAndUpdate(salesPerson.user._id, {
+        password: hashedPassword,
+      });
+    }
+
+    // Return updated sales person with populated user data
+    const updatedSalesPerson = await SalesPerson.findById(id)
+      .populate("user", "email isActive");
+
+    res.json({
+      message: "Sales person updated successfully",
+      salesPerson: updatedSalesPerson,
+    });
+  } catch (error) {
+    console.error("Update sales person error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

@@ -26,11 +26,17 @@ interface Client {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address?: string;
+  agentId: string;
+  status: "pending" | "contacted" | "converted" | "declined";
+  notes?: string;
+  lastPayment?: string;
   isActive: boolean;
-  joinedDate: string;
-  lastPayment: string;
-  feedback: ClientFeedback[];
+  createdAt: string;
+  updatedAt: string;
+  // Keep for UI compatibility
+  joinedDate?: string;
+  feedback?: ClientFeedback[];
 }
 
 interface ClientFeedback {
@@ -165,7 +171,7 @@ export default function InsuranceClientDetailsModal({
                     Joined Date
                   </Typography>
                   <Typography variant="body1" fontWeight="medium">
-                    {formatDate(client.joinedDate)}
+                    {formatDate(client.joinedDate || client.createdAt)}
                   </Typography>
                 </Box>
               </Box>
@@ -177,7 +183,7 @@ export default function InsuranceClientDetailsModal({
                     Last Payment
                   </Typography>
                   <Typography variant="body1" fontWeight="medium">
-                    {formatDate(client.lastPayment)}
+                    {client.lastPayment ? formatDate(client.lastPayment) : 'N/A'}
                   </Typography>
                 </Box>
               </Box>
@@ -191,11 +197,11 @@ export default function InsuranceClientDetailsModal({
             </Typography>
             <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
               <Chip
-                label={`Total Remarks: ${client.feedback.length}`}
+                label={`Total Remarks: ${client.feedback?.length || 0}`}
                 variant="outlined"
                 color="default"
               />
-              {client.feedback.length > 0 && (
+              {client.feedback && client.feedback.length > 0 && (
                 <>
                   <Chip
                     label={`Positive: ${client.feedback.filter(f => f.type === "positive").length}`}

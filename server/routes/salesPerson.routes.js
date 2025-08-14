@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
   getAllSalesPersons,
+  createSalesPerson,
   getSalesPersonById,
   getMyProfile,
   updateProfile,
@@ -15,6 +16,27 @@ const {
 const { auth, authorizeRoles } = require("../middlewares/auth.middleware");
 const { validateRequest } = require("../middlewares/validation.middleware");
 const { body, param } = require("express-validator");
+
+// Validation for creating a sales person
+const createSalesPersonValidation = [
+  body("name")
+    .notEmpty()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Name is required and must be between 2 and 100 characters")
+    .trim(),
+  body("email")
+    .isEmail()
+    .withMessage("Valid email is required")
+    .normalizeEmail(),
+  body("phone")
+    .optional()
+    .matches(/^[\+]?[\d\s\-\(\)\.]{10,}$/)
+    .withMessage("Please provide a valid phone number"),
+  body("department")
+    .optional()
+    .isIn(["sales", "business_development", "account_management", "inside_sales"])
+    .withMessage("Invalid department"),
+];
 
 // Validation for profile update
 const updateProfileValidation = [
@@ -95,6 +117,7 @@ const idValidation = [
 
 // Admin-only routes
 router.get("/", auth, authorizeRoles("admin"), getAllSalesPersons);
+router.post("/", auth, authorizeRoles("admin"), createSalesPersonValidation, validateRequest, createSalesPerson);
 router.get("/:id", auth, authorizeRoles("admin"), idValidation, validateRequest, getSalesPersonById);
 router.post("/:id/assign-agents", auth, authorizeRoles("admin"), idValidation, assignAgentsValidation, validateRequest, assignAgents);
 router.put("/:id/performance", auth, authorizeRoles("admin"), idValidation, updatePerformanceValidation, validateRequest, updatePerformance);

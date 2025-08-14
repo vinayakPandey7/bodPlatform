@@ -16,6 +16,11 @@ import {
   CircularProgress,
   Grid,
   InputAdornment,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from "@mui/material";
 import {
   Close as CloseIcon,
@@ -32,11 +37,17 @@ interface Client {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address?: string;
+  agentId: string;
+  status: "pending" | "contacted" | "converted" | "declined";
+  notes?: string;
+  lastPayment?: string;
   isActive: boolean;
-  joinedDate: string;
-  lastPayment: string;
-  feedback: ClientFeedback[];
+  createdAt: string;
+  updatedAt: string;
+  // Keep for UI compatibility
+  joinedDate?: string;
+  feedback?: ClientFeedback[];
 }
 
 interface ClientFeedback {
@@ -52,6 +63,8 @@ interface ClientFormData {
   email: string;
   phone: string;
   address: string;
+  status?: "pending" | "contacted" | "converted" | "declined";
+  notes?: string;
 }
 
 interface InsuranceClientModalProps {
@@ -77,7 +90,13 @@ const ClientValidationSchema = Yup.object().shape({
   address: Yup.string()
     .min(5, "Address must be at least 5 characters")
     .max(200, "Address must be less than 200 characters")
-    .required("Address is required"),
+    .optional(),
+  status: Yup.string()
+    .oneOf(["pending", "contacted", "converted", "declined"], "Invalid status")
+    .optional(),
+  notes: Yup.string()
+    .max(500, "Notes must be less than 500 characters")
+    .optional(),
 });
 
 export default function InsuranceClientModal({
@@ -93,6 +112,8 @@ export default function InsuranceClientModal({
     email: client?.email || "",
     phone: client?.phone || "",
     address: client?.address || "",
+    status: client?.status || "pending",
+    notes: client?.notes || "",
   };
 
   const handleSubmit = async (values: ClientFormData) => {
@@ -200,12 +221,32 @@ export default function InsuranceClientModal({
                   className="!py-5"
                 />
 
+                <FormControl fullWidth error={touched.status && Boolean(errors.status)}>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    name="status"
+                    value={values.status || 'pending'}
+                    label="Status"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    disabled={loading}
+                  >
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="contacted">Contacted</MenuItem>
+                    <MenuItem value="converted">Converted</MenuItem>
+                    <MenuItem value="declined">Declined</MenuItem>
+                  </Select>
+                  {touched.status && errors.status && (
+                    <FormHelperText>{errors.status}</FormHelperText>
+                  )}
+                </FormControl>
+
                 <TextField
                   fullWidth
                   name="address"
-                  label="Address"
+                  label="Address (Optional)"
                   multiline
-                  rows={3}
+                  rows={2}
                   value={values.address}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -219,6 +260,21 @@ export default function InsuranceClientModal({
                       </InputAdornment>
                     ),
                   }}
+                />
+
+                <TextField
+                  fullWidth
+                  name="notes"
+                  label="Notes (Optional)"
+                  multiline
+                  rows={3}
+                  value={values.notes}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.notes && Boolean(errors.notes)}
+                  helperText={touched.notes && errors.notes}
+                  disabled={loading}
+                  placeholder="Add any additional notes about this client..."
                 />
               </Box>
             </DialogContent>

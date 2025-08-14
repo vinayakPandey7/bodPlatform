@@ -79,6 +79,26 @@ export const API_ENDPOINTS = {
     UPDATE_USER_STATUS: (userId: string) => `/admin/users/${userId}/status`,
   },
 
+  // Sales Person endpoints
+  SALES_PERSONS: {
+    LIST: "/admin/sales-persons",
+    CREATE: "/admin/sales-persons",
+    DETAIL: (id: string) => `/admin/sales-persons/${id}`,
+    UPDATE: (id: string) => `/admin/sales-persons/${id}`,
+    DELETE: (id: string) => `/admin/sales-persons/${id}`,
+    ASSIGN_AGENTS: (id: string) => `/admin/sales-persons/${id}/assign-agents`,
+  },
+
+  // Insurance Agent endpoints
+  INSURANCE_AGENTS: {
+    LIST: "/insurance-agents",
+    CREATE: "/insurance-agents",
+    DETAIL: (id: string) => `/insurance-agents/${id}`,
+    UPDATE: (id: string) => `/insurance-agents/${id}`,
+    DELETE: (id: string) => `/insurance-agents/${id}`,
+    TOGGLE_STATUS: (id: string) => `/insurance-agents/${id}/toggle-status`,
+  },
+
   // Notification endpoints
   NOTIFICATIONS: {
     LIST: "/notifications",
@@ -136,6 +156,16 @@ export const QUERY_KEYS = {
     CANDIDATES: (params?: any) =>
       ["recruitment-partners", "candidates", params] as const,
     JOBS: (params?: any) => ["recruitment-partners", "jobs", params] as const,
+  },
+  SALES_PERSONS: {
+    ALL: ["sales-persons"] as const,
+    LIST: (params?: any) => ["sales-persons", "list", params] as const,
+    DETAIL: (id: string) => ["sales-persons", "detail", id] as const,
+  },
+  INSURANCE_AGENTS: {
+    ALL: ["insurance-agents"] as const,
+    LIST: (params?: any) => ["insurance-agents", "list", params] as const,
+    DETAIL: (id: string) => ["insurance-agents", "detail", id] as const,
   },
   ADMIN: {
     DASHBOARD: ["admin", "dashboard"] as const,
