@@ -24,11 +24,17 @@ interface Client {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address?: string;
+  agentId: string;
+  status: "pending" | "contacted" | "converted" | "declined";
+  notes?: string;
+  lastPayment?: string;
   isActive: boolean;
-  joinedDate: string;
-  lastPayment: string;
-  feedback: ClientFeedback[];
+  createdAt: string;
+  updatedAt: string;
+  // Keep for UI compatibility
+  joinedDate?: string;
+  feedback?: ClientFeedback[];
 }
 
 interface ClientFeedback {
@@ -90,7 +96,7 @@ export default function InsuranceClientFeedbackModal({
     });
   };
 
-  const sortedFeedback = [...client.feedback].sort(
+  const sortedFeedback = [...(client.feedback || [])].sort(
     (a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime()
   );
 
@@ -147,24 +153,24 @@ export default function InsuranceClientFeedbackModal({
             </Box>
             <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <Chip
-                label={`Total Remarks: ${client.feedback.length}`}
+                label={`Total Remarks: ${client.feedback?.length || 0}`}
                 variant="outlined"
                 size="small"
               />
               <Chip
-                label={`Positive: ${client.feedback.filter(f => f.type === "positive").length}`}
+                label={`Positive: ${client.feedback?.filter(f => f.type === "positive").length || 0}`}
                 color="success"
                 variant="outlined"
                 size="small"
               />
               <Chip
-                label={`Important: ${client.feedback.filter(f => f.type === "important").length}`}
+                label={`Important: ${client.feedback?.filter(f => f.type === "important").length || 0}`}
                 color="warning"
                 variant="outlined"
                 size="small"
               />
               <Chip
-                label={`Negative: ${client.feedback.filter(f => f.type === "negative").length}`}
+                label={`Negative: ${client.feedback?.filter(f => f.type === "negative").length || 0}`}
                 color="error"
                 variant="outlined"
                 size="small"
@@ -175,10 +181,10 @@ export default function InsuranceClientFeedbackModal({
           {/* Remarks History */}
           <Box>
             <Typography variant="h6" gutterBottom fontWeight="bold">
-              All Remarks ({client.feedback.length})
+              All Remarks ({client.feedback?.length || 0})
             </Typography>
             
-            {client.feedback.length === 0 ? (
+            {!client.feedback || client.feedback.length === 0 ? (
               <Alert severity="info" sx={{ mt: 2 }}>
                 <Typography variant="body2">
                   No remarks available for this client yet.

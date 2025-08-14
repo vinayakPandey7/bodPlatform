@@ -19,6 +19,8 @@ const notificationRoutes = require("./routes/notification.routes");
 const cloudinaryRoutes = require("./routes/cloudinary.routes");
 const locationRoutes = require("./routes/location.routes");
 const clientRoutes = require("./routes/client.routes");
+const insuranceAgentRoutes = require("./routes/insuranceAgent.routes");
+const insuranceClientRoutes = require("./routes/insuranceClient.routes");
 
 // Initialize express app
 const app = express();
@@ -75,6 +77,8 @@ app.use("/api/candidates", candidateRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/upload", cloudinaryRoutes); // Use Cloudinary for all uploads
 app.use("/api/location", locationRoutes);
+app.use("/api/insurance-agents", insuranceAgentRoutes);
+app.use("/api/insurance-clients", insuranceClientRoutes);
 
 // Root route
 app.get("/", (req, res) => {

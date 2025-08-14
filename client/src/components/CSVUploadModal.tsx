@@ -53,8 +53,9 @@ interface CSVRow {
 interface CSVUploadModalProps {
   open: boolean;
   onClose: () => void;
-  onUpload: (clients: Omit<Client, '_id' | 'feedback'>[]) => Promise<void>;
+  onUpload: (file: File) => Promise<void>;
   agentName?: string;
+  agentId?: string;
 }
 
 const CSV_TEMPLATE_HEADERS = [
@@ -62,14 +63,26 @@ const CSV_TEMPLATE_HEADERS = [
   "email", 
   "phone",
   "address",
-  "joinedDate",
-  "lastPayment"
+  "status",
+  "notes"
 ];
 
 const SAMPLE_CSV_DATA = [
-  ["John Doe", "john.doe@email.com", "+1-555-0101", "123 Main St, New York, NY 10001", "2024-01-15", "2024-01-01"],
-  ["Jane Smith", "jane.smith@email.com", "+1-555-0102", "456 Oak Ave, Los Angeles, CA 90210", "2024-02-20", "2024-02-01"],
-  ["Bob Johnson", "bob.johnson@email.com", "+1-555-0103", "789 Pine Rd, Chicago, IL 60601", "2024-03-05", "2024-03-01"]
+  ["John Smith", "john.smith@email.com", "+1-555-1001", "123 Main Street New York NY 10001", "pending", "New lead from website inquiry"],
+  ["Sarah Johnson", "sarah.johnson@email.com", "+1-555-1002", "456 Oak Avenue Los Angeles CA 90210", "contacted", "Interested in life insurance policy"],
+  ["Michael Brown", "michael.brown@email.com", "+1-555-1003", "789 Pine Road Chicago IL 60601", "converted", "Purchased family health plan"],
+  ["Emily Davis", "emily.davis@email.com", "+1-555-1004", "321 Elm Street Miami FL 33101", "pending", "Referral from existing client"],
+  ["David Wilson", "david.wilson@email.com", "+1-555-1005", "654 Maple Lane Houston TX 77001", "contacted", "Scheduled follow-up meeting"],
+  ["Lisa Anderson", "lisa.anderson@email.com", "+1-555-1006", "987 Cedar Drive Phoenix AZ 85001", "declined", "Not interested at this time"],
+  ["Robert Taylor", "robert.taylor@email.com", "+1-555-1007", "147 Birch Boulevard Denver CO 80201", "converted", "Auto insurance policy active"],
+  ["Jennifer Martinez", "jennifer.martinez@email.com", "+1-555-1008", "258 Spruce Street Seattle WA 98101", "pending", "Needs home insurance quote"],
+  ["Christopher Lee", "christopher.lee@email.com", "+1-555-1009", "369 Willow Way Boston MA 02101", "contacted", "Comparing different plans"],
+  ["Amanda White", "amanda.white@email.com", "+1-555-1010", "741 Ash Court Atlanta GA 30301", "converted", "Business insurance package"],
+  ["James Thompson", "james.thompson@email.com", "+1-555-1011", "852 Hickory Hill Portland OR 97201", "pending", "Young professional seeking coverage"],
+  ["Mary Garcia", "mary.garcia@email.com", "+1-555-1012", "963 Dogwood Drive Nashville TN 37201", "contacted", "Health insurance for family"],
+  ["Daniel Rodriguez", "daniel.rodriguez@email.com", "+1-555-1013", "159 Magnolia Street Dallas TX 75201", "declined", "Found better rates elsewhere"],
+  ["Jessica Martinez", "jessica.martinez@email.com", "+1-555-1014", "357 Cherry Lane San Francisco CA 94101", "converted", "Comprehensive auto policy"],
+  ["Matthew Hernandez", "matthew.hernandez@email.com", "+1-555-1015", "468 Peach Place Orlando FL 32801", "pending", "First time insurance buyer"]
 ];
 
 export default function CSVUploadModal({
@@ -77,6 +90,7 @@ export default function CSVUploadModal({
   onClose,
   onUpload,
   agentName,
+  agentId,
 }: CSVUploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
@@ -176,22 +190,12 @@ export default function CSVUploadModal({
   });
 
   const handleUpload = async () => {
-    if (parsedData.length === 0) return;
+    if (!file || parsedData.length === 0) return;
     
     try {
       setLoading(true);
       
-      const clientsToUpload = parsedData.map(row => ({
-        name: row.name,
-        email: row.email,
-        phone: row.phone,
-        address: row.address,
-        isActive: true,
-        joinedDate: row.joinedDate || new Date().toISOString().split('T')[0],
-        lastPayment: row.lastPayment || new Date().toISOString().split('T')[0],
-      }));
-      
-      await onUpload(clientsToUpload);
+      await onUpload(file);
       setStep('success');
     } catch (error) {
       setErrors([`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`]);

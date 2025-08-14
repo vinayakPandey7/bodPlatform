@@ -79,6 +79,38 @@ export const API_ENDPOINTS = {
     UPDATE_USER_STATUS: (userId: string) => `/admin/users/${userId}/status`,
   },
 
+  // Sales Person endpoints
+  SALES_PERSONS: {
+    LIST: "/admin/sales-persons",
+    CREATE: "/admin/sales-persons",
+    DETAIL: (id: string) => `/admin/sales-persons/${id}`,
+    UPDATE: (id: string) => `/admin/sales-persons/${id}`,
+    DELETE: (id: string) => `/admin/sales-persons/${id}`,
+    ASSIGN_AGENTS: (id: string) => `/admin/sales-persons/${id}/assign-agents`,
+    MY_AGENTS: "/sales-person/agents/me",
+    MY_PROFILE: "/sales-person/profile/me",
+  },
+
+  // Insurance Agent endpoints
+  INSURANCE_AGENTS: {
+    LIST: "/insurance-agents",
+    CREATE: "/insurance-agents",
+    DETAIL: (id: string) => `/insurance-agents/${id}`,
+    UPDATE: (id: string) => `/insurance-agents/${id}`,
+    DELETE: (id: string) => `/insurance-agents/${id}`,
+    TOGGLE_STATUS: (id: string) => `/insurance-agents/${id}/toggle-status`,
+  },
+
+  // Insurance Client endpoints
+  INSURANCE_CLIENTS: {
+    LIST: "/insurance-clients",
+    BY_AGENT: (agentId: string) => `/insurance-clients/agent/${agentId}`,
+    DETAIL: (id: string) => `/insurance-clients/${id}`,
+    CREATE: "/insurance-clients",
+    UPDATE: (id: string) => `/insurance-clients/${id}`,
+    DELETE: (id: string) => `/insurance-clients/${id}`,
+  },
+
   // Notification endpoints
   NOTIFICATIONS: {
     LIST: "/notifications",
@@ -136,6 +168,16 @@ export const QUERY_KEYS = {
     CANDIDATES: (params?: any) =>
       ["recruitment-partners", "candidates", params] as const,
     JOBS: (params?: any) => ["recruitment-partners", "jobs", params] as const,
+  },
+  SALES_PERSONS: {
+    ALL: ["sales-persons"] as const,
+    LIST: (params?: any) => ["sales-persons", "list", params] as const,
+    DETAIL: (id: string) => ["sales-persons", "detail", id] as const,
+  },
+  INSURANCE_AGENTS: {
+    ALL: ["insurance-agents"] as const,
+    LIST: (params?: any) => ["insurance-agents", "list", params] as const,
+    DETAIL: (id: string) => ["insurance-agents", "detail", id] as const,
   },
   ADMIN: {
     DASHBOARD: ["admin", "dashboard"] as const,

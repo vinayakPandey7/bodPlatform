@@ -504,6 +504,107 @@ export const adminFetchers = {
     );
     return response.data;
   },
+
+  // Sales Person Management
+  getAdminSalesPersons: async (params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.SALES_PERSONS.LIST, {
+      params,
+    });
+    return response.data;
+  },
+
+  createSalesPerson: async (data: any) => {
+    const response = await Client.post(API_ENDPOINTS.SALES_PERSONS.CREATE, data);
+    return response.data;
+  },
+
+  updateSalesPerson: async (id: string, data: any) => {
+    const response = await Client.put(API_ENDPOINTS.SALES_PERSONS.UPDATE(id), data);
+    return response.data;
+  },
+
+  deleteSalesPerson: async (id: string) => {
+    const response = await Client.delete(API_ENDPOINTS.SALES_PERSONS.DELETE(id));
+    return response.data;
+  },
+
+  assignAgentsToSalesPerson: async (id: string, agents: any[]) => {
+    const response = await Client.post(API_ENDPOINTS.SALES_PERSONS.ASSIGN_AGENTS(id), { agents });
+    return response.data;
+  },
+
+  // Get assigned agents for current sales person
+  getMyAssignedAgents: async () => {
+    const response = await Client.get(API_ENDPOINTS.SALES_PERSONS.MY_AGENTS);
+    return response.data;
+  },
+
+  // Get current sales person profile
+  getMySalesPersonProfile: async () => {
+    const response = await Client.get(API_ENDPOINTS.SALES_PERSONS.MY_PROFILE);
+    return response.data;
+  },
+
+  // Insurance Agent Management
+  getInsuranceAgents: async (params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.INSURANCE_AGENTS.LIST, {
+      params,
+    });
+    return response.data;
+  },
+
+  getInsuranceAgent: async (id: string) => {
+    const response = await Client.get(API_ENDPOINTS.INSURANCE_AGENTS.DETAIL(id));
+    return response.data;
+  },
+
+  createInsuranceAgent: async (data: any) => {
+    const response = await Client.post(API_ENDPOINTS.INSURANCE_AGENTS.CREATE, data);
+    return response.data;
+  },
+
+  updateInsuranceAgent: async (id: string, data: any) => {
+    const response = await Client.put(API_ENDPOINTS.INSURANCE_AGENTS.UPDATE(id), data);
+    return response.data;
+  },
+
+  deleteInsuranceAgent: async (id: string) => {
+    const response = await Client.delete(API_ENDPOINTS.INSURANCE_AGENTS.DELETE(id));
+    return response.data;
+  },
+
+  toggleInsuranceAgentStatus: async (id: string) => {
+    const response = await Client.patch(API_ENDPOINTS.INSURANCE_AGENTS.TOGGLE_STATUS(id));
+    return response.data;
+  },
+
+  // Insurance Client Management
+  getAllInsuranceClients: async (params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.INSURANCE_CLIENTS.LIST, {
+      params,
+    });
+    return response.data;
+  },
+
+  getInsuranceClientsByAgent: async (agentId: string) => {
+    const response = await Client.get(API_ENDPOINTS.INSURANCE_CLIENTS.BY_AGENT(agentId));
+    return response.data;
+  },
+
+  createInsuranceClient: async (data: any) => {
+    const response = await Client.post(API_ENDPOINTS.INSURANCE_CLIENTS.CREATE, data);
+    return response.data;
+  },
+
+  updateInsuranceClient: async (id: string, data: any) => {
+    const response = await Client.put(API_ENDPOINTS.INSURANCE_CLIENTS.UPDATE(id), data);
+    return response.data;
+  },
+
+  deleteInsuranceClient: async (id: string) => {
+    const response = await Client.delete(API_ENDPOINTS.INSURANCE_CLIENTS.DELETE(id));
+    return response.data;
+  },
 };
 
 // Notification fetchers
@@ -579,6 +680,33 @@ export const uploadFetchers = {
         },
       }
     );
+    return response.data;
+  },
+};
+
+// Sales Person fetchers (for sales person specific operations)
+export const salesPersonFetchers = {
+  // Get my profile as a sales person
+  getMyProfile: async () => {
+    const response = await Client.get("/sales-person/profile/me");
+    return response.data;
+  },
+
+  // Get my assigned agents
+  getMyAgents: async () => {
+    const response = await Client.get("/sales-person/agents/me");
+    return response.data;
+  },
+
+  // Get clients for a specific agent that I'm assigned to
+  getAgentClients: async (agentId: string) => {
+    const response = await Client.get(`/sales-person/agents/${agentId}/clients`);
+    return response.data;
+  },
+
+  // Update client call status
+  updateClientCallStatus: async (agentId: string, clientId: string, statusData: any) => {
+    const response = await Client.put(`/sales-person/agents/${agentId}/clients/${clientId}/call-status`, statusData);
     return response.data;
   },
 };

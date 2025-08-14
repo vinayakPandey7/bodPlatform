@@ -19,13 +19,21 @@ interface Agent {
   isActive: boolean;
 }
 
+interface AssignedAgent {
+  agentId: string;
+  agentName: string;
+  agentEmail: string;
+  assignedDate: string;
+  isActive: boolean;
+}
+
 interface SalesPerson {
   _id: string;
   name: string;
   email: string;
   phone: string;
   isActive: boolean;
-  assignedAgents: Agent[];
+  assignedAgents: AssignedAgent[];
   createdAt: string;
 }
 

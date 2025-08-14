@@ -6,12 +6,7 @@ const salesPersonSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  firstName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  lastName: {
+  name: {
     type: String,
     required: true,
     trim: true,
@@ -22,20 +17,18 @@ const salesPersonSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
   },
-  phoneNumber: {
+  phone: {
     type: String,
-    required: true,
     trim: true,
   },
   employeeId: {
     type: String,
-    required: true,
     unique: true,
+    sparse: true,
     trim: true,
   },
   department: {
     type: String,
-    required: true,
     enum: ["sales", "business_development", "account_management", "inside_sales"],
     default: "sales",
   },

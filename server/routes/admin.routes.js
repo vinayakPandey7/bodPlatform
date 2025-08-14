@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const adminController = require("../controllers/admin.controller");
+const salesPersonController = require("../controllers/salesPerson.controller");
 const { auth, authorizeRoles } = require("../middlewares/auth.middleware");
+const { validateRequest } = require("../middlewares/validation.middleware");
+const { body } = require("express-validator");
 
 // Profile Management
 router.get(
@@ -177,6 +180,76 @@ router.delete(
   auth,
   authorizeRoles("admin", "sub_admin"),
   adminController.deleteNotification
+);
+
+// Sales Person Management
+const createSalesPersonValidation = [
+  body("name")
+    .notEmpty()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Name is required and must be between 2 and 100 characters")
+    .trim(),
+  body("email")
+    .isEmail()
+    .withMessage("Valid email is required")
+    .normalizeEmail(),
+  body("password")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters long"),
+  body("phone")
+    .optional()
+    .matches(/^[\+]?[\d\s\-\(\)\.]{10,}$/)
+    .withMessage("Please provide a valid phone number"),
+];
+
+const updateSalesPersonValidation = [
+  body("name")
+    .optional()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Name must be between 2 and 100 characters")
+    .trim(),
+  body("email")
+    .optional()
+    .isEmail()
+    .withMessage("Valid email is required")
+    .normalizeEmail(),
+  body("password")
+    .optional()
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters long"),
+  body("phone")
+    .optional()
+    .matches(/^[\+]?[\d\s\-\(\)\.]{10,}$/)
+    .withMessage("Please provide a valid phone number"),
+];
+
+router.get(
+  "/sales-persons",
+  salesPersonController.getAllSalesPersons
+);
+router.post(
+  "/sales-persons",
+  createSalesPersonValidation,
+  validateRequest,
+  salesPersonController.createSalesPerson
+);
+router.get(
+  "/sales-persons/:id",
+  salesPersonController.getSalesPersonById
+);
+router.put(
+  "/sales-persons/:id",
+  updateSalesPersonValidation,
+  validateRequest,
+  salesPersonController.updateSalesPerson
+);
+router.delete(
+  "/sales-persons/:id",
+  salesPersonController.deleteSalesPerson
+);
+router.post(
+  "/sales-persons/:id/assign-agents",
+  salesPersonController.assignAgents
 );
 
 module.exports = router;

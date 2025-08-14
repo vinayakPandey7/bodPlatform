@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -20,12 +20,22 @@ import AgentAssignmentModal from "@/components/admin/AgentAssignmentModal";
 import ClientsModal from "@/components/admin/ClientsModal";
 import StatisticsCards from "@/components/admin/StatisticsCards";
 import { useSalesPersonManagement } from "@/hooks/useSalesPersonManagement";
+import { adminFetchers } from "@/lib/fetchers";
+import { toast } from "sonner";
 import { Users, UserCheck, Building2 } from "lucide-react";
 
 interface Agent {
   _id: string;
   name: string;
   email: string;
+  isActive: boolean;
+}
+
+interface AssignedAgent {
+  agentId: string;
+  agentName: string;
+  agentEmail: string;
+  assignedDate: string;
   isActive: boolean;
 }
 
@@ -36,6 +46,9 @@ interface Client {
   email: string;
   salesPersonId?: string;
   salesPersonName?: string;
+  agentId?: string;
+  agentIdString?: string;
+  agentName?: string;
   status?: string;
   notes?: string;
   dateAdded?: string;
@@ -72,28 +85,45 @@ export default function SalesExecutePage() {
 
   // Client modal state and management
   const [isViewClientsModalOpen, setIsViewClientsModalOpen] = useState(false);
-  const [clients, setClients] = useState<Client[]>([
-    {
-      _id: "c1",
-      name: "Client One",
-      phone: "+1-555-0201",
-      email: "client1@example.com",
-      salesPersonId: "sp1",
-      salesPersonName: "John Doe",
-      status: "active",
-      dateAdded: new Date().toISOString(),
-    },
-    {
-      _id: "c2",
-      name: "Client Two",
-      phone: "+1-555-0202",
-      email: "client2@example.com",
-      salesPersonId: "sp1",
-      salesPersonName: "John Doe",
-      status: "pending",
-      dateAdded: new Date().toISOString(),
-    },
-  ]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+
+  // Fetch real client data
+  const fetchClients = useCallback(async () => {
+    try {
+      setLoadingClients(true);
+      console.log("Fetching all insurance clients...");
+      
+      const response = await adminFetchers.getAllInsuranceClients();
+      console.log("Clients response:", response);
+      
+      // Transform client data to match expected interface
+      const transformedClients: Client[] = (response.data || []).map((client: any) => ({
+        _id: client._id,
+        name: client.name,
+        phone: client.phone,
+        email: client.email,
+        salesPersonId: client.agentId?._id || client.agentId, // Use agent ID for mapping
+        salesPersonName: client.agentId?.name || "Unassigned",
+        // Store both ObjectId and string version of agent ID for comparison
+        agentId: client.agentId?._id || client.agentId, // ObjectId version
+        agentIdString: client.agentId?._id?.toString() || client.agentId?.toString(), // String version
+        agentName: client.agentId?.name || "Unassigned",
+        status: client.status || "pending",
+        notes: client.notes || "",
+        dateAdded: client.createdAt || new Date().toISOString(),
+      }));
+      
+      console.log("Transformed clients:", transformedClients);
+      setClients(transformedClients);
+    } catch (error: any) {
+      console.error("Error fetching clients:", error);
+      toast.error("Failed to load clients");
+      setClients([]);
+    } finally {
+      setLoadingClients(false);
+    }
+  }, []);
 
   // Handle client updates from CSV upload
   const handleClientsUpdate = (updatedClients: Client[]) => {
@@ -106,8 +136,19 @@ export default function SalesExecutePage() {
   };
 
   useEffect(() => {
+    console.log("Sales Execute Page: Component mounted, fetching data...");
     fetchData();
-  }, [fetchData]);
+    fetchClients();
+  }, [fetchData, fetchClients]);
+
+  // Debug: Log when clients or salesPersons change
+  useEffect(() => {
+    console.log("Sales Execute Page: Clients updated:", clients.length, clients);
+  }, [clients]);
+
+  useEffect(() => {
+    console.log("Sales Execute Page: Sales persons updated:", salesPersons.length, salesPersons);
+  }, [salesPersons]);
 
   // Memoized table columns
   const columns: TableColumn<any>[] = useMemo(
@@ -126,7 +167,7 @@ export default function SalesExecutePage() {
         label: "Assigned Agents",
         type: "text",
         responsive: "lg",
-        render: (value: Agent[]) => (
+        render: (value: AssignedAgent[]) => (
           <span className="text-sm text-gray-600">
             {value.length > 0
               ? `${value.length} agent(s)`
@@ -140,12 +181,30 @@ export default function SalesExecutePage() {
         type: "text",
         responsive: "lg",
         render: (value: number, row: any) => {
-          const salesPersonClients = clients.filter(
-            (client) => client.salesPersonId === row._id
-          );
+          // Calculate total clients through assigned insurance agents
+          const assignedAgents = row.assignedAgents || [];
+          // Use agentId field from the embedded assignedAgents documents
+          const assignedAgentIds = assignedAgents.map((agent: any) => agent.agentId);
+          
+          console.log(`Sales Execute: Calculating clients for ${row.name}:`, {
+            assignedAgents: assignedAgents.length,
+            assignedAgentIds,
+            totalClients: clients.length,
+            clients: clients.map(c => ({ name: c.name, agentId: c.agentId, agentIdString: c.agentIdString }))
+          });
+          
+          // Count clients that belong to any of the assigned agents
+          // Try matching with both ObjectId and string versions
+          const totalClients = clients.filter((client) => 
+            assignedAgentIds.includes(client.agentId) || 
+            assignedAgentIds.includes(client.agentIdString)
+          ).length;
+          
+          console.log(`Sales Execute: Found ${totalClients} clients for ${row.name}`);
+          
           return (
             <span className="text-sm text-gray-600">
-              {salesPersonClients.length} client(s)
+              {totalClients} client(s)
             </span>
           );
         },
@@ -243,27 +302,7 @@ export default function SalesExecutePage() {
                 Manage sales persons and assign agents to them
               </p>
             </div>
-            <div className="flex space-x-4">
-              <button
-                onClick={handleViewAllClients}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  />
-                </svg>
-                <span>Manage Clients</span>
-              </button>
-            </div>
+            
           </div>
 
           {/* Statistics Cards */}

@@ -116,6 +116,7 @@ const SalesPersonForm: React.FC<SalesPersonFormProps> = ({
               onChange={handleFieldChange('email')}
               required
               sx={textFieldSx}
+              disabled={Boolean(editingPerson)}
             />
           </Box>
           <Box sx={{ mb: 3 }}>
@@ -126,7 +127,8 @@ const SalesPersonForm: React.FC<SalesPersonFormProps> = ({
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={handleFieldChange('password')}
-              required
+              required={!editingPerson}
+              placeholder={editingPerson ? "Leave blank to keep current password" : "Enter password"}
               sx={textFieldSx}
               InputProps={{
                 endAdornment: (
