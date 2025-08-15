@@ -586,8 +586,10 @@ export const adminFetchers = {
     return response.data;
   },
 
-  getInsuranceClientsByAgent: async (agentId: string) => {
-    const response = await Client.get(API_ENDPOINTS.INSURANCE_CLIENTS.BY_AGENT(agentId));
+  getInsuranceClientsByAgent: async (agentId: string, params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.INSURANCE_CLIENTS.BY_AGENT(agentId), {
+      params,
+    });
     return response.data;
   },
 

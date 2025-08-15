@@ -57,12 +57,16 @@ export const useSalesPersonManagement = () => {
     try {
       setLoading(true);
       
-      // Fetch sales persons
-      const salesPersonsResponse = await adminFetchers.getAdminSalesPersons();
+      // Fetch sales persons - get all records for client-side pagination
+      const salesPersonsResponse = await adminFetchers.getAdminSalesPersons({ 
+        limit: 1000, // Get all records for client-side pagination
+        page: 1 
+      });
       console.log("Sales persons response:", salesPersonsResponse);
       
       // Handle the response structure
       const salesPersonsData = salesPersonsResponse.salesPersons || salesPersonsResponse.data || [];
+      console.log("Sales persons data extracted:", salesPersonsData.length, salesPersonsData);
       setSalesPersons(salesPersonsData);
       
       // Fetch insurance agents dynamically

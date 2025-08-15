@@ -46,6 +46,14 @@ export interface StatCard {
   variant?: "primary" | "secondary" | "success" | "warning" | "danger";
 }
 
+export interface PaginationConfig {
+  enabled: boolean;
+  pageSize: number;
+  pageSizeOptions?: number[];
+  showPageInfo?: boolean;
+  showPageSizeSelector?: boolean;
+}
+
 export interface GenericTableProps<T = any> {
   data: T[];
   columns: TableColumn<T>[];
@@ -69,9 +77,172 @@ export interface GenericTableProps<T = any> {
   statCards?: StatCard[];
   tableHeight?: string; // Configurable table height
   enableTableScroll?: boolean; // Enable/disable table internal scrolling
+  pagination?: PaginationConfig; // Pagination configuration
 }
 
-// Action Dropdown Component
+// Pagination Component
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  pageSizeOptions: number[];
+  showPageInfo: boolean;
+  showPageSizeSelector: boolean;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  startIndex: number;
+  endIndex: number;
+}
+
+function Pagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  pageSizeOptions,
+  showPageInfo,
+  showPageSizeSelector,
+  onPageChange,
+  onPageSizeChange,
+  startIndex,
+  endIndex,
+}: PaginationProps) {
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
+  if (totalPages <= 1 && !showPageInfo && !showPageSizeSelector) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-6">
+          {/* Page Info */}
+          {showPageInfo && (
+            <div className="text-sm text-gray-700">
+              Showing <span className="font-medium">{startIndex}</span> to{' '}
+              <span className="font-medium">{endIndex}</span> of{' '}
+              <span className="font-medium">{totalItems}</span> results
+            </div>
+          )}
+          
+          {/* Page Size Selector */}
+          {showPageSizeSelector && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">Show:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => onPageSizeChange(Number(e.target.value))}
+                className="border border-gray-300 rounded-md text-sm px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {pageSizeOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <span className="text-sm text-gray-700">per page</span>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-1">
+            {/* Previous Button */}
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Previous
+            </button>
+
+            {/* Page Numbers */}
+            <div className="hidden sm:flex space-x-1">
+              {getPageNumbers().map((page, index) => (
+                <React.Fragment key={index}>
+                  {page === '...' ? (
+                    <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => onPageChange(page as number)}
+                      className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border rounded-md ${
+                        currentPage === page
+                          ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            {/* Mobile page indicator */}
+            <div className="sm:hidden">
+              <span className="text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 interface ActionDropdownProps<T> {
   actions: TableAction<T>[];
   row: T;
@@ -401,9 +572,18 @@ export function GenericTable<T extends Record<string, any>>({
   statCards,
   tableHeight = "auto",
   enableTableScroll = false,
+  pagination = {
+    enabled: false,
+    pageSize: 10,
+    pageSizeOptions: [5, 10, 25, 50, 100],
+    showPageInfo: true,
+    showPageSizeSelector: true,
+  },
 }: GenericTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(pagination.pageSize);
 
   // Close dropdown when clicking outside or scrolling
   useEffect(() => {
@@ -441,6 +621,7 @@ export function GenericTable<T extends Record<string, any>>({
   // Handle search
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
     if (onSearch) {
       onSearch(value);
     }
@@ -458,6 +639,38 @@ export function GenericTable<T extends Record<string, any>>({
       });
     });
   }, [data, searchTerm, columns, onSearch]);
+
+  // Pagination calculations
+  const totalItems = filteredData.length;
+  const totalPages = pagination.enabled ? Math.ceil(totalItems / pageSize) : 1;
+  const startIndex = pagination.enabled ? (currentPage - 1) * pageSize + 1 : 1;
+  const endIndex = pagination.enabled ? Math.min(currentPage * pageSize, totalItems) : totalItems;
+  
+  // Get current page data
+  const paginatedData = useMemo(() => {
+    if (!pagination.enabled) return filteredData;
+    
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredData.slice(start, end);
+  }, [filteredData, currentPage, pageSize, pagination.enabled]);
+
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when page size changes
+  };
+
+  // Reset current page when data changes
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // Get responsive classes for columns
   const getColumnClasses = (column: TableColumn) => {
@@ -614,7 +827,8 @@ export function GenericTable<T extends Record<string, any>>({
             </div>
             {searchTerm && !onSearch && (
               <p className="mt-2 text-sm text-gray-600">
-                Showing {filteredData.length} of {data.length} results
+                Showing {paginatedData.length} of {filteredData.length} results
+                {pagination.enabled && ` (Page ${currentPage} of ${totalPages})`}
               </p>
             )}
           </div>
@@ -647,7 +861,7 @@ export function GenericTable<T extends Record<string, any>>({
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.length === 0 ? (
+                {paginatedData.length === 0 ? (
                   <tr>
                     <td
                       colSpan={columns.length + 1}
@@ -675,10 +889,13 @@ export function GenericTable<T extends Record<string, any>>({
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((row, index) => {
+                  paginatedData.map((row, index) => {
                     const rowClasses = typeof rowClassName === "function" 
                       ? rowClassName(row, index) 
                       : rowClassName;
+                    
+                    // Calculate global index for serial numbers
+                    const globalIndex = pagination.enabled ? (currentPage - 1) * pageSize + index : index;
                     
                     return (
                       <tr
@@ -688,7 +905,7 @@ export function GenericTable<T extends Record<string, any>>({
                       >
                         {/* Serial Number */}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {index + 1}
+                          {globalIndex + 1}
                         </td>
                         {columns.map((column) => (
                           <td
@@ -707,6 +924,23 @@ export function GenericTable<T extends Record<string, any>>({
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination */}
+          {pagination.enabled && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              pageSizeOptions={pagination.pageSizeOptions || [5, 10, 25, 50, 100]}
+              showPageInfo={pagination.showPageInfo !== false}
+              showPageSizeSelector={pagination.showPageSizeSelector !== false}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              startIndex={Math.min(startIndex, totalItems)}
+              endIndex={Math.min(endIndex, totalItems)}
+            />
+          )}
         </div>
       </div>
     </div>

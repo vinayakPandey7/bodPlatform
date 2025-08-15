@@ -175,6 +175,13 @@ export default function InsuranceAgentsPage() {
             onRowClick={handleViewClients}
             tableHeight="auto"
             enableTableScroll={false}
+            pagination={{
+              enabled: true,
+              pageSize: 10,
+              pageSizeOptions: [5, 10, 25, 50],
+              showPageInfo: true,
+              showPageSizeSelector: true,
+            }}
           />
 
           {/* Add/Edit Insurance Agent Modal */}

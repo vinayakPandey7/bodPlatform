@@ -320,6 +320,13 @@ export default function SalesExecutePage() {
             addButton={{ label: "ADD SALES PERSON", onClick: handleAdd }}
             tableHeight="auto"
             enableTableScroll={false}
+            pagination={{
+              enabled: true,
+              pageSize: 10,
+              pageSizeOptions: [5, 10, 25, 50],
+              showPageInfo: true,
+              showPageSizeSelector: true,
+            }}
           />
 
           {/* Modals */}

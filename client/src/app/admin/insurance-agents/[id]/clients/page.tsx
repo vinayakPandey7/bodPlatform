@@ -113,7 +113,7 @@ export default function AgentClientsPage() {
       setAgent(agentResponse.data);
 
       // Fetch clients for this agent using the proper fetcher
-      const clientsData = await adminFetchers.getInsuranceClientsByAgent(agentId);
+      const clientsData = await adminFetchers.getInsuranceClientsByAgent(agentId, { limit: 1000, page: 1 });
       const formattedClients = clientsData.data?.map((client: any) => ({
         ...client,
         // Map backend fields to UI expected fields for compatibility
@@ -413,6 +413,13 @@ export default function AgentClientsPage() {
             addButton={{ label: "ADD CLIENT", onClick: handleAdd }}
             tableHeight="auto"
             enableTableScroll={false}
+            pagination={{
+              enabled: true,
+              pageSize: 15,
+              pageSizeOptions: [10, 15, 25, 50, 100],
+              showPageInfo: true,
+              showPageSizeSelector: true,
+            }}
           />
 
           {/* Modals */}
