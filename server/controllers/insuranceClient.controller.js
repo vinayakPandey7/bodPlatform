@@ -351,20 +351,25 @@ const importClientsCSV = async (req, res) => {
         throw new Error('Failed to download CSV file from Cloudinary');
       }
 
-      // Use await with Promise to properly handle async operations
-      const result = await new Promise((resolve, reject) => {
-        response.data
-          .pipe(csv())
-          .on('data', (data) => {
-            lineNumber++;
-            try {
-              console.log(`Processing line ${lineNumber}:`, data); // Debug log
+      // Use Promise.race to handle timeout issues
+      const result = await Promise.race([
+        new Promise((resolve, reject) => {
+          let hasResolved = false;
+          
+          response.data
+            .pipe(csv())
+            .on('data', (data) => {
+              if (hasResolved) return; // Prevent processing if already resolved
               
-              // Skip empty rows
-              if (!data.name && !data.email && !data.phone) {
-                console.log(`Skipping empty row at line ${lineNumber}`);
-                return;
-              }
+              lineNumber++;
+              try {
+                console.log(`Processing line ${lineNumber}:`, data); // Debug log
+                
+                // Skip empty rows
+                if (!data.name && !data.email && !data.phone) {
+                  console.log(`Skipping empty row at line ${lineNumber}`);
+                  return;
+                }
 
               // Validate required fields
               if (!data.name || !data.email || !data.phone) {
@@ -463,26 +468,40 @@ const importClientsCSV = async (req, res) => {
 
               console.log(`Import completed: ${successCount} imported, ${skipCount} skipped, ${errors.length} errors`);
 
-              resolve({
-                success: true,
-                data: {
-                  imported: successCount,
-                  skipped: skipCount,
-                  errors: errors.length,
-                  errorDetails: errors
-                },
-                message: `Successfully imported ${successCount} clients. ${skipCount} skipped (duplicates). ${errors.length} errors.`
-              });
+              if (!hasResolved) {
+                hasResolved = true;
+                resolve({
+                  success: true,
+                  data: {
+                    imported: successCount,
+                    skipped: skipCount,
+                    errors: errors.length,
+                    errorDetails: errors
+                  },
+                  message: `Successfully imported ${successCount} clients. ${skipCount} skipped (duplicates). ${errors.length} errors.`
+                });
+              }
             } catch (error) {
-              console.error('Error processing CSV data:', error);
-              reject(error);
+              if (!hasResolved) {
+                hasResolved = true;
+                console.error('Error processing CSV data:', error);
+                reject(error);
+              }
             }
           })
           .on('error', (error) => {
-            console.error('Error reading CSV stream:', error);
-            reject(error);
+            if (!hasResolved) {
+              hasResolved = true;
+              console.error('Error reading CSV stream:', error);
+              reject(error);
+            }
           });
-      });
+        }),
+        // Timeout after 3 minutes to prevent hanging requests
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('CSV processing timeout')), 180000)
+        )
+      ]);
 
       // Send successful response after Promise resolves
       return res.status(200).json(result);
@@ -508,10 +527,18 @@ const importClientsCSV = async (req, res) => {
     }
   } catch (error) {
     console.error('Error importing clients:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Environment check:', {
+      cloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: !!process.env.CLOUDINARY_API_KEY,
+      apiSecret: !!process.env.CLOUDINARY_API_SECRET,
+      nodeEnv: process.env.NODE_ENV
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to import clients',
-      error: error.message
+      error: error.message,
+      debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
