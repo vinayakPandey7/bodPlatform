@@ -5,6 +5,21 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { adminFetchers } from "@/lib/fetchers";
 import { toast } from "sonner";
 import PhoneNumberInput from "@/components/PhoneNumberInput";
+import {
+  GenericTable,
+  TableColumn,
+  TableAction,
+  StatCard,
+} from "@/components/GenericTable";
+import {
+  statusBadgeConfig,
+  createNameColumn,
+  createEmailColumn,
+  createActionsColumn,
+  createEditAction,
+  createViewAction,
+  createDeleteAction,
+} from "@/components/table/tableUtils";
 
 interface RecruitmentPartner {
   _id: string;
@@ -71,7 +86,6 @@ const PartnerFormModal = ({
   onSave,
   mode,
 }: PartnerFormModalProps) => {
-  console.log("cvbbcvb", partner);
   const [formData, setFormData] = useState({
     ownerName: "",
     companyName: "",
@@ -93,7 +107,7 @@ const PartnerFormModal = ({
       setFormData({
         ownerName: partner.ownerName,
         companyName: partner.companyName,
-        email: partner.user.email,
+        email: partner.user?.email || "",
         phoneNumber: partner.phoneNumber,
         address: partner.address,
         city: partner.city,
@@ -182,7 +196,6 @@ const PartnerFormModal = ({
 
   if (!isOpen) return null;
 
-  console.log("cxvxc", formData);
   return (
     <div className="fixed inset-0 bg-black/50 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
@@ -426,7 +439,6 @@ const PartnerFormModal = ({
 };
 
 const ProfileModal = ({ partner, isOpen, onClose }: ProfileModalProps) => {
-  console.log("xvxvxcv", partner);
   if (!isOpen || !partner) return null;
 
   return (
@@ -480,7 +492,7 @@ const ProfileModal = ({ partner, isOpen, onClose }: ProfileModalProps) => {
                   Email
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {partner.user.email}
+                  {partner.user?.email || "No email"}
                 </p>
               </div>
               <div>
@@ -576,7 +588,6 @@ export default function AdminRecruitmentPartnersPage() {
   const [partners, setPartners] = useState<RecruitmentPartner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedPartner, setSelectedPartner] =
     useState<RecruitmentPartner | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -584,32 +595,10 @@ export default function AdminRecruitmentPartnersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPartner, setEditingPartner] =
     useState<RecruitmentPartner | null>(null);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPartners();
   }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (activeDropdown) {
-        const target = event.target as Element;
-        const dropdownElement = document.querySelector(
-          `[data-dropdown-id="${activeDropdown}"]`
-        );
-
-        if (dropdownElement && !dropdownElement.contains(target)) {
-          setActiveDropdown(null);
-        }
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [activeDropdown]);
 
   const fetchPartners = async () => {
     try {
@@ -639,25 +628,22 @@ export default function AdminRecruitmentPartnersPage() {
     }
   };
 
-  const handleToggleStatus = async (partnerId: string) => {
+  const handleToggleStatus = async (partner: RecruitmentPartner) => {
     try {
-      const partner = partners.find((emp) => emp._id === partnerId);
-      if (!partner) return;
-
       const newStatus = !partner.isApproved;
 
       if (newStatus) {
-        await adminFetchers.approveRecruitmentPartner(partnerId);
+        await adminFetchers.approveRecruitmentPartner(partner._id);
       } else {
         // For deactivating, we'll update the partner directly
-        await adminFetchers.updateRecruitmentPartner(partnerId, {
+        await adminFetchers.updateRecruitmentPartner(partner._id, {
           isApproved: false,
         });
       }
 
       setPartners(
         partners.map((emp) =>
-          emp._id === partnerId ? { ...emp, isApproved: newStatus } : emp
+          emp._id === partner._id ? { ...emp, isApproved: newStatus } : emp
         )
       );
 
@@ -672,13 +658,13 @@ export default function AdminRecruitmentPartnersPage() {
     }
   };
 
-  const handleDeletePartner = async (partnerId: string) => {
+  const handleDeletePartner = async (partner: RecruitmentPartner) => {
     if (!confirm("Are you sure you want to delete this recruitment partner?"))
       return;
 
     try {
-      await adminFetchers.deleteRecruitmentPartner(partnerId);
-      setPartners(partners.filter((emp) => emp._id !== partnerId));
+      await adminFetchers.deleteRecruitmentPartner(partner._id);
+      setPartners(partners.filter((emp) => emp._id !== partner._id));
       toast.success("Recruitment Partner deleted successfully!");
     } catch (err: any) {
       console.error("Error deleting recruitment partner:", err);
@@ -786,323 +772,124 @@ export default function AdminRecruitmentPartnersPage() {
     }
   };
 
-  const filteredPartners = partners?.filter(
-    (partner) =>
-      partner.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      partner.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      partner.user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Table columns configuration
+  const columns: TableColumn<RecruitmentPartner>[] = [
+    {
+      key: "ownerName",
+      label: "Owner Name",
+      type: "text",
+      responsive: "always",
+      searchable: true,
+    },
+    {
+      key: "companyName",
+      label: "Company Name",
+      type: "text",
+      responsive: "always",
+      searchable: true,
+    },
+    {
+      key: "email",
+      label: "Email",
+      type: "text",
+      responsive: "md",
+      searchable: true,
+      width: "64",
+      className: "truncate",
+      render: (value: any, row: RecruitmentPartner) => row.user?.email || "No email",
+    },
+    {
+      key: "isApproved",
+      label: "Status",
+      type: "badge",
+      responsive: "always",
+      badgeConfig: statusBadgeConfig,
+    },
+    createActionsColumn(),
+  ];
 
-  // Debug logging
-  console.log("Total partners:", partners);
-  console.log("Filtered partners:", filteredPartners.length);
+  // Table actions configuration
+  const actions: TableAction<RecruitmentPartner>[] = [
+    createEditAction(handleEditPartner),
+    createViewAction(handleViewProfile),
+    {
+      label: "Toggle Status",
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      onClick: handleToggleStatus,
+      variant: "warning",
+    },
+    createDeleteAction(handleDeletePartner),
+  ];
 
-  if (loading) {
-    return (
-      <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
-        <DashboardLayout>
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="relative">
-                <div className="flex items-center justify-center space-x-2 mb-4">
-                  <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                </div>
-              </div>
-              <p className="text-lg font-medium text-gray-600 mt-4">
-                Loading Recruitment Partners...
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Please wait while we fetch partner data
-              </p>
-            </div>
-          </div>
-        </DashboardLayout>
-      </ProtectedRoute>
-    );
-  }
+  // Statistics
+  const totalPartners = partners.length;
+  const activePartners = partners.filter(partner => partner.isApproved).length;
+  const pendingPartners = partners.filter(partner => !partner.isApproved).length;
+
+  // Statistics cards
+  const statCards: StatCard[] = [
+    {
+      title: "Total Partners",
+      value: totalPartners,
+      subtitle: "All registered",
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      variant: "primary",
+    },
+    {
+      title: "Active",
+      value: activePartners,
+      subtitle: "Approved partners",
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      variant: "success",
+    },
+    {
+      title: "Pending",
+      value: pendingPartners,
+      subtitle: "Awaiting approval",
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      variant: "warning",
+    },
+  ];
 
   return (
     <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
       <DashboardLayout>
-        <div className="min-h-screen">
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Recruitment Partner Management
-              </h1>
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                onClick={handleAddNew}
-              >
-                ADD NEW
-              </button>
-            </div>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
-
-            {/* Search Bar */}
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="relative max-w-md">
-                <input
-                  type="text"
-                  placeholder="Search employers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="bg-white shadow rounded-lg overflow-hidden min-h-[600px]">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="w-16 px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        S.No
-                      </th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Owner Name
-                      </th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Company Name
-                      </th>
-                      <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Email
-                      </th>
-                      {/* <th className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Job Posting
-                      </th> */}
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredPartners.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={6}
-                          className="px-6 py-4 text-center text-gray-500"
-                        >
-                          No recruitment partners found matching your search.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredPartners.map((recruitmentPartner, index) => (
-                        <tr
-                          key={recruitmentPartner._id}
-                          className="hover:bg-gray-50"
-                        >
-                          <td className="w-16 px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                            {index + 1}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
-                            {recruitmentPartner.ownerName}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                            {recruitmentPartner.companyName}
-                          </td>
-                          <td className="w-64 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                            {recruitmentPartner.user.email}
-                          </td>
-                          {/* <td className="w-32 px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                            {employer.jobPosting}
-                          </td> */}
-                          <td className="w-48 px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-wrap gap-1">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  recruitmentPartner.isApproved
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {recruitmentPartner.isApproved
-                                  ? "Active"
-                                  : "Deactivated"}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="w-40 px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div
-                              className="relative"
-                              data-dropdown-id={recruitmentPartner._id}
-                            >
-                              <button
-                                onClick={() =>
-                                  setActiveDropdown(
-                                    activeDropdown === recruitmentPartner._id
-                                      ? null
-                                      : recruitmentPartner._id
-                                  )
-                                }
-                                className="text-gray-400 hover:text-gray-600 p-2 rounded hover:bg-gray-50 transition-colors"
-                                title="Actions"
-                              >
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                </svg>
-                              </button>
-
-                              {activeDropdown === recruitmentPartner._id && (
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                                  <div className="py-1">
-                                    <button
-                                      onClick={() => {
-                                        handleEditPartner(recruitmentPartner);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-blue-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                        />
-                                      </svg>
-                                      Edit Recruiter
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        handleViewProfile(recruitmentPartner);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-green-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                        />
-                                      </svg>
-                                      View Profile
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        handleToggleStatus(
-                                          recruitmentPartner._id
-                                        );
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-yellow-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                        />
-                                      </svg>
-                                      {recruitmentPartner.isApproved
-                                        ? "Deactivate"
-                                        : "Activate"}
-                                    </button>
-
-                                    <div className="border-t border-gray-100 my-1"></div>
-
-                                    <button
-                                      onClick={() => {
-                                        handleDeletePartner(
-                                          recruitmentPartner._id
-                                        );
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-red-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                        />
-                                      </svg>
-                                      Delete Employer
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+        <GenericTable
+          data={partners}
+          columns={columns}
+          actions={actions}
+          loading={loading}
+          error={error || null}
+          title="Recruitment Partner Management"
+          searchPlaceholder="Search recruitment partners..."
+          addButton={{ label: "ADD NEW", onClick: handleAddNew }}
+          statCards={statCards}
+          tableHeight="auto"
+          enableTableScroll={false}
+          pagination={{
+            enabled: true,
+            pageSize: 15,
+            pageSizeOptions: [10, 15, 25, 50, 100],
+            showPageInfo: true,
+            showPageSizeSelector: true,
+          }}
+        />
 
         {/* Profile Modal */}
         <ProfileModal
@@ -1111,7 +898,7 @@ export default function AdminRecruitmentPartnersPage() {
           onClose={() => setIsModalOpen(false)}
         />
 
-        {/* Add Employer Modal */}
+        {/* Add Partner Modal */}
         <PartnerFormModal
           partner={null}
           isOpen={isAddModalOpen}
@@ -1120,7 +907,7 @@ export default function AdminRecruitmentPartnersPage() {
           mode="add"
         />
 
-        {/* Edit Employer Modal */}
+        {/* Edit Partner Modal */}
         <PartnerFormModal
           partner={editingPartner}
           isOpen={isEditModalOpen}

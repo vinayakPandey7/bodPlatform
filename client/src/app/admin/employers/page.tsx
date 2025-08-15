@@ -5,6 +5,21 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useEmployers } from "@/lib/hooks/employer.hooks";
 import { adminFetchers } from "@/lib/fetchers";
 import { toast } from "sonner";
+import {
+  GenericTable,
+  TableColumn,
+  TableAction,
+  StatCard,
+} from "@/components/GenericTable";
+import {
+  statusBadgeConfig,
+  createNameColumn,
+  createEmailColumn,
+  createActionsColumn,
+  createEditAction,
+  createViewAction,
+  createDeleteAction,
+} from "@/components/table/tableUtils";
 
 interface Employer {
   _id: string;
@@ -84,7 +99,7 @@ const EmployerFormModal = ({
       setFormData({
         ownerName: employer.ownerName,
         companyName: employer.companyName,
-        email: employer.user.email,
+        email: employer.user?.email || "",
         phoneNumber: employer.phoneNumber,
         address: employer.address,
         city: employer.city,
@@ -171,7 +186,6 @@ const EmployerFormModal = ({
     }
   };
 
-  console.log("fdfdsdfsg", formData);
   if (!isOpen) return null;
 
   return (
@@ -472,7 +486,7 @@ const ProfileModal = ({ employer, isOpen, onClose }: ProfileModalProps) => {
                   Email
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {employer.user.email}
+                  {employer.user?.email || "No email"}
                 </p>
               </div>
               <div>
@@ -542,7 +556,9 @@ const ProfileModal = ({ employer, isOpen, onClose }: ProfileModalProps) => {
                 Registered Date
               </label>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(employer.user.createdAt).toLocaleDateString()}
+                {employer.user?.createdAt
+                  ? new Date(employer.user.createdAt).toLocaleDateString()
+                  : "No date available"}
               </p>
             </div>
           </div>
@@ -565,7 +581,6 @@ export default function AdminEmployersPage() {
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmployer, setSelectedEmployer] = useState<Employer | null>(
     null
   );
@@ -573,32 +588,10 @@ export default function AdminEmployersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingEmployer, setEditingEmployer] = useState<Employer | null>(null);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEmployers();
   }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (activeDropdown) {
-        const target = event.target as Element;
-        const dropdownElement = document.querySelector(
-          `[data-dropdown-id="${activeDropdown}"]`
-        );
-
-        if (dropdownElement && !dropdownElement.contains(target)) {
-          setActiveDropdown(null);
-        }
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [activeDropdown]);
 
   const fetchEmployers = async () => {
     try {
@@ -626,23 +619,20 @@ export default function AdminEmployersPage() {
     }
   };
 
-  const handleToggleStatus = async (employerId: string) => {
+  const handleToggleStatus = async (employer: Employer) => {
     try {
-      const employer = employers.find((emp) => emp._id === employerId);
-      if (!employer) return;
-
       const newStatus = !employer.isApproved;
 
       if (newStatus) {
-        await adminFetchers.approveEmployer(employerId);
+        await adminFetchers.approveEmployer(employer._id);
       } else {
         // For deactivating, we'll update the employer directly
-        await adminFetchers.updateEmployer(employerId, { isApproved: false });
+        await adminFetchers.updateEmployer(employer._id, { isApproved: false });
       }
 
       setEmployers(
         employers.map((emp) =>
-          emp._id === employerId ? { ...emp, isApproved: newStatus } : emp
+          emp._id === employer._id ? { ...emp, isApproved: newStatus } : emp
         )
       );
 
@@ -655,12 +645,12 @@ export default function AdminEmployersPage() {
     }
   };
 
-  const handleDeleteEmployer = async (employerId: string) => {
+  const handleDeleteEmployer = async (employer: Employer) => {
     if (!confirm("Are you sure you want to delete this employer?")) return;
 
     try {
-      await adminFetchers.deleteEmployer(employerId);
-      setEmployers(employers.filter((emp) => emp._id !== employerId));
+      await adminFetchers.deleteEmployer(employer._id);
+      setEmployers(employers.filter((emp) => emp._id !== employer._id));
       toast.success("Employer deleted successfully!");
     } catch (err: any) {
       console.error("Error deleting employer:", err);
@@ -756,317 +746,169 @@ export default function AdminEmployersPage() {
     }
   };
 
-  // Debug logging
+  // Table columns configuration
+  const columns: TableColumn<Employer>[] = [
+    {
+      key: "ownerName",
+      label: "Owner Name",
+      type: "text",
+      responsive: "always",
+      searchable: true,
+    },
+    {
+      key: "companyName",
+      label: "Company Name",
+      type: "text",
+      responsive: "always",
+      searchable: true,
+    },
+    {
+      key: "email",
+      label: "Email",
+      type: "text",
+      responsive: "always",
+      searchable: true,
+      render: (value: any, row: Employer) => row.user?.email || "No email",
+    },
+    {
+      key: "jobPosting",
+      label: "Job Posting",
+      type: "text",
+      responsive: "lg",
+      render: (value: string) => <span className="capitalize">{value}</span>,
+    },
+    {
+      key: "isApproved",
+      label: "Status",
+      type: "badge",
+      responsive: "always",
+      badgeConfig: statusBadgeConfig,
+    },
+    createActionsColumn(),
+  ];
 
-  // console.log("Filtered employers:", filteredEmployers.length);
+  // Table actions configuration
+  const actions: TableAction<Employer>[] = [
+    createEditAction(handleEditEmployer),
+    createViewAction(handleViewProfile),
+    {
+      label: "Toggle Status",
+      icon: (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+      onClick: handleToggleStatus,
+      variant: "warning",
+    },
+    createDeleteAction(handleDeleteEmployer),
+  ];
 
-  const filteredEmployers = employers.filter(
-    (employer) =>
-      employer.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employer.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employer.user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Statistics
+  const totalEmployers = employers.length;
+  const activeEmployers = employers.filter((emp) => emp.isApproved).length;
+  const pendingEmployers = employers.filter((emp) => !emp.isApproved).length;
 
-  if (loading) {
-    return (
-      <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
-        <DashboardLayout>
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="relative">
-                <div className="flex items-center justify-center space-x-2 mb-4">
-                  <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                </div>
-              </div>
-              <p className="text-lg font-medium text-gray-600 mt-4">
-                Loading Employers...
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Please wait while we fetch employer data
-              </p>
-            </div>
-          </div>
-        </DashboardLayout>
-      </ProtectedRoute>
-    );
-  }
+  // Statistics cards
+  const statCards: StatCard[] = [
+    {
+      title: "Total Employers",
+      value: totalEmployers,
+      subtitle: "All registered",
+      icon: (
+        <svg
+          className="w-8 h-8"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+          />
+        </svg>
+      ),
+      variant: "primary",
+    },
+    {
+      title: "Active",
+      value: activeEmployers,
+      subtitle: "Approved employers",
+      icon: (
+        <svg
+          className="w-8 h-8"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+      variant: "success",
+    },
+    {
+      title: "Pending",
+      value: pendingEmployers,
+      subtitle: "Awaiting approval",
+      icon: (
+        <svg
+          className="w-8 h-8"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+      variant: "warning",
+    },
+  ];
 
   return (
     <ProtectedRoute allowedRoles={["admin", "sub_admin"]}>
       <DashboardLayout>
-        <div className="min-h-screen">
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Employer Management
-              </h1>
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                onClick={handleAddNew}
-              >
-                ADD NEW
-              </button>
-            </div>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
-
-            {/* Search Bar */}
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="relative max-w-md">
-                <input
-                  type="text"
-                  placeholder="Search employers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="bg-white shadow rounded-lg overflow-hidden min-h-[600px]">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="w-16 px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        S.No
-                      </th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Owner Name
-                      </th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Company Name
-                      </th>
-                      <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Job Posting
-                      </th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-1 sm:px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredEmployers.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={7}
-                          className="px-6 py-4 text-center text-gray-500"
-                        >
-                          No employers found matching your search.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredEmployers.map((employer, index) => (
-                        <tr key={employer._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {index + 1}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
-                            {employer.ownerName}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                            {employer.companyName}
-                          </td>
-                          <td className="w-64 px-6 py-4 whitespace-nowrap text-sm text-gray-900 truncate">
-                            {employer.user.email}
-                          </td>
-                          <td className="w-32 px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                            {employer.jobPosting}
-                          </td>
-                          <td className="w-48 px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-wrap gap-1">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  employer.isApproved
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {employer.isApproved ? "Active" : "Deactivated"}
-                              </span>
-                              {/* <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                Verified
-                              </span> */}
-                            </div>
-                          </td>
-                          <td className="w-40 px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div
-                              className="relative"
-                              data-dropdown-id={employer._id}
-                            >
-                              <button
-                                onClick={() =>
-                                  setActiveDropdown(
-                                    activeDropdown === employer._id
-                                      ? null
-                                      : employer._id
-                                  )
-                                }
-                                className="text-gray-400 hover:text-gray-600 p-2 rounded hover:bg-gray-50 transition-colors"
-                                title="Actions"
-                              >
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                </svg>
-                              </button>
-
-                              {activeDropdown === employer._id && (
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                                  <div className="py-1">
-                                    <button
-                                      onClick={() => {
-                                        handleEditEmployer(employer);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-blue-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                        />
-                                      </svg>
-                                      Edit Employer
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        handleViewProfile(employer);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-green-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                        />
-                                      </svg>
-                                      View Profile
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        handleToggleStatus(employer._id);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-yellow-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                        />
-                                      </svg>
-                                      {employer.isApproved
-                                        ? "Deactivate"
-                                        : "Activate"}
-                                    </button>
-
-                                    <div className="border-t border-gray-100 my-1"></div>
-
-                                    <button
-                                      onClick={() => {
-                                        handleDeleteEmployer(employer._id);
-                                        setActiveDropdown(null);
-                                      }}
-                                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 mr-3 text-red-500"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                        />
-                                      </svg>
-                                      Delete Employer
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+        <GenericTable
+          data={employers}
+          columns={columns}
+          actions={actions}
+          loading={loading}
+          error={error || null}
+          title="Employer Management"
+          searchPlaceholder="Search employers..."
+          addButton={{ label: "ADD NEW", onClick: handleAddNew }}
+          statCards={statCards}
+          tableHeight="auto"
+          enableTableScroll={false}
+          pagination={{
+            enabled: true,
+            pageSize: 15,
+            pageSizeOptions: [10, 15, 25, 50, 100],
+            showPageInfo: true,
+            showPageSizeSelector: true,
+          }}
+        />
 
         {/* Profile Modal */}
         <ProfileModal

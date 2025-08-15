@@ -30,7 +30,7 @@ const getCallStatusBadge = (status: SalesClient["callStatus"]) => {
     unpicked: { color: "error" as const, label: "Unpicked" },
   };
 
-  const config = statusConfig[status];
+  const config = statusConfig[status] || statusConfig.not_called;
   return <Chip label={config.label} color={config.color} size="small" />;
 };
 
@@ -78,7 +78,7 @@ export default function SalesAgentClientsPage() {
       responsive: "md",
       render: (value: SalesRemark[]) => (
         <Chip
-          label={`${value.length} remarks`}
+          label={`${value?.length || 0} remarks`}
           color="info"
           variant="outlined"
           size="small"
