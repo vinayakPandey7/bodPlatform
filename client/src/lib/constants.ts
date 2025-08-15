@@ -109,6 +109,7 @@ export const API_ENDPOINTS = {
     CREATE: "/insurance-clients",
     UPDATE: (id: string) => `/insurance-clients/${id}`,
     DELETE: (id: string) => `/insurance-clients/${id}`,
+    IMPORT_CSV: (agentId: string) => `/insurance-clients/agent/${agentId}/import-csv`,
   },
 
   // Notification endpoints

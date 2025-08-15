@@ -605,6 +605,18 @@ export const adminFetchers = {
     const response = await Client.delete(API_ENDPOINTS.INSURANCE_CLIENTS.DELETE(id));
     return response.data;
   },
+
+  importInsuranceClientsCSV: async (agentId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('csv', file);
+    
+    const response = await Client.post(API_ENDPOINTS.INSURANCE_CLIENTS.IMPORT_CSV(agentId), formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };
 
 // Notification fetchers
