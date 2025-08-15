@@ -293,14 +293,22 @@ const importClientsCSV = async (req, res) => {
       console.log('Downloading CSV from Cloudinary:', req.file.path);
       const response = await axios.get(req.file.path, {
         responseType: 'stream',
-        timeout: 30000, // 30 seconds timeout
+        timeout: process.env.NODE_ENV === 'production' ? 120000 : 60000, // 2 minutes in production
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; BOD-Platform/1.0)',
+          'Accept': '*/*',
+          'Connection': 'keep-alive'
+        },
+        maxRedirects: 5,
+        validateStatus: (status) => status >= 200 && status < 400
       });
 
       if (!response.data) {
         throw new Error('Failed to download CSV file from Cloudinary');
       }
 
-      return new Promise((resolve) => {
+      // Use await with Promise to properly handle async operations
+      const result = await new Promise((resolve, reject) => {
         response.data
           .pipe(csv())
           .on('data', (data) => {
@@ -393,7 +401,7 @@ const importClientsCSV = async (req, res) => {
 
               console.log(`Import completed: ${successCount} imported, ${skipCount} skipped, ${errors.length} errors`);
 
-              resolve(res.status(200).json({
+              resolve({
                 success: true,
                 data: {
                   imported: successCount,
@@ -402,31 +410,38 @@ const importClientsCSV = async (req, res) => {
                   errorDetails: errors
                 },
                 message: `Successfully imported ${successCount} clients. ${skipCount} skipped (duplicates). ${errors.length} errors.`
-              }));
+              });
             } catch (error) {
               console.error('Error processing CSV data:', error);
-              resolve(res.status(500).json({
-                success: false,
-                message: 'Failed to process CSV file',
-                error: error.message
-              }));
+              reject(error);
             }
           })
           .on('error', (error) => {
             console.error('Error reading CSV stream:', error);
-            resolve(res.status(500).json({
-              success: false,
-              message: 'Failed to read CSV file',
-              error: error.message
-            }));
+            reject(error);
           });
       });
+
+      // Send successful response after Promise resolves
+      return res.status(200).json(result);
     } catch (downloadError) {
-      console.error('Error downloading CSV from Cloudinary:', downloadError);
+      console.error('Error downloading CSV from Cloudinary:', {
+        message: downloadError.message,
+        status: downloadError.response?.status,
+        statusText: downloadError.response?.statusText,
+        cloudinaryUrl: req.file?.path,
+        headers: downloadError.response?.headers
+      });
       return res.status(500).json({
         success: false,
         message: 'Failed to download CSV file from storage',
-        error: downloadError.message
+        error: downloadError.message,
+        details: {
+          fileReceived: !!req.file,
+          hasCloudinaryUrl: !!req.file?.path,
+          httpStatus: downloadError.response?.status,
+          errorType: 'cloudinary_download_failed'
+        }
       });
     }
   } catch (error) {
