@@ -15,6 +15,7 @@ const {
 router.post("/register", authController.register); // Temporarily remove validation
 router.post("/register/employer", authController.registerEmployer); // New dedicated employer registration
 router.post("/register/candidate", authController.registerCandidate); // New dedicated candidate registration
+router.post("/register/recruitment-partner", authController.registerRecruitmentPartner); // New dedicated recruitment partner registration
 router.post("/register/sales-person", authController.registerSalesPerson); // New dedicated sales person registration
 router.post("/login", validate(loginSchema), authController.login);
 router.post("/logout", authController.logout);
