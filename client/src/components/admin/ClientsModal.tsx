@@ -292,6 +292,13 @@ const ClientsModal: React.FC<ClientsModalProps> = ({
           emptyMessage="No clients found. Upload a CSV file to add clients."
           tableHeight="400px"
           enableTableScroll={true}
+          pagination={{
+            enabled: true,
+            pageSize: 20,
+            pageSizeOptions: [10, 20, 50, 100],
+            showPageInfo: true,
+            showPageSizeSelector: true,
+          }}
         />
       </DialogContent>
     </Dialog>

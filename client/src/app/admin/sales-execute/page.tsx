@@ -175,40 +175,40 @@ export default function SalesExecutePage() {
           </span>
         ),
       },
-      {
-        key: "clientsCount",
-        label: "Clients",
-        type: "text",
-        responsive: "lg",
-        render: (value: number, row: any) => {
-          // Calculate total clients through assigned insurance agents
-          const assignedAgents = row.assignedAgents || [];
-          // Use agentId field from the embedded assignedAgents documents
-          const assignedAgentIds = assignedAgents.map((agent: any) => agent.agentId);
+      // {
+      //   key: "clientsCount",
+      //   label: "Clients",
+      //   type: "text",
+      //   responsive: "lg",
+      //   render: (value: number, row: any) => {
+      //     // Calculate total clients through assigned insurance agents
+      //     const assignedAgents = row.assignedAgents || [];
+      //     // Use agentId field from the embedded assignedAgents documents
+      //     const assignedAgentIds = assignedAgents.map((agent: any) => agent.agentId);
           
-          console.log(`Sales Execute: Calculating clients for ${row.name}:`, {
-            assignedAgents: assignedAgents.length,
-            assignedAgentIds,
-            totalClients: clients.length,
-            clients: clients.map(c => ({ name: c.name, agentId: c.agentId, agentIdString: c.agentIdString }))
-          });
+      //     console.log(`Sales Execute: Calculating clients for ${row.name}:`, {
+      //       assignedAgents: assignedAgents.length,
+      //       assignedAgentIds,
+      //       totalClients: clients.length,
+      //       clients: clients.map(c => ({ name: c.name, agentId: c.agentId, agentIdString: c.agentIdString }))
+      //     });
           
-          // Count clients that belong to any of the assigned agents
-          // Try matching with both ObjectId and string versions
-          const totalClients = clients.filter((client) => 
-            assignedAgentIds.includes(client.agentId) || 
-            assignedAgentIds.includes(client.agentIdString)
-          ).length;
+      //     // Count clients that belong to any of the assigned agents
+      //     // Try matching with both ObjectId and string versions
+      //     const totalClients = clients.filter((client) => 
+      //       assignedAgentIds.includes(client.agentId) || 
+      //       assignedAgentIds.includes(client.agentIdString)
+      //     ).length;
           
-          console.log(`Sales Execute: Found ${totalClients} clients for ${row.name}`);
+      //     console.log(`Sales Execute: Found ${totalClients} clients for ${row.name}`);
           
-          return (
-            <span className="text-sm text-gray-600">
-              {totalClients} client(s)
-            </span>
-          );
-        },
-      },
+      //     return (
+      //       <span className="text-sm text-gray-600">
+      //         {totalClients} client(s)
+      //       </span>
+      //     );
+      //   },
+      // },
       createActionsColumn(),
     ],
     [clients]
@@ -320,6 +320,13 @@ export default function SalesExecutePage() {
             addButton={{ label: "ADD SALES PERSON", onClick: handleAdd }}
             tableHeight="auto"
             enableTableScroll={false}
+            pagination={{
+              enabled: true,
+              pageSize: 10,
+              pageSizeOptions: [5, 10, 25, 50],
+              showPageInfo: true,
+              showPageSizeSelector: true,
+            }}
           />
 
           {/* Modals */}

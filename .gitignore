@@ -1,0 +1,3 @@
+# Debugging and test files
+server/check-sales-user.js
+server/test-clients.js

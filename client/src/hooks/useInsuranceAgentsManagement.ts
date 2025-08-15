@@ -34,7 +34,7 @@ export const useInsuranceAgentsManagement = () => {
     refetch,
   } = useQuery({
     queryKey: QUERY_KEYS.INSURANCE_AGENTS.LIST(),
-    queryFn: () => adminFetchers.getInsuranceAgents(),
+    queryFn: () => adminFetchers.getInsuranceAgents({ limit: 1000, page: 1 }),
     select: (data) => data.data || [],
   });
 

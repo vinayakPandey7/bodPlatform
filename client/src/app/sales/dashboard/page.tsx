@@ -62,7 +62,7 @@ export default function SalesDashboard() {
       // Fetch both profile and assigned agents
       const [profileResponse, agentsResponse] = await Promise.all([
         adminFetchers.getMySalesPersonProfile(),
-        adminFetchers.getMyAssignedAgents(),
+        adminFetchers.getMyAssignedAgents({ limit: 1000, page: 1 }),
       ]);
 
       console.log("Profile response:", profileResponse);
@@ -328,20 +328,134 @@ export default function SalesDashboard() {
             </div>
           </div>
 
-          {/* Assigned Insurance Agents Table */}
-          <GenericTable
-            data={assignedAgents}
-            columns={columns}
-            actions={actions}
-            loading={loading}
-            error={error}
-            title="Your Assigned Insurance Agents"
-            searchPlaceholder="Search agents..."
-            onRowClick={handleViewClients}
-            tableHeight="auto"
-            enableTableScroll={false}
-          />
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-xl shadow-lg bg-gradient-to-br from-purple-500 to-purple-600">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">
+                  Total Clients
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalClients}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-yellow-500 bg-opacity-10">
+                <svg
+                  className="w-6 h-6 text-yellow-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">
+                  Pending Calls
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalPending}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-green-500 bg-opacity-10">
+                <svg
+                  className="w-6 h-6 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">
+                  Completion Rate
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {completionRate}%
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => {
+                if (assignedAgents.length > 0) {
+                  router.push(`/sales/agents/${assignedAgents[0]._id}/clients`);
+                }
+              }}
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+              disabled={assignedAgents.length === 0}
+            >
+              <h3 className="font-medium text-gray-900">Start Calling</h3>
+              <p className="text-sm text-gray-600">
+                Begin calling clients from your assigned agents
+              </p>
+            </button>
+            <button
+              onClick={() => {
+                // Could implement a report or summary view
+                toast.info("Reports feature coming soon!");
+              }}
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+            >
+              <h3 className="font-medium text-gray-900">View Reports</h3>
+              <p className="text-sm text-gray-600">
+                Check your calling performance and statistics
+              </p>
+            </button>
+          </div>
+        </div>
+
+        {/* Assigned Insurance Agents Table */}
+        <GenericTable
+          data={assignedAgents}
+          columns={columns}
+          actions={actions}
+          loading={loading}
+          error={error}
+          title="Your Assigned Insurance Agents"
+          searchPlaceholder="Search agents..."
+          onRowClick={handleViewClients}
+          tableHeight="auto"
+          enableTableScroll={false}
+          pagination={{
+            enabled: true,
+            pageSize: 10,
+            pageSizeOptions: [5, 10, 25, 50],
+            showPageInfo: true,
+            showPageSizeSelector: true,
+          }}
+        />
       </DashboardLayout>
     </ProtectedRoute>
   );

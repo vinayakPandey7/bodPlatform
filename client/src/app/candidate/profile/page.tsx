@@ -138,12 +138,7 @@ export default function CandidateProfilePage() {
     }
   }, []);
 
-  // Debug user data
-  useEffect(() => {
-    console.log("Candidate User data:", currentUserData);
-    console.log("Candidate User loading:", userLoading);
-    console.log("Candidate User error:", userError);
-  }, [currentUserData, userLoading, userError]);
+
 
   if (isLoading) {
     return (
@@ -225,6 +220,8 @@ export default function CandidateProfilePage() {
     resume: null,
   };
 
+
+
   const handleViewResume = () => {
     setShowResumeModal(true);
   };
@@ -284,8 +281,6 @@ export default function CandidateProfilePage() {
 
       uploadProfilePicture(file, {
         onSuccess: (data) => {
-          console.log("Profile picture uploaded to Cloudinary:", data);
-          console.log("Current profile before update:", profile);
 
           const updatedPersonalInfo = {
             ...profile.personalInfo,
@@ -298,7 +293,6 @@ export default function CandidateProfilePage() {
             },
           };
 
-          console.log("Updated personal info:", updatedPersonalInfo);
 
           updateProfile({
             personalInfo: updatedPersonalInfo,
@@ -342,8 +336,6 @@ export default function CandidateProfilePage() {
 
       uploadProfilePicture(file, {
         onSuccess: (data) => {
-          console.log("Profile picture uploaded to Cloudinary:", data);
-          console.log("Current profile before update:", profile);
 
           const updatedPersonalInfo = {
             ...profile.personalInfo,
@@ -356,7 +348,6 @@ export default function CandidateProfilePage() {
             },
           };
 
-          console.log("Updated personal info:", updatedPersonalInfo);
 
           updateProfile({
             personalInfo: updatedPersonalInfo,
@@ -607,7 +598,7 @@ export default function CandidateProfilePage() {
         body: JSON.stringify({
           ...referralForm,
           candidateName: `${profile.personalInfo?.firstName || ''} ${profile.personalInfo?.lastName || ''}`.trim(),
-          candidateEmail: profile.email || user?.email || '',
+          candidateEmail: profile.personalInfo?.email || userData?.email || '',
         }),
       });
 
@@ -781,7 +772,6 @@ export default function CandidateProfilePage() {
       // Upload to Cloudinary
       uploadResumeToCloudinary(file, {
         onSuccess: (data) => {
-          console.log("Resume uploaded to Cloudinary:", data);
           // Update profile with the resume data
           updateProfile(
             {
@@ -850,7 +840,6 @@ export default function CandidateProfilePage() {
       // Upload to Cloudinary
       uploadResumeToCloudinary(file, {
         onSuccess: (data) => {
-          console.log("Resume uploaded to Cloudinary:", data);
           // Update profile with the resume data
           updateProfile(
             {
@@ -924,7 +913,6 @@ export default function CandidateProfilePage() {
   //   }
   // };
 
-  console.log("profileprofile", profile);
 
   // FAQ data
   const faqData = [
@@ -1242,7 +1230,7 @@ export default function CandidateProfilePage() {
                       </div>
                     </div>
 
-                    {profile.resume ? (
+                    {profile.resume && profile.resume.cloudinaryUrl && profile.resume.originalName ? (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
                           <div className="flex items-center space-x-3">
@@ -1295,14 +1283,29 @@ export default function CandidateProfilePage() {
                       >
                         <div className="space-y-4">
                           <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                            <Upload className="h-6 w-6 text-gray-400" />
+                            {isUploadingAny ? (
+                              <Loader className="h-6 w-6 text-blue-600 animate-spin" />
+                            ) : (
+                              <Upload className="h-6 w-6 text-gray-400" />
+                            )}
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">
-                              <label className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium">
-                                Click to upload
-                              </label>{" "}
-                              or drag and drop
+                              {isUploadingAny ? (
+                                <span className="text-blue-600 font-medium">
+                                  Uploading your resume...
+                                </span>
+                              ) : (
+                                <>
+                                  <label 
+                                    htmlFor="resume-upload"
+                                    className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
+                                  >
+                                    Click to upload
+                                  </label>{" "}
+                                  or drag and drop
+                                </>
+                              )}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
                               PDF, DOC, or DOCX (max 10MB)
@@ -1314,10 +1317,15 @@ export default function CandidateProfilePage() {
                             onChange={handleFileUpload}
                             className="hidden"
                             id="resume-upload"
+                            disabled={isUploadingAny}
                           />
                           <label
                             htmlFor="resume-upload"
-                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer"
+                            className={`inline-flex items-center px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
+                              isUploadingAny 
+                                ? "bg-gray-400 text-white cursor-not-allowed" 
+                                : "bg-blue-600 text-white hover:bg-blue-700"
+                            }`}
                           >
                             {isUploadingAny ? (
                               <Loader className="h-4 w-4 mr-2 animate-spin" />

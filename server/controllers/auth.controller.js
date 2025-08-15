@@ -25,59 +25,34 @@ const generateToken = (user) => {
   );
 };
 
-// Register new user
+// Register new user - Routes to appropriate specialized registration method
 exports.register = async (req, res) => {
   try {
-    const { email, password, role, employerData, recruitmentPartnerData } =
-      req.body;
+    const { role } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "User already exists with this email" });
+    // Route to appropriate specialized registration method
+    switch (role) {
+      case "employer":
+        return await exports.registerEmployer(req, res);
+      case "recruitment_partner":
+        return await exports.registerRecruitmentPartner(req, res);
+      case "candidate":
+        return await exports.registerCandidate(req, res);
+      case "sales_person":
+        return await exports.registerSalesPerson(req, res);
+      default:
+        return res.status(400).json({
+          message: "Invalid role specified",
+          error: "INVALID_ROLE",
+          validRoles: ["employer", "recruitment_partner", "candidate", "sales_person"]
+        });
     }
-
-    // Create user
-    const user = new User({
-      email,
-      password,
-      role,
-      status: "pending", // Set to pending by default for approval
-    });
-
-    await user.save();
-
-    // Create role-specific profile
-    if (role === "employer" && employerData) {
-      const employer = new Employer({
-        user: user._id,
-        ...employerData,
-        status: "pending",
-      });
-      await employer.save();
-    } else if (role === "recruitment_partner" && recruitmentPartnerData) {
-      const recruitmentPartner = new RecruitmentPartner({
-        user: user._id,
-        ...recruitmentPartnerData,
-        status: "pending",
-      });
-      await recruitmentPartner.save();
-    }
-
-    res.status(201).json({
-      message: "Registration successful. Your account is pending approval.",
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      },
-    });
   } catch (error) {
-    console.error("Register error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Registration routing error:", error);
+    return res.status(500).json({
+      message: "Server error during registration",
+      error: error.message,
+    });
   }
 };
 
@@ -101,9 +76,10 @@ exports.login = async (req, res) => {
 
     // Check if user is active
     if (!user.isActive) {
-      return res
-        .status(401)
-        .json({ message: "Your account has been deactivated" });
+      return res.status(401).json({ 
+        message: "Your account has been deactivated. Please contact support.",
+        error: "ACCOUNT_DEACTIVATED"
+      });
     }
 
     // Check password
@@ -299,19 +275,28 @@ exports.registerEmployer = async (req, res) => {
     const {
       email,
       password,
+      role,
+      employerData,
+      coordinates: detectedCoordinates = null,
+      locationDetected = false,
+    } = req.body;
+
+    // Extract employer data - support both nested and flat formats
+    const employerInfo = employerData || req.body;
+    const {
       ownerName,
       companyName,
       phoneNumber,
+      website,
+      companySize,
       address,
       city,
       state,
       zipCode,
       country = "United States",
-      locationDetected = false,
-      detectedCoordinates = null, // GPS coordinates from browser location detection
-    } = req.body;
+    } = employerInfo;
 
-    // Validate required fields (city and state may be auto-populated from zip code or GPS)
+    // Validate required fields
     if (
       !email ||
       !password ||
@@ -476,7 +461,7 @@ exports.registerEmployer = async (req, res) => {
     await user.save();
 
     // Prepare employer profile data
-    const employerData = {
+    const employerProfileData = {
       user: user._id,
       ownerName,
       companyName,
@@ -487,21 +472,23 @@ exports.registerEmployer = async (req, res) => {
       state: finalState,
       zipCode: finalZipCode || "",
       country: "United States",
+      website: website || "",
+      companySize: companySize || "",
       locationDetected,
       jobPosting: "manual", // Default to manual job posting
-      isApproved: false, // Requires admin approval
+      isApproved: true, // Auto-approve for immediate access
     };
 
     // Add location coordinates if available
     if (coordinates) {
-      employerData.location = {
+      employerProfileData.location = {
         type: "Point",
         coordinates: coordinates,
       };
     }
 
     // Create employer profile
-    const employer = new Employer(employerData);
+    const employer = new Employer(employerProfileData);
     await employer.save();
 
     // Generate token for immediate login
@@ -510,7 +497,7 @@ exports.registerEmployer = async (req, res) => {
     res.status(201).json({
       success: true,
       message:
-        "Employer registration successful! Your account is pending admin approval for job posting privileges.",
+        "Employer registration successful! You can now login and start posting jobs.",
       token,
       user: {
         id: user._id,
@@ -552,6 +539,256 @@ exports.registerEmployer = async (req, res) => {
   }
 };
 
+// Dedicated Recruitment Partner Registration
+exports.registerRecruitmentPartner = async (req, res) => {
+  let user = null; // Declare user variable in outer scope for cleanup
+
+  try {
+    console.log("Registration request body:", req.body);
+    
+    const {
+      email,
+      password,
+      role,
+      recruitmentPartnerData,
+      coordinates: detectedCoordinates = null,
+      locationDetected = false,
+    } = req.body;
+
+    console.log("Extracted email:", email);
+    console.log("Extracted recruitmentPartnerData:", recruitmentPartnerData);
+
+    // Extract recruitment partner data - support both nested and flat formats
+    const partnerInfo = recruitmentPartnerData || req.body;
+    const {
+      companyName: partnerCompanyName,
+      ownerName: partnerContactPersonName,
+      phoneNumber: partnerPhone,
+      website: partnerWebsite,
+      address: partnerAddress,
+      city: partnerCity,
+      state: partnerState,
+      zipCode: partnerZipCode,
+      country = "United States",
+      yearsOfExperience,
+      specialization,
+    } = partnerInfo;
+
+    // Validate required fields
+    if (
+      !email ||
+      !password ||
+      !partnerCompanyName ||
+      !partnerContactPersonName ||
+      !partnerPhone ||
+      !partnerAddress ||
+      !yearsOfExperience ||
+      !specialization
+    ) {
+      return res.status(400).json({
+        message:
+          "All fields are required: email, password, company name, contact person, phone, address, years of experience, and specialization",
+      });
+    }
+
+    // Validate US-only registration
+    if (country !== "United States" && country !== "USA" && country !== "US") {
+      return res.status(400).json({
+        message:
+          "Only recruitment partners from the United States can register on this platform",
+        error: "INVALID_COUNTRY",
+      });
+    }
+
+    let finalCity = partnerCity;
+    let finalState = partnerState;
+    let finalZipCode = partnerZipCode;
+    let coordinates;
+    let locationValidation = {
+      zipCodeProvided: !!partnerZipCode,
+      coordinatesGenerated: false,
+      locationDetected: locationDetected,
+      withinUSBounds: false,
+      method: "none",
+    };
+
+    // Handle location detection scenarios
+    if (locationDetected && detectedCoordinates) {
+      // GPS location was detected and provided
+      console.log("Processing GPS-detected location for recruitment partner...");
+
+      // Validate coordinates are within US bounds
+      const { isWithinUSBounds } = require("../utils/geoUtils");
+      const withinBounds = isWithinUSBounds(detectedCoordinates);
+
+      if (!withinBounds) {
+        return res.status(400).json({
+          message: "Detected location is outside United States boundaries",
+          error: "LOCATION_OUTSIDE_US",
+        });
+      }
+
+      coordinates = detectedCoordinates;
+      locationValidation.coordinatesGenerated = true;
+      locationValidation.withinUSBounds = true;
+      locationValidation.method = "gps";
+    }
+
+    // Process zip code if provided
+    if (partnerZipCode && partnerZipCode.trim() !== "") {
+      const {
+        getCoordinatesFromZipCode,
+        getCityFromZipCode,
+      } = require("../utils/geoUtils");
+
+      try {
+        // Auto-populate city and state from zip code if not provided
+        if (!finalCity || !finalState) {
+          console.log("Auto-populating city/state from zip code for recruitment partner...");
+          const cityInfo = await getCityFromZipCode(partnerZipCode);
+
+          if (cityInfo) {
+            finalCity = finalCity || cityInfo.city;
+            finalState = finalState || cityInfo.state;
+            console.log(`Auto-populated: ${finalCity}, ${finalState}`);
+          } else {
+            return res.status(400).json({
+              message:
+                "Invalid or unsupported zip code. Please use a valid US zip code.",
+              error: "INVALID_ZIP_CODE",
+            });
+          }
+        }
+
+        // If coordinates weren't set from GPS, get them from zip code
+        if (!coordinates) {
+          coordinates = await getCoordinatesFromZipCode(partnerZipCode);
+          locationValidation.method = "zipcode";
+        }
+
+        locationValidation.coordinatesGenerated = true;
+
+        // Validate coordinates are within US bounds
+        const { isWithinUSBounds } = require("../utils/geoUtils");
+        locationValidation.withinUSBounds = isWithinUSBounds(coordinates);
+      } catch (error) {
+        return res.status(400).json({
+          message: "Invalid zip code or unable to get location coordinates",
+          error: "INVALID_ZIP_CODE",
+          details: error.message,
+        });
+      }
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists with this email",
+        error: "USER_EXISTS",
+      });
+    }
+
+    // Create user account
+    user = new User({
+      email,
+      password,
+      role: "recruitment_partner",
+      isActive: true, // Allow immediate login without approval
+    });
+
+    await user.save();
+
+    // Prepare recruitment partner profile data
+    const partnerProfileData = {
+      user: user._id,
+      companyName: partnerCompanyName,
+      ownerName: partnerContactPersonName,
+      email: email, // Explicitly set the email
+      phoneNumber: partnerPhone,
+      website: partnerWebsite || "",
+      address: partnerAddress,
+      city: finalCity || "",
+      state: finalState || "",
+      zipCode: finalZipCode || "",
+      country: "United States",
+      specializations: specialization ? [specialization] : [], // Convert to array
+      isApproved: true, // Auto-approve for immediate access
+    };
+
+    console.log("Profile data to be saved:", partnerProfileData);
+
+    // Add location coordinates if available
+    if (coordinates) {
+      partnerProfileData.location = {
+        type: "Point",
+        coordinates: coordinates,
+      };
+    }
+
+    // Create recruitment partner profile
+    console.log("Creating recruitment partner with data:", partnerProfileData);
+    const recruitmentPartner = new RecruitmentPartner(partnerProfileData);
+    await recruitmentPartner.save();
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Recruitment partner registration successful! You can now login and start using the platform.",
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        profile: {
+          companyName: recruitmentPartner.companyName,
+          ownerName: recruitmentPartner.ownerName,
+          yearsOfExperience: recruitmentPartner.yearsOfExperience,
+          specialization: recruitmentPartner.specialization,
+          isApproved: recruitmentPartner.isApproved,
+        },
+      },
+      locationValidation: locationValidation,
+    });
+  } catch (error) {
+    console.error("Recruitment partner registration error:", error);
+
+    // Clean up user if it was created but recruitment partner creation failed
+    if (user && user._id) {
+      try {
+        await User.findByIdAndDelete(user._id);
+        console.log("Cleaned up user after recruitment partner creation failure");
+      } catch (cleanupError) {
+        console.error("Error during user cleanup:", cleanupError);
+      }
+    }
+
+    // Handle specific validation errors
+    if (error.name === "ValidationError") {
+      const validationErrors = Object.values(error.errors).map(
+        (err) => err.message
+      );
+      return res.status(400).json({
+        message: "Validation error",
+        errors: validationErrors,
+        error: "VALIDATION_ERROR",
+      });
+    }
+
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        message: `${duplicateField} already exists`,
+        error: "DUPLICATE_VALUE",
+      });
+    }
+
+    res.status(500).json({
+      message: "Server error during recruitment partner registration",
+      error: error.message,
+    });
+  }
+};
+
 // Dedicated Candidate Registration with mandatory location validation
 exports.registerCandidate = async (req, res) => {
   let user = null; // Declare user variable in outer scope for cleanup
@@ -560,17 +797,24 @@ exports.registerCandidate = async (req, res) => {
     const {
       email,
       password,
+      role,
+      candidateData,
+      locationDetected = false,
+      coordinates: detectedCoordinates = null, // GPS coordinates from browser location detection
+    } = req.body;
+
+    // Extract candidate data - support both nested and flat formats
+    const candidateInfo = candidateData || req.body;
+    const {
       firstName,
       lastName,
-      phoneNumber,
+      phone: phoneNumber,
       address,
       city,
       state,
       zipCode,
       country = "United States",
-      locationDetected = false,
-      detectedCoordinates = null, // GPS coordinates from browser location detection
-    } = req.body;
+    } = candidateInfo;
 
     // Validate required fields
     if (
@@ -840,7 +1084,7 @@ exports.registerSalesPerson = async (req, res) => {
       email,
       password,
       role: "sales_person",
-      isActive: false, // Requires admin approval
+      isActive: true, // Allow immediate login without approval
     });
 
     await user.save();
@@ -856,7 +1100,7 @@ exports.registerSalesPerson = async (req, res) => {
       department,
       territory,
       managerId,
-      isApproved: false, // Requires admin approval
+      isApproved: true, // Auto-approve for immediate access
     };
 
     const salesPerson = new SalesPerson(salesPersonData);

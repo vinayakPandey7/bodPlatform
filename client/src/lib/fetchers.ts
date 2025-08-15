@@ -534,8 +534,10 @@ export const adminFetchers = {
   },
 
   // Get assigned agents for current sales person
-  getMyAssignedAgents: async () => {
-    const response = await Client.get(API_ENDPOINTS.SALES_PERSONS.MY_AGENTS);
+  getMyAssignedAgents: async (params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.SALES_PERSONS.MY_AGENTS, {
+      params,
+    });
     return response.data;
   },
 
@@ -586,8 +588,10 @@ export const adminFetchers = {
     return response.data;
   },
 
-  getInsuranceClientsByAgent: async (agentId: string) => {
-    const response = await Client.get(API_ENDPOINTS.INSURANCE_CLIENTS.BY_AGENT(agentId));
+  getInsuranceClientsByAgent: async (agentId: string, params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.INSURANCE_CLIENTS.BY_AGENT(agentId), {
+      params,
+    });
     return response.data;
   },
 
@@ -603,6 +607,18 @@ export const adminFetchers = {
 
   deleteInsuranceClient: async (id: string) => {
     const response = await Client.delete(API_ENDPOINTS.INSURANCE_CLIENTS.DELETE(id));
+    return response.data;
+  },
+
+  importInsuranceClientsCSV: async (agentId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('csv', file);
+    
+    const response = await Client.post(API_ENDPOINTS.INSURANCE_CLIENTS.IMPORT_CSV(agentId), formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 };
@@ -699,8 +715,10 @@ export const salesPersonFetchers = {
   },
 
   // Get clients for a specific agent that I'm assigned to
-  getAgentClients: async (agentId: string) => {
-    const response = await Client.get(`/sales-person/agents/${agentId}/clients`);
+  getAgentClients: async (agentId: string, params?: any) => {
+    const response = await Client.get(`/sales-person/agents/${agentId}/clients`, {
+      params,
+    });
     return response.data;
   },
 

@@ -112,32 +112,22 @@ export default function AgentClientsPage() {
       const agentResponse = await adminFetchers.getInsuranceAgent(agentId);
       setAgent(agentResponse.data);
 
-      // Fetch clients for this agent
-      const clientsResponse = await fetch(`/api/insurance-clients/agent/${agentId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      
-      if (clientsResponse.ok) {
-        const clientsData = await clientsResponse.json();
-        const formattedClients = clientsData.data?.map((client: any) => ({
-          ...client,
-          // Map backend fields to UI expected fields for compatibility
-          joinedDate: client.createdAt?.split('T')[0] || '',
-          lastPayment: client.lastPayment || client.updatedAt?.split('T')[0] || '',
-          feedback: client.notes ? [{
-            _id: 'note_' + client._id,
-            message: client.notes,
-            addedBy: 'System',
-            addedAt: client.updatedAt || client.createdAt,
-            type: 'neutral' as const
-          }] : [],
-        })) || [];
-        setClients(formattedClients);
-      } else {
-        throw new Error('Failed to fetch clients');
-      }
+      // Fetch clients for this agent using the proper fetcher
+      const clientsData = await adminFetchers.getInsuranceClientsByAgent(agentId, { limit: 1000, page: 1 });
+      const formattedClients = clientsData.data?.map((client: any) => ({
+        ...client,
+        // Map backend fields to UI expected fields for compatibility
+        joinedDate: client.createdAt?.split('T')[0] || '',
+        lastPayment: client.lastPayment || client.updatedAt?.split('T')[0] || '',
+        feedback: client.notes ? [{
+          _id: 'note_' + client._id,
+          message: client.notes,
+          addedBy: 'System',
+          addedAt: client.updatedAt || client.createdAt,
+          type: 'neutral' as const
+        }] : [],
+      })) || [];
+      setClients(formattedClients);
     } catch (err: any) {
       setError(err.message || "Failed to fetch agent and clients data");
       toast.error("Failed to load agent and clients");
@@ -172,23 +162,13 @@ export default function AgentClientsPage() {
     }
 
     try {
-      const response = await fetch(`/api/insurance-clients/${client._id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (response.ok) {
-        setClients((prev) => prev.filter((c) => c._id !== client._id));
-        toast.success("Client deleted successfully");
-        
-        // Update agent client count
-        if (agent) {
-          setAgent(prev => prev ? { ...prev, clientsCount: prev.clientsCount - 1 } : null);
-        }
-      } else {
-        throw new Error('Failed to delete client');
+      await adminFetchers.deleteInsuranceClient(client._id);
+      setClients((prev) => prev.filter((c) => c._id !== client._id));
+      toast.success("Client deleted successfully");
+      
+      // Update agent client count
+      if (agent) {
+        setAgent(prev => prev ? { ...prev, clientsCount: prev.clientsCount - 1 } : null);
       }
     } catch (error) {
       toast.error("Failed to delete client");
@@ -203,59 +183,39 @@ export default function AgentClientsPage() {
         status: data.status || 'pending',
       };
 
-      let response;
+      let result;
       if (isEdit && editingClient) {
         // Update existing client
-        response = await fetch(`/api/insurance-clients/${editingClient._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(clientData),
-        });
+        result = await adminFetchers.updateInsuranceClient(editingClient._id, clientData);
       } else {
         // Create new client
-        response = await fetch('/api/insurance-clients', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(clientData),
-        });
+        result = await adminFetchers.createInsuranceClient(clientData);
       }
 
-      if (response.ok) {
-        const result = await response.json();
-        const formattedClient = {
-          ...result.data,
-          joinedDate: result.data.createdAt?.split('T')[0] || '',
-          lastPayment: result.data.lastPayment || result.data.updatedAt?.split('T')[0] || '',
-          feedback: result.data.notes ? [{
-            _id: 'note_' + result.data._id,
-            message: result.data.notes,
-            addedBy: 'System',
-            addedAt: result.data.updatedAt || result.data.createdAt,
-            type: 'neutral' as const
-          }] : [],
-        };
-        
-        if (isEdit && editingClient) {
-          setClients(prev => prev.map(c => c._id === editingClient._id ? formattedClient : c));
-          toast.success("Client updated successfully");
-        } else {
-          setClients(prev => [formattedClient, ...prev]);
-          toast.success("Client added successfully");
-          
-          // Update agent client count
-          if (agent) {
-            setAgent(prev => prev ? { ...prev, clientsCount: prev.clientsCount + 1 } : null);
-          }
-        }
+      const formattedClient = {
+        ...result.data,
+        joinedDate: result.data.createdAt?.split('T')[0] || '',
+        lastPayment: result.data.lastPayment || result.data.updatedAt?.split('T')[0] || '',
+        feedback: result.data.notes ? [{
+          _id: 'note_' + result.data._id,
+          message: result.data.notes,
+          addedBy: 'System',
+          addedAt: result.data.updatedAt || result.data.createdAt,
+          type: 'neutral' as const
+        }] : [],
+      };
+      
+      if (isEdit && editingClient) {
+        setClients(prev => prev.map(c => c._id === editingClient._id ? formattedClient : c));
+        toast.success("Client updated successfully");
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save client');
+        setClients(prev => [formattedClient, ...prev]);
+        toast.success("Client added successfully");
+        
+        // Update agent client count
+        if (agent) {
+          setAgent(prev => prev ? { ...prev, clientsCount: prev.clientsCount + 1 } : null);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to save client");
@@ -265,27 +225,11 @@ export default function AgentClientsPage() {
 
   const handleCSVUpload = async (file: File) => {
     try {
-      const formData = new FormData();
-      formData.append('csv', file);
-
-      const response = await fetch(`/api/insurance-clients/agent/${agentId}/import-csv`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        toast.success(result.message);
-        
-        // Refresh the clients list
-        await fetchAgentAndClients();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to import CSV');
-      }
+      const result = await adminFetchers.importInsuranceClientsCSV(agentId, file);
+      toast.success(result.message);
+      
+      // Refresh the clients list
+      await fetchAgentAndClients();
     } catch (error: any) {
       toast.error(error.message || "Failed to import CSV");
       throw error; // Let the modal handle the error display
@@ -469,6 +413,13 @@ export default function AgentClientsPage() {
             addButton={{ label: "ADD CLIENT", onClick: handleAdd }}
             tableHeight="auto"
             enableTableScroll={false}
+            pagination={{
+              enabled: true,
+              pageSize: 15,
+              pageSizeOptions: [10, 15, 25, 50, 100],
+              showPageInfo: true,
+              showPageSizeSelector: true,
+            }}
           />
 
           {/* Modals */}

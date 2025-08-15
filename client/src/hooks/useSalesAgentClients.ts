@@ -71,7 +71,7 @@ export const useSalesAgentClients = (agentId: string) => {
       setLoading(true);
 
       // Fetch agent and clients data using the new sales person specific endpoint
-      const response = await salesPersonFetchers.getAgentClients(agentId);
+      const response = await salesPersonFetchers.getAgentClients(agentId, { limit: 1000, page: 1 });
 
       if (response.success) {
         // Set agent data
