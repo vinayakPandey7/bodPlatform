@@ -156,6 +156,13 @@ export default function SalesAgentClientsPage() {
             searchPlaceholder="Search clients..."
             tableHeight="auto"
             enableTableScroll={false}
+            pagination={{
+              enabled: true,
+              pageSize: 15,
+              pageSizeOptions: [10, 15, 25, 50, 100],
+              showPageInfo: true,
+              showPageSizeSelector: true,
+            }}
           />
 
           {/* Update Status Modal */}

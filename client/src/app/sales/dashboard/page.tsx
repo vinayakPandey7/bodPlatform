@@ -62,7 +62,7 @@ export default function SalesDashboard() {
       // Fetch both profile and assigned agents
       const [profileResponse, agentsResponse] = await Promise.all([
         adminFetchers.getMySalesPersonProfile(),
-        adminFetchers.getMyAssignedAgents()
+        adminFetchers.getMyAssignedAgents({ limit: 1000, page: 1 })
       ]);
       
       console.log("Profile response:", profileResponse);
@@ -356,6 +356,13 @@ export default function SalesDashboard() {
           onRowClick={handleViewClients}
           tableHeight="auto"
           enableTableScroll={false}
+          pagination={{
+            enabled: true,
+            pageSize: 10,
+            pageSizeOptions: [5, 10, 25, 50],
+            showPageInfo: true,
+            showPageSizeSelector: true,
+          }}
         />
         </div>
       </DashboardLayout>

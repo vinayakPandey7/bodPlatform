@@ -534,8 +534,10 @@ export const adminFetchers = {
   },
 
   // Get assigned agents for current sales person
-  getMyAssignedAgents: async () => {
-    const response = await Client.get(API_ENDPOINTS.SALES_PERSONS.MY_AGENTS);
+  getMyAssignedAgents: async (params?: any) => {
+    const response = await Client.get(API_ENDPOINTS.SALES_PERSONS.MY_AGENTS, {
+      params,
+    });
     return response.data;
   },
 
@@ -713,8 +715,10 @@ export const salesPersonFetchers = {
   },
 
   // Get clients for a specific agent that I'm assigned to
-  getAgentClients: async (agentId: string) => {
-    const response = await Client.get(`/sales-person/agents/${agentId}/clients`);
+  getAgentClients: async (agentId: string, params?: any) => {
+    const response = await Client.get(`/sales-person/agents/${agentId}/clients`, {
+      params,
+    });
     return response.data;
   },
 
