@@ -159,22 +159,53 @@ export default function CSVUploadModal({
     const csvFile = acceptedFiles[0];
     if (!csvFile) return;
     
+    // Check file size
+    if (csvFile.size === 0) {
+      setErrors(['The CSV file is empty. Please select a file with data.']);
+      return;
+    }
+    
+    if (csvFile.size < 10) {
+      setErrors(['The CSV file appears to be too small or corrupted. Please check the file.']);
+      return;
+    }
+    
     setFile(csvFile);
     setErrors([]);
+    
+    console.log('Processing CSV file:', {
+      name: csvFile.name,
+      size: csvFile.size,
+      type: csvFile.type
+    });
     
     Papa.parse(csvFile, {
       header: true,
       skipEmptyLines: true,
       complete: (results: any) => {
+        console.log('CSV parsing results:', {
+          data: results.data?.length || 0,
+          errors: results.errors?.length || 0,
+          meta: results.meta
+        });
+        
+        if (!results.data || results.data.length === 0) {
+          setErrors(['No data found in CSV file. Please check the file format.']);
+          return;
+        }
+        
         const { valid, errors } = validateCSVData(results.data);
         setParsedData(valid);
         setErrors(errors);
         
         if (valid.length > 0) {
           setStep('preview');
+        } else {
+          setErrors(['No valid data found in CSV. Please check the format and required fields.']);
         }
       },
       error: (error: any) => {
+        console.error('CSV parsing error:', error);
         setErrors([`Failed to parse CSV: ${error.message}`]);
       }
     });
@@ -195,9 +226,37 @@ export default function CSVUploadModal({
     try {
       setLoading(true);
       
-      await onUpload(file);
+      // Create a new CSV file from the validated parsed data
+      const csvHeaders = ["name", "email", "phone", "address", "status", "notes"];
+      const csvRows = parsedData.map(client => [
+        client.name,
+        client.email,
+        client.phone,
+        client.address,
+        "pending", // default status
+        "" // empty notes
+      ]);
+      
+      const csvContent = [csvHeaders, ...csvRows]
+        .map(row => row.map(field => `"${field}"`).join(","))
+        .join("\n");
+      
+      // Create a new file blob with the clean data
+      const cleanFile = new File([csvContent], file.name, {
+        type: "text/csv",
+        lastModified: Date.now(),
+      });
+      
+      console.log('Uploading CSV file:', {
+        fileName: cleanFile.name,
+        fileSize: cleanFile.size,
+        parsedRows: parsedData.length
+      });
+      
+      await onUpload(cleanFile);
       setStep('success');
     } catch (error) {
+      console.error('CSV upload error:', error);
       setErrors([`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`]);
     } finally {
       setLoading(false);
