@@ -259,6 +259,20 @@ const deleteClient = async (req, res) => {
 // Bulk import clients via CSV
 const importClientsCSV = async (req, res) => {
   try {
+    // Validate environment configuration
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error('Missing Cloudinary environment variables:', {
+        cloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: !!process.env.CLOUDINARY_API_KEY,
+        apiSecret: !!process.env.CLOUDINARY_API_SECRET
+      });
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error - Cloudinary not properly configured',
+        error: 'Missing required environment variables'
+      });
+    }
+
     const { agentId } = req.params;
     
     // Verify agent exists
@@ -284,6 +298,29 @@ const importClientsCSV = async (req, res) => {
       size: req.file.size
     });
 
+    // Validate file size
+    if (req.file.size === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'CSV file is empty',
+        details: {
+          fileSize: req.file.size,
+          fileName: req.file.originalname
+        }
+      });
+    }
+
+    if (req.file.size < 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'CSV file appears to be too small or corrupted',
+        details: {
+          fileSize: req.file.size,
+          fileName: req.file.originalname
+        }
+      });
+    }
+
     const results = [];
     const errors = [];
     let lineNumber = 1;
@@ -291,6 +328,13 @@ const importClientsCSV = async (req, res) => {
     try {
       // Download CSV content from Cloudinary
       console.log('Downloading CSV from Cloudinary:', req.file.path);
+      console.log('Request environment:', process.env.NODE_ENV);
+      console.log('Cloudinary config status:', {
+        cloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: !!process.env.CLOUDINARY_API_KEY,
+        apiSecret: !!process.env.CLOUDINARY_API_SECRET
+      });
+      
       const response = await axios.get(req.file.path, {
         responseType: 'stream',
         timeout: process.env.NODE_ENV === 'production' ? 120000 : 60000, // 2 minutes in production
@@ -314,8 +358,11 @@ const importClientsCSV = async (req, res) => {
           .on('data', (data) => {
             lineNumber++;
             try {
+              console.log(`Processing line ${lineNumber}:`, data); // Debug log
+              
               // Skip empty rows
               if (!data.name && !data.email && !data.phone) {
+                console.log(`Skipping empty row at line ${lineNumber}`);
                 return;
               }
 
@@ -362,6 +409,21 @@ const importClientsCSV = async (req, res) => {
           .on('end', async () => {
             try {
               console.log(`CSV parsing completed. Found ${results.length} valid entries, ${errors.length} errors`);
+              
+              // Check if no valid data was found
+              if (results.length === 0 && errors.length === 0) {
+                resolve({
+                  success: false,
+                  message: 'CSV file appears to be empty or has no valid data',
+                  data: {
+                    imported: 0,
+                    skipped: 0,
+                    errors: 0,
+                    errorDetails: ['No valid rows found in CSV file']
+                  }
+                });
+                return;
+              }
               
               let successCount = 0;
               let skipCount = 0;
