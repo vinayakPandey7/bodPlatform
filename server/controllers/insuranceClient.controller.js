@@ -466,9 +466,23 @@ const importClientsCSV = async (req, res) => {
     let lineNumber = 1;
 
     try {
-      // Download CSV content from Cloudinary
       console.log('Downloading CSV from Cloudinary:', req.file.path);
       console.log('Request environment:', process.env.NODE_ENV);
+      
+      // Return immediate response for production to avoid timeout
+      if (process.env.NODE_ENV === 'production') {
+        // Send immediate response
+        res.status(200).json({
+          success: true,
+          message: 'CSV import started and processing in background',
+          data: {
+            status: 'processing',
+            agentId: req.params.agentId,
+            filename: req.file.originalname
+          }
+        });
+      }
+      
       console.log('Cloudinary config status:', {
         cloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
         apiKey: !!process.env.CLOUDINARY_API_KEY,
@@ -675,8 +689,12 @@ const importClientsCSV = async (req, res) => {
       });
 
       console.log('Promise.race resolved successfully');
-      // Send successful response after Promise resolves
-      return res.status(200).json(result);
+      // Send successful response after Promise resolves (only in development)
+      if (process.env.NODE_ENV !== 'production') {
+        return res.status(200).json(result);
+      }
+      
+      console.log('Production background processing completed:', result);
     } catch (downloadError) {
       console.error('Error downloading CSV from Cloudinary:', {
         message: downloadError.message,
@@ -685,17 +703,23 @@ const importClientsCSV = async (req, res) => {
         cloudinaryUrl: req.file?.path,
         headers: downloadError.response?.headers
       });
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to download CSV file from storage',
-        error: downloadError.message,
-        details: {
-          fileReceived: !!req.file,
-          hasCloudinaryUrl: !!req.file?.path,
-          httpStatus: downloadError.response?.status,
-          errorType: 'cloudinary_download_failed'
-        }
-      });
+      
+      // Only return error response if we haven't sent one already (development)
+      if (process.env.NODE_ENV !== 'production') {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to download CSV file from storage',
+          error: downloadError.message,
+          details: {
+            fileReceived: !!req.file,
+            hasCloudinaryUrl: !!req.file?.path,
+            httpStatus: downloadError.response?.status,
+            errorType: 'cloudinary_download_failed'
+          }
+        });
+      } else {
+        console.error('Production error after response sent:', downloadError.message);
+      }
     }
   } catch (error) {
     console.error('Error importing clients:', error);
@@ -706,12 +730,18 @@ const importClientsCSV = async (req, res) => {
       apiSecret: !!process.env.CLOUDINARY_API_SECRET,
       nodeEnv: process.env.NODE_ENV
     });
-    res.status(500).json({
-      success: false,
-      message: 'Failed to import clients',
-      error: error.message,
-      debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    
+    // Only return error response if we haven't sent one already
+    if (process.env.NODE_ENV !== 'production') {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to import clients',
+        error: error.message,
+        debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    } else {
+      console.error('Production error after response sent:', error.message);
+    }
   }
 };
 
