@@ -2,6 +2,8 @@ const express = require('express');
 const { body, param } = require('express-validator');
 const multer = require('multer');
 const path = require('path');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const {
   getAllClients,
   getClientsByAgent,
@@ -15,20 +17,25 @@ const { auth, authorizeRoles } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
-// Configure multer for CSV upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/csv/');
+// Configure Cloudinary storage for CSV upload
+const csvStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'csv-uploads', // Folder for CSV files
+    allowedFormats: ['csv'],
+    resource_type: 'raw', // Important: Use 'raw' for non-image files
   },
-  filename: function (req, file, cb) {
-    cb(null, `clients-${Date.now()}-${file.originalname}`);
-  }
 });
 
 const upload = multer({
-  storage: storage,
+  storage: csvStorage,
   fileFilter: function (req, file, cb) {
+    // Check file extension
     if (path.extname(file.originalname).toLowerCase() !== '.csv') {
+      return cb(new Error('Only CSV files are allowed'));
+    }
+    // Check MIME type
+    if (file.mimetype !== 'text/csv' && file.mimetype !== 'application/csv') {
       return cb(new Error('Only CSV files are allowed'));
     }
     cb(null, true);

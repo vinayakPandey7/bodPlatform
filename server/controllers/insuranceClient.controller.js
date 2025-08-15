@@ -4,6 +4,8 @@ const { validationResult } = require('express-validator');
 const csv = require('csv-parser');
 const multer = require('multer');
 const fs = require('fs');
+const axios = require('axios');
+const { Readable } = require('stream');
 
 // Get all clients (admin only)
 const getAllClients = async (req, res) => {
@@ -275,138 +277,164 @@ const importClientsCSV = async (req, res) => {
       });
     }
 
+    console.log('Processing CSV upload:', {
+      filename: req.file.originalname,
+      cloudinaryUrl: req.file.path,
+      publicId: req.file.filename,
+      size: req.file.size
+    });
+
     const results = [];
     const errors = [];
     let lineNumber = 1;
 
-    return new Promise((resolve) => {
-      fs.createReadStream(req.file.path)
-        .pipe(csv())
-        .on('data', (data) => {
-          lineNumber++;
-          try {
-            // Validate required fields
-            if (!data.name || !data.email || !data.phone) {
-              errors.push({
-                line: lineNumber,
-                error: 'Missing required fields (name, email, phone)',
-                data
-              });
-              return;
-            }
+    try {
+      // Download CSV content from Cloudinary
+      console.log('Downloading CSV from Cloudinary:', req.file.path);
+      const response = await axios.get(req.file.path, {
+        responseType: 'stream',
+        timeout: 30000, // 30 seconds timeout
+      });
 
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(data.email)) {
-              errors.push({
-                line: lineNumber,
-                error: 'Invalid email format',
-                data
-              });
-              return;
-            }
+      if (!response.data) {
+        throw new Error('Failed to download CSV file from Cloudinary');
+      }
 
-            results.push({
-              name: data.name.trim(),
-              email: data.email.toLowerCase().trim(),
-              phone: data.phone.trim(),
-              address: data.address?.trim() || '',
-              agentId,
-              status: data.status?.toLowerCase() || 'pending',
-              notes: data.notes?.trim() || '',
-              lastPayment: data.lastPayment ? new Date(data.lastPayment) : null
-            });
-          } catch (error) {
-            errors.push({
-              line: lineNumber,
-              error: error.message,
-              data
-            });
-          }
-        })
-        .on('end', async () => {
-          try {
-            let successCount = 0;
-            let skipCount = 0;
+      return new Promise((resolve) => {
+        response.data
+          .pipe(csv())
+          .on('data', (data) => {
+            lineNumber++;
+            try {
+              // Skip empty rows
+              if (!data.name && !data.email && !data.phone) {
+                return;
+              }
 
-            // Process each client
-            for (const clientData of results) {
-              try {
-                // Check if client already exists
-                const existingClient = await InsuranceClient.findOne({
-                  email: clientData.email,
-                  agentId
-                });
-
-                if (existingClient) {
-                  skipCount++;
-                  continue;
-                }
-
-                const client = new InsuranceClient(clientData);
-                await client.save();
-                successCount++;
-              } catch (error) {
+              // Validate required fields
+              if (!data.name || !data.email || !data.phone) {
                 errors.push({
-                  email: clientData.email,
-                  error: error.message
+                  line: lineNumber,
+                  error: 'Missing required fields (name, email, phone)',
+                  data
+                });
+                return;
+              }
+
+              // Validate email format
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailRegex.test(data.email)) {
+                errors.push({
+                  line: lineNumber,
+                  error: 'Invalid email format',
+                  data
+                });
+                return;
+              }
+
+              results.push({
+                name: data.name.trim(),
+                email: data.email.toLowerCase().trim(),
+                phone: data.phone.trim(),
+                address: data.address?.trim() || '',
+                agentId,
+                status: data.status?.toLowerCase() || 'pending',
+                notes: data.notes?.trim() || '',
+                lastPayment: data.lastPayment ? new Date(data.lastPayment) : null
+              });
+            } catch (error) {
+              console.error('Error processing CSV row:', error);
+              errors.push({
+                line: lineNumber,
+                error: error.message,
+                data
+              });
+            }
+          })
+          .on('end', async () => {
+            try {
+              console.log(`CSV parsing completed. Found ${results.length} valid entries, ${errors.length} errors`);
+              
+              let successCount = 0;
+              let skipCount = 0;
+
+              // Process each client
+              for (const clientData of results) {
+                try {
+                  // Check if client already exists
+                  const existingClient = await InsuranceClient.findOne({
+                    email: clientData.email,
+                    agentId
+                  });
+
+                  if (existingClient) {
+                    skipCount++;
+                    continue;
+                  }
+
+                  const client = new InsuranceClient(clientData);
+                  await client.save();
+                  successCount++;
+                } catch (error) {
+                  console.error('Error saving client:', error);
+                  errors.push({
+                    email: clientData.email,
+                    error: error.message
+                  });
+                }
+              }
+
+              // Update agent's client count
+              if (successCount > 0) {
+                await InsuranceAgent.findByIdAndUpdate(agentId, {
+                  $inc: { clientsCount: successCount }
                 });
               }
-            }
 
-            // Update agent's client count
-            if (successCount > 0) {
-              await InsuranceAgent.findByIdAndUpdate(agentId, {
-                $inc: { clientsCount: successCount }
-              });
-            }
+              console.log(`Import completed: ${successCount} imported, ${skipCount} skipped, ${errors.length} errors`);
 
-            // Clean up uploaded file
-            fs.unlinkSync(req.file.path);
-
-            resolve(res.status(200).json({
-              success: true,
-              data: {
-                imported: successCount,
-                skipped: skipCount,
-                errors: errors.length,
-                errorDetails: errors
-              },
-              message: `Successfully imported ${successCount} clients. ${skipCount} skipped (duplicates). ${errors.length} errors.`
-            }));
-          } catch (error) {
-            console.error('Error processing CSV:', error);
-            // Clean up uploaded file
-            if (req.file && req.file.path) {
-              fs.unlinkSync(req.file.path);
+              resolve(res.status(200).json({
+                success: true,
+                data: {
+                  imported: successCount,
+                  skipped: skipCount,
+                  errors: errors.length,
+                  errorDetails: errors
+                },
+                message: `Successfully imported ${successCount} clients. ${skipCount} skipped (duplicates). ${errors.length} errors.`
+              }));
+            } catch (error) {
+              console.error('Error processing CSV data:', error);
+              resolve(res.status(500).json({
+                success: false,
+                message: 'Failed to process CSV file',
+                error: error.message
+              }));
             }
+          })
+          .on('error', (error) => {
+            console.error('Error reading CSV stream:', error);
             resolve(res.status(500).json({
               success: false,
-              message: 'Failed to process CSV file'
+              message: 'Failed to read CSV file',
+              error: error.message
             }));
-          }
-        })
-        .on('error', (error) => {
-          console.error('Error reading CSV:', error);
-          // Clean up uploaded file
-          if (req.file && req.file.path) {
-            fs.unlinkSync(req.file.path);
-          }
-          resolve(res.status(500).json({
-            success: false,
-            message: 'Failed to read CSV file'
-          }));
-        });
-    });
+          });
+      });
+    } catch (downloadError) {
+      console.error('Error downloading CSV from Cloudinary:', downloadError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to download CSV file from storage',
+        error: downloadError.message
+      });
+    }
   } catch (error) {
     console.error('Error importing clients:', error);
-    // Clean up uploaded file
-    if (req.file && req.file.path) {
-      fs.unlinkSync(req.file.path);
-    }
     res.status(500).json({
       success: false,
-      message: 'Failed to import clients'
+      message: 'Failed to import clients',
+      error: error.message
     });
   }
 };

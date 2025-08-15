@@ -5,6 +5,8 @@ const { auth } = require("../middlewares/auth.middleware");
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 // Configure Cloudinary storage for profile pictures
 const profilePictureStorage = new CloudinaryStorage({
@@ -30,6 +32,36 @@ const profilePictureUpload = multer({
       cb(null, true);
     } else {
       cb(new Error("Only image files are allowed for profile pictures"), false);
+    }
+  },
+});
+
+// Configure Cloudinary storage for resumes
+const resumeStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "resumes", // Folder for resume files
+    allowedFormats: ["pdf", "doc", "docx"],
+    resource_type: "raw", // Important: Use 'raw' for non-image files
+  },
+});
+
+const resumeUpload = multer({
+  storage: resumeStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for resumes
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow PDF, DOC, and DOCX files
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF, DOC, and DOCX files are allowed for resumes"), false);
     }
   },
 });
@@ -64,38 +96,47 @@ router.post(
   }
 );
 
-// Upload resume
-router.post("/resume", auth, upload.single("resume"), (req, res) => {
+// Upload resume to Cloudinary
+router.post("/resume", auth, resumeUpload.single("resume"), (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return res.status(400).json({ message: "No resume file uploaded" });
     }
 
     res.json({
-      message: "Resume uploaded successfully",
-      filename: req.file.filename,
+      message: "Resume uploaded successfully to Cloudinary",
+      url: req.file.path, // Cloudinary URL
+      cloudinaryUrl: req.file.path, // Alias for compatibility
+      publicId: req.file.filename, // Cloudinary public ID
       originalName: req.file.originalname,
       size: req.file.size,
-      path: `/uploads/resumes/${req.file.filename}`,
     });
   } catch (error) {
-    console.error("Upload error:", error);
-    res.status(500).json({ message: "Upload failed", error: error.message });
+    console.error("Resume upload error:", error);
+    res.status(500).json({ 
+      message: "Resume upload failed", 
+      error: error.message 
+    });
   }
 });
 
-// Download resume
+// Download resume (redirect to Cloudinary URL)
+// Note: This route is kept for backward compatibility
+// New resumes are accessed directly via Cloudinary URLs
 router.get("/resume/:filename", (req, res) => {
   try {
     const filename = req.params.filename;
     const filePath = path.join(__dirname, "../uploads/resumes", filename);
 
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: "File not found" });
+    // Check if file exists locally (for old uploads)
+    if (fs.existsSync(filePath)) {
+      return res.download(filePath);
     }
 
-    res.download(filePath);
+    // If not found locally, it might be a Cloudinary file
+    res.status(404).json({ 
+      message: "File not found. Resume may be stored on Cloudinary and accessible via direct URL." 
+    });
   } catch (error) {
     console.error("Download error:", error);
     res.status(500).json({ message: "Download failed", error: error.message });
