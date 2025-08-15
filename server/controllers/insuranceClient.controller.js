@@ -256,6 +256,146 @@ const deleteClient = async (req, res) => {
   }
 };
 
+// Background CSV processing function
+const processCSVInBackground = async (agentId, cloudinaryUrl, processingId) => {
+  const results = [];
+  const errors = [];
+  let lineNumber = 1;
+
+  try {
+    console.log(`Background processing started for ID: ${processingId}`);
+    
+    // Download CSV content from Cloudinary
+    const response = await axios.get(cloudinaryUrl, {
+      responseType: 'stream',
+      timeout: 120000,
+      headers: {
+        'Accept': 'text/csv, application/octet-stream, */*'
+      }
+    });
+
+    if (!response.data) {
+      throw new Error('Failed to download CSV file from Cloudinary');
+    }
+
+    return new Promise((resolve, reject) => {
+      response.data
+        .pipe(csv())
+        .on('data', (data) => {
+          lineNumber++;
+          try {
+            console.log(`Background processing line ${lineNumber}:`, data.email);
+            
+            // Skip empty rows
+            if (!data.name && !data.email && !data.phone) {
+              return;
+            }
+
+            // Validate required fields
+            if (!data.name || !data.email || !data.phone) {
+              errors.push({
+                line: lineNumber,
+                error: 'Missing required fields (name, email, phone)',
+                data
+              });
+              return;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.email)) {
+              errors.push({
+                line: lineNumber,
+                error: 'Invalid email format',
+                data
+              });
+              return;
+            }
+
+            results.push({
+              name: data.name.trim(),
+              email: data.email.toLowerCase().trim(),
+              phone: data.phone.trim(),
+              address: data.address?.trim() || '',
+              agentId,
+              status: data.status?.toLowerCase() || 'pending',
+              notes: data.notes?.trim() || '',
+              lastPayment: data.lastPayment ? new Date(data.lastPayment) : null
+            });
+          } catch (error) {
+            console.error('Error processing CSV row:', error);
+            errors.push({
+              line: lineNumber,
+              error: error.message,
+              data
+            });
+          }
+        })
+        .on('end', async () => {
+          try {
+            console.log(`Background CSV parsing completed for ${processingId}. Found ${results.length} valid entries, ${errors.length} errors`);
+            
+            let successCount = 0;
+            let skipCount = 0;
+
+            // Process each client
+            for (const clientData of results) {
+              try {
+                // Check if client already exists
+                const existingClient = await InsuranceClient.findOne({
+                  email: clientData.email,
+                  agentId
+                });
+                
+                if (existingClient) {
+                  skipCount++;
+                  continue;
+                }
+
+                const client = new InsuranceClient(clientData);
+                await client.save();
+                successCount++;
+              } catch (error) {
+                console.error('Error saving client:', error);
+                errors.push({
+                  email: clientData.email,
+                  error: error.message
+                });
+              }
+            }
+
+            // Update agent's client count
+            if (successCount > 0) {
+              await InsuranceAgent.findByIdAndUpdate(agentId, {
+                $inc: { clientsCount: successCount }
+              });
+            }
+
+            console.log(`Background import completed for ${processingId}: ${successCount} imported, ${skipCount} skipped, ${errors.length} errors`);
+            
+            resolve({
+              processingId,
+              imported: successCount,
+              skipped: skipCount,
+              errors: errors.length,
+              errorDetails: errors
+            });
+          } catch (error) {
+            console.error('Error in background processing:', error);
+            reject(error);
+          }
+        })
+        .on('error', (error) => {
+          console.error('Error reading CSV stream in background:', error);
+          reject(error);
+        });
+    });
+  } catch (error) {
+    console.error(`Background processing error for ${processingId}:`, error);
+    throw error;
+  }
+};
+
 // Bulk import clients via CSV
 const importClientsCSV = async (req, res) => {
   try {
