@@ -650,7 +650,7 @@ export default function SalesProfilePage() {
                 </div>
 
                 {/* Sales Quotas */}
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                {/* <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                   <div className="flex items-center space-x-3 mb-6">
                     <div className="p-2 bg-green-100 rounded-lg">
                       <Target className="h-5 w-5 text-green-600" />
@@ -711,10 +711,10 @@ export default function SalesProfilePage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Performance Metrics */}
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                {/* <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                   <div className="flex items-center space-x-3 mb-6">
                     <div className="p-2 bg-orange-100 rounded-lg">
                       <Award className="h-5 w-5 text-orange-600" />
@@ -763,10 +763,10 @@ export default function SalesProfilePage() {
                       <p className="text-sm text-yellow-600">Commission</p>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Assigned Agents */}
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                {/* <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                   <div className="flex items-center space-x-3 mb-6">
                     <div className="p-2 bg-indigo-100 rounded-lg">
                       <Users className="h-5 w-5 text-indigo-600" />
@@ -827,10 +827,10 @@ export default function SalesProfilePage() {
                       <p>No agents assigned yet</p>
                     </div>
                   )}
-                </div>
+                </div> */}
 
                 {/* Skills */}
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                {/* <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-teal-100 rounded-lg">
@@ -909,9 +909,9 @@ export default function SalesProfilePage() {
                       )}
                     </div>
                   )}
-                </div>
+                </div> */}
 
-                {/* Experience */}
+                {/* Experience
                 <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                   <div className="flex items-center space-x-3 mb-6">
                     <div className="p-2 bg-orange-100 rounded-lg">
@@ -966,7 +966,7 @@ export default function SalesProfilePage() {
                 </div>
 
                 {/* Education */}
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                {/* <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                   <div className="flex items-center space-x-3 mb-6">
                     <div className="p-2 bg-purple-100 rounded-lg">
                       <GraduationCap className="h-5 w-5 text-purple-600" />
@@ -1020,10 +1020,10 @@ export default function SalesProfilePage() {
                       <p>No education records added yet</p>
                     </div>
                   )}
-                </div>
+                </div> */}
 
                 {/* Certifications */}
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                {/* <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                   <div className="flex items-center space-x-3 mb-6">
                     <div className="p-2 bg-yellow-100 rounded-lg">
                       <Award className="h-5 w-5 text-yellow-600" />
@@ -1079,7 +1079,7 @@ export default function SalesProfilePage() {
                       <p>No certifications added yet</p>
                     </div>
                   )}
-                </div>
+                </div>  */}
 
                 {/* Permissions */}
                 <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
@@ -1350,7 +1350,7 @@ export default function SalesProfilePage() {
                         <option value="private">Private</option>
                       </select>
                     </div>
-
+                    {/* 
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-gray-900">
@@ -1374,11 +1374,11 @@ export default function SalesProfilePage() {
                         <option value="team">Team Only</option>
                         <option value="admin">Admin Only</option>
                       </select>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
+                {/* <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20">
                   <div className="flex items-center space-x-3 mb-6">
                     <div className="p-2 bg-yellow-100 rounded-lg">
                       <Bell className="h-5 w-5 text-yellow-600" />
@@ -1444,7 +1444,7 @@ export default function SalesProfilePage() {
                       </label>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
 

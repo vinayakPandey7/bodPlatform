@@ -58,23 +58,25 @@ export default function SalesDashboard() {
     try {
       setLoading(true);
       console.log("Fetching sales dashboard data...");
-      
+
       // Fetch both profile and assigned agents
       const [profileResponse, agentsResponse] = await Promise.all([
         adminFetchers.getMySalesPersonProfile(),
-        adminFetchers.getMyAssignedAgents()
+        adminFetchers.getMyAssignedAgents(),
       ]);
-      
+
       console.log("Profile response:", profileResponse);
       console.log("Agents response:", agentsResponse);
-      
+
       // Set profile data
       if (profileResponse.salesPerson) {
         setProfile(profileResponse.salesPerson);
       }
-      
+
       // Transform and set agents data
-      const transformedAgents: AssignedInsuranceAgent[] = (agentsResponse.agents || []).map((agent: any) => ({
+      const transformedAgents: AssignedInsuranceAgent[] = (
+        agentsResponse.agents || []
+      ).map((agent: any) => ({
         _id: agent.agentId,
         name: agent.agentName || "N/A",
         email: agent.agentEmail || "N/A",
@@ -85,7 +87,7 @@ export default function SalesDashboard() {
         completedClients: agent.completedClients || 0,
         assignedDate: agent.assignedDate || new Date().toISOString(),
       }));
-      
+
       console.log("Transformed dashboard agents:", transformedAgents);
       setAssignedAgents(transformedAgents);
       setError("");
@@ -126,28 +128,7 @@ export default function SalesDashboard() {
         </span>
       ),
     },
-    {
-      key: "pendingClients",
-      label: "Pending",
-      type: "number",
-      responsive: "lg",
-      render: (value: number) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          {value} pending
-        </span>
-      ),
-    },
-    {
-      key: "completedClients",
-      label: "Completed",
-      type: "number",
-      responsive: "lg",
-      render: (value: number) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          {value} done
-        </span>
-      ),
-    },
+
     createActionsColumn(),
   ];
 
@@ -193,170 +174,173 @@ export default function SalesDashboard() {
     <ProtectedRoute allowedRoles={["sales_person"]}>
       <DashboardLayout>
         <div className="space-y-6">
-        {/* Header Section */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome, {profile?.name || "Sales Person"}!
-          </h1>
-          <p className="text-gray-600">
-            {profile ? 
-              `${profile.department || "Sales"} • ${profile.territory || "Territory not assigned"}` 
-              : "Manage your assigned insurance agents and their clients"
-            }
-          </p>
-        </div>
+          {/* Header Section */}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Welcome, {profile?.name || "Sales Person"}!
+            </h1>
+            <p className="text-gray-600">
+              {profile
+                ? `${profile.department || "Sales"} • ${
+                    profile.territory || "Territory not assigned"
+                  }`
+                : "Manage your assigned insurance agents and their clients"}
+            </p>
+          </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-blue-500 bg-opacity-10">
+                  <svg
+                    className="w-6 h-6 text-blue-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Assigned Agents
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {assignedAgents.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-xl shadow-lg bg-gradient-to-br from-purple-500 to-purple-600">
+                  <Building2 className="w-6 h-6 text-white" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Clients
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {totalClients}
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* 
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-yellow-500 bg-opacity-10">
+                  <svg
+                    className="w-6 h-6 text-yellow-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Pending Calls
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {totalPending}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-green-500 bg-opacity-10">
+                  <svg
+                    className="w-6 h-6 text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Completion Rate
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {completionRate}%
+                  </p>
+                </div>
+              </div>
+            </div> */}
+          </div>
+
+          {/* Quick Actions */}
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-500 bg-opacity-10">
-                <svg
-                  className="w-6 h-6 text-blue-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Assigned Agents
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => {
+                  if (assignedAgents.length > 0) {
+                    router.push(
+                      `/sales/agents/${assignedAgents[0]._id}/clients`
+                    );
+                  }
+                }}
+                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                disabled={assignedAgents.length === 0}
+              >
+                <h3 className="font-medium text-gray-900">Start Calling</h3>
+                <p className="text-sm text-gray-600">
+                  Begin calling clients from your assigned agents
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {assignedAgents.length}
+              </button>
+              <button
+                onClick={() => {
+                  // Could implement a report or summary view
+                  toast.info("Reports feature coming soon!");
+                }}
+                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+              >
+                <h3 className="font-medium text-gray-900">View Reports</h3>
+                <p className="text-sm text-gray-600">
+                  Check your calling performance and statistics
                 </p>
-              </div>
+              </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-xl shadow-lg bg-gradient-to-br from-purple-500 to-purple-600">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Total Clients
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalClients}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-yellow-500 bg-opacity-10">
-                <svg
-                  className="w-6 h-6 text-yellow-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Pending Calls
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalPending}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-500 bg-opacity-10">
-                <svg
-                  className="w-6 h-6 text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Completion Rate
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {completionRate}%
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={() => {
-                if (assignedAgents.length > 0) {
-                  router.push(`/sales/agents/${assignedAgents[0]._id}/clients`);
-                }
-              }}
-              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
-              disabled={assignedAgents.length === 0}
-            >
-              <h3 className="font-medium text-gray-900">Start Calling</h3>
-              <p className="text-sm text-gray-600">
-                Begin calling clients from your assigned agents
-              </p>
-            </button>
-            <button
-              onClick={() => {
-                // Could implement a report or summary view
-                toast.info("Reports feature coming soon!");
-              }}
-              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
-            >
-              <h3 className="font-medium text-gray-900">View Reports</h3>
-              <p className="text-sm text-gray-600">
-                Check your calling performance and statistics
-              </p>
-            </button>
-          </div>
-        </div>
-
-        {/* Assigned Insurance Agents Table */}
-        <GenericTable
-          data={assignedAgents}
-          columns={columns}
-          actions={actions}
-          loading={loading}
-          error={error}
-          title="Your Assigned Insurance Agents"
-          searchPlaceholder="Search agents..."
-          onRowClick={handleViewClients}
-          tableHeight="auto"
-          enableTableScroll={false}
-        />
+          {/* Assigned Insurance Agents Table */}
+          <GenericTable
+            data={assignedAgents}
+            columns={columns}
+            actions={actions}
+            loading={loading}
+            error={error}
+            title="Your Assigned Insurance Agents"
+            searchPlaceholder="Search agents..."
+            onRowClick={handleViewClients}
+            tableHeight="auto"
+            enableTableScroll={false}
+          />
         </div>
       </DashboardLayout>
     </ProtectedRoute>

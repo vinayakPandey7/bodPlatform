@@ -70,27 +70,29 @@ export default function MyAgentsPage() {
     try {
       setLoading(true);
       console.log("Fetching assigned agents for current sales person...");
-      
+
       // Fetch assigned agents from the API
       const response = await adminFetchers.getMyAssignedAgents();
       console.log("Agents response:", response);
-      
+
       // Transform the backend data to match frontend interface
-      const transformedAgents: InsuranceAgent[] = (response.agents || []).map((agent: any) => ({
-        _id: agent.agentId,
-        name: agent.agentName,
-        email: agent.agentEmail,
-        phone: agent.phone || "N/A",
-        specialization: agent.specialization || [],
-        isActive: agent.isActive || true,
-        clientsCount: agent.clientsCount || 0,
-        pendingClients: agent.pendingClients || 0,
-        completedClients: agent.completedClients || 0,
-        assignedDate: agent.assignedDate || new Date().toISOString(),
-        lastContactDate: agent.lastContactDate || new Date().toISOString(),
-        territory: agent.territory || "Not specified",
-      }));
-      
+      const transformedAgents: InsuranceAgent[] = (response.agents || []).map(
+        (agent: any) => ({
+          _id: agent.agentId,
+          name: agent.agentName,
+          email: agent.agentEmail,
+          phone: agent.phone || "N/A",
+          specialization: agent.specialization || [],
+          isActive: agent.isActive || true,
+          clientsCount: agent.clientsCount || 0,
+          pendingClients: agent.pendingClients || 0,
+          completedClients: agent.completedClients || 0,
+          assignedDate: agent.assignedDate || new Date().toISOString(),
+          lastContactDate: agent.lastContactDate || new Date().toISOString(),
+          territory: agent.territory || "Not specified",
+        })
+      );
+
       console.log("Transformed agents:", transformedAgents);
       setAgents(transformedAgents);
       setError("");
@@ -153,12 +155,21 @@ export default function MyAgentsPage() {
     },
     {
       key: "email",
-      label: "Contact",
+      label: "Email",
       type: "custom",
       render: (value: string, agent: InsuranceAgent) => (
         <div>
           <div className="text-sm text-gray-900">{value}</div>
-          <div className="text-sm text-gray-500">{agent.phone}</div>
+        </div>
+      ),
+    },
+    {
+      key: "phone",
+      label: "Contact",
+      type: "custom",
+      render: (value: string, agent: InsuranceAgent) => (
+        <div>
+          <div className="text-sm text-gray-500">+1 {agent.phone}</div>
         </div>
       ),
     },
@@ -225,14 +236,14 @@ export default function MyAgentsPage() {
     {
       title: "Total Agents",
       value: totalAgents.toString(),
-      icon: <Users className="w-6 h-6" />,
+      icon: <Users className="w-6 h-6 text-white" />,
       color: "primary" as const,
     },
 
     {
       title: "Total Clients",
       value: totalClients.toString(),
-      icon: <Building2 className="w-6 h-6" />,
+      icon: <Building2 className="w-6 h-6 text-white" />,
       color: "info" as const,
     },
   ];
