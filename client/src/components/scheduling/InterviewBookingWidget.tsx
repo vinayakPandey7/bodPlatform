@@ -166,7 +166,7 @@ const InterviewBookingWidget: React.FC<InterviewBookingWidgetProps> = ({
       toast.success("Interview booked successfully!");
       onClose();
     } catch (error) {
-      toast.error("Failed to book interview. Please try again.");
+      toast.error(error?.data?.message);
     }
   };
 

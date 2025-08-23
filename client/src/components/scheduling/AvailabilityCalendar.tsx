@@ -197,7 +197,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       <Grid container spacing={1}>
         {/* Day headers */}
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <Grid item xs key={day}>
+          <Grid item xs={1.714} key={day}>
             <Box
               textAlign="center"
               py={1}
@@ -217,7 +217,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           const isPastDate = isBefore(day, new Date().setHours(0, 0, 0, 0));
 
           return (
-            <Grid item xs key={day.toISOString()}>
+            <Grid item xs={1.714} key={day.toISOString()}>
               <Card
                 sx={{
                   minHeight: 120,
@@ -288,7 +288,8 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         onClose={() => setIsSlotModalOpen(false)}
         selectedDate={selectedDate}
         editingSlot={editingSlot}
-        onSave={editingSlot ? onUpdateSlot : onCreateSlot}
+        onCreateSlot={onCreateSlot}
+        onUpdateSlot={onUpdateSlot}
         loading={loading}
       />
     </Box>
@@ -301,7 +302,8 @@ interface SlotModalProps {
   onClose: () => void;
   selectedDate: Date | null;
   editingSlot: AvailabilitySlot | null;
-  onSave: (id: string | undefined, data: any) => Promise<void>;
+  onCreateSlot: (slotData: any) => Promise<void>;
+  onUpdateSlot: (id: string, slotData: any) => Promise<void>;
   loading: boolean;
 }
 
@@ -310,7 +312,8 @@ const SlotModal: React.FC<SlotModalProps> = ({
   onClose,
   selectedDate,
   editingSlot,
-  onSave,
+  onCreateSlot,
+  onUpdateSlot,
   loading,
 }) => {
   const [formData, setFormData] = useState({
@@ -339,7 +342,12 @@ const SlotModal: React.FC<SlotModalProps> = ({
         duration: editingSlot.duration,
         meetingType: editingSlot.meetingType,
         maxBookings: editingSlot.maxBookings,
-        meetingDetails: editingSlot.meetingDetails,
+        meetingDetails: {
+          location: editingSlot.meetingDetails.location || '',
+          videoLink: editingSlot.meetingDetails.videoLink || '',
+          phoneNumber: editingSlot.meetingDetails.phoneNumber || '',
+          instructions: editingSlot.meetingDetails.instructions || '',
+        },
         isRecurring: editingSlot.isRecurring,
       });
     } else {
@@ -370,7 +378,12 @@ const SlotModal: React.FC<SlotModalProps> = ({
         date: format(selectedDate, 'yyyy-MM-dd'),
       };
 
-      await onSave(editingSlot?._id, slotData);
+      if (editingSlot) {
+        await onUpdateSlot(editingSlot._id, slotData);
+      } else {
+        await onCreateSlot(slotData);
+      }
+      
       toast.success(editingSlot ? 'Slot updated successfully' : 'Slot created successfully');
       onClose();
     } catch (error) {
@@ -423,7 +436,7 @@ const SlotModal: React.FC<SlotModalProps> = ({
             />
           </Box>
 
-          <Box display="flex" gap={2}>
+          {/* <Box display="flex" gap={2}>
             <FormControl sx={{ flex: 1 }}>
               <InputLabel>Meeting Type</InputLabel>
               <Select
@@ -444,7 +457,7 @@ const SlotModal: React.FC<SlotModalProps> = ({
               sx={{ flex: 1 }}
               inputProps={{ min: 1, max: 10 }}
             />
-          </Box>
+          </Box> */}
 
           {/* Meeting Details */}
           {formData.meetingType === 'video' && (
@@ -499,7 +512,7 @@ const SlotModal: React.FC<SlotModalProps> = ({
             placeholder="Any special instructions for the interview..."
           />
 
-          <FormControlLabel
+          {/* <FormControlLabel
             control={
               <Switch
                 checked={formData.isRecurring}
@@ -507,7 +520,7 @@ const SlotModal: React.FC<SlotModalProps> = ({
               />
             }
             label="Recurring Slot"
-          />
+          /> */}
         </Box>
       </DialogContent>
       <DialogActions>

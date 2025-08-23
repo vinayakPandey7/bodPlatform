@@ -242,7 +242,7 @@ exports.getActiveJobs = async (req, res) => {
         // Get candidate's coordinates
         const candidateCoords = await getCoordinatesFromZipCode(zipCode);
 
-        // Use MongoDB geospatial query to find jobs within 5 miles (8047 meters)
+        // Use MongoDB geospatial query to find jobs within 20 miles (32187 meters)
         const nearbyJobs = await Job.find({
           ...filter,
           geoLocation: {
@@ -251,7 +251,7 @@ exports.getActiveJobs = async (req, res) => {
                 type: "Point",
                 coordinates: candidateCoords,
               },
-              $maxDistance: 8047, // 5 miles in meters
+              $maxDistance: 32187, // 20 miles in meters
             },
           },
         })
@@ -268,7 +268,7 @@ exports.getActiveJobs = async (req, res) => {
                 type: "Point",
                 coordinates: candidateCoords,
               },
-              $maxDistance: 8047,
+              $maxDistance: 32187,
             },
           },
         });
@@ -283,7 +283,7 @@ exports.getActiveJobs = async (req, res) => {
             hasPrev: pageNum > 1,
           },
           searchType: "location-based",
-          searchRadius: "4 miles",
+          searchRadius: "20 miles",
           candidateLocation: zipCode,
         });
       } catch (error) {
@@ -516,7 +516,7 @@ exports.getJobsForCandidates = async (req, res) => {
       // Get candidate's coordinates
       const candidateCoords = await getCoordinatesFromZipCode(zipCode);
 
-      // Find jobs within 4 miles using geospatial query
+      // Find jobs within 20 miles using geospatial query
       const nearbyJobs = await Job.aggregate([
         {
           $geoNear: {
@@ -525,7 +525,7 @@ exports.getJobsForCandidates = async (req, res) => {
               coordinates: candidateCoords,
             },
             distanceField: "distance",
-            maxDistance: 6437, // 4 miles in meters (4 * 1609.34 = 6437.36)
+            maxDistance: 32187, // 20 miles in meters (20 * 1609.34 = 32187)
             spherical: true,
             query: baseFilter,
           },
@@ -606,7 +606,7 @@ exports.getJobsForCandidates = async (req, res) => {
               coordinates: candidateCoords,
             },
             distanceField: "distance",
-            maxDistance: 8047,
+            maxDistance: 32187,
             spherical: true,
             query: baseFilter,
           },
@@ -630,15 +630,15 @@ exports.getJobsForCandidates = async (req, res) => {
         },
         searchCriteria: {
           zipCode,
-          searchRadius: "4 miles",
+          searchRadius: "20 miles",
           search: search || null,
           jobType: jobType || null,
           experience: experience || null,
         },
         message:
           totalJobs > 0
-            ? `Found ${totalJobs} jobs within 5 miles of ${zipCode}`
-            : `No jobs found within 4 miles of ${zipCode}`,
+            ? `Found ${totalJobs} jobs within 20 miles of ${zipCode}`
+            : `No jobs found within 20 miles of ${zipCode}`,
       });
     } catch (geoError) {
       console.error("Geolocation error:", geoError);
