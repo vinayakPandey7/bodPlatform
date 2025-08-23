@@ -5,8 +5,12 @@ import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CandidateProfileModal from "@/components/CandidateProfileModal";
 import NotesModal from "@/components/NotesModal";
+import InterviewBookingWidget from "@/components/scheduling/InterviewBookingWidget";
 import api from "@/lib/api";
 import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { API_ENDPOINTS, QUERY_KEYS } from "@/lib/constants";
+import { toast } from "sonner";
 
 interface Application {
   _id: string;
@@ -69,9 +73,57 @@ export default function JobApplicationsPage() {
   >(null);
   const [selectedCandidateName, setSelectedCandidateName] =
     useState<string>("");
+  const [showInterviewBooking, setShowInterviewBooking] = useState(false);
+  const [selectedCandidateForInterview, setSelectedCandidateForInterview] = useState<{
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null>(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  
   const params = useParams();
   const router = useRouter();
   const jobId = params.id as string;
+  const queryClient = useQueryClient();
+
+  // Fetch availability slots for this employer
+  const { data: slotsData } = useQuery({
+    queryKey: QUERY_KEYS.AVAILABILITY.LIST(),
+    queryFn: async () => {
+      const response = await api.get(API_ENDPOINTS.AVAILABILITY.LIST);
+      return response.data;
+    },
+  });
+
+  // Book interview mutation (for employer to book on behalf of candidate)
+  const bookInterviewMutation = useMutation({
+    mutationFn: async ({ slotId, jobId, candidateId, notes, interviewType }: {
+      slotId: string;
+      jobId: string;
+      candidateId: string;
+      notes?: string;
+      interviewType?: string;
+    }) => {
+      // This would be a special endpoint for employers to book interviews
+      // For now, we'll use the regular booking endpoint
+      const response = await api.post(API_ENDPOINTS.INTERVIEWS.BOOK, {
+        availabilitySlotId: slotId,
+        jobId,
+        candidateNotes: notes,
+        interviewType,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Interview scheduled successfully!");
+      setShowInterviewBooking(false);
+      fetchJobAndApplications(); // Refresh applications
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to schedule interview");
+    },
+  });
 
   useEffect(() => {
     if (jobId) {
@@ -161,6 +213,24 @@ export default function JobApplicationsPage() {
     setSelectedApplicationId(null);
     setSelectedCandidateName("");
     setIsNotesModalOpen(false);
+  };
+
+  const handleScheduleInterview = (candidate: { _id: string; firstName: string; lastName: string; email: string }) => {
+    setSelectedCandidateForInterview(candidate);
+    setAvailableSlots(slotsData?.slots || []);
+    setShowInterviewBooking(true);
+  };
+
+  const handleBookInterview = async (slotId: string, jobId: string, notes?: string, interviewType?: string) => {
+    if (!selectedCandidateForInterview) return;
+    
+    await bookInterviewMutation.mutateAsync({
+      slotId,
+      jobId,
+      candidateId: selectedCandidateForInterview._id,
+      notes,
+      interviewType,
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -408,15 +478,24 @@ export default function JobApplicationsPage() {
                           </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() =>
-                                openCandidateProfile(application.candidate._id)
-                              }
-                              className="text-indigo-600 hover:text-indigo-900 text-xs px-2 py-1 border border-indigo-300 rounded hover:bg-indigo-50 transition-colors"
-                            >
-                              View Profile
-                            </button>
+                          <div className="flex flex-col space-y-2">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() =>
+                                  openCandidateProfile(application.candidate._id)
+                                }
+                                className="text-indigo-600 hover:text-indigo-900 text-xs px-2 py-1 border border-indigo-300 rounded hover:bg-indigo-50 transition-colors"
+                              >
+                                View Profile
+                              </button>
+                              <button
+                                onClick={() => handleScheduleInterview(application.candidate)}
+                                className="text-green-600 hover:text-green-900 text-xs px-2 py-1 border border-green-300 rounded hover:bg-green-50 transition-colors"
+                                disabled={bookInterviewMutation.isPending}
+                              >
+                                Schedule Interview
+                              </button>
+                            </div>
                             <select
                               value={application.status}
                               onChange={(e) =>
@@ -473,6 +552,27 @@ export default function JobApplicationsPage() {
             isOpen={isNotesModalOpen}
             onClose={closeNotesModal}
             onNotesUpdate={fetchJobAndApplications}
+          />
+        )}
+
+        {/* Interview Booking Widget */}
+        {job && selectedCandidateForInterview && showInterviewBooking && (
+          <InterviewBookingWidget
+            job={{
+              _id: job._id,
+              title: job.title,
+              location: job.location,
+              employer: {
+                _id: job._id, // This should be employer ID, but we'll use job ID for now
+                companyName: "Your Company", // This should come from employer data
+                ownerName: "Employer", // This should come from employer data
+              }
+            }}
+            availableSlots={availableSlots}
+            onBookInterview={handleBookInterview}
+            loading={bookInterviewMutation.isPending}
+            open={showInterviewBooking}
+            onClose={() => setShowInterviewBooking(false)}
           />
         )}
       </DashboardLayout>

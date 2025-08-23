@@ -127,6 +127,28 @@ export const API_ENDPOINTS = {
     PROFILE_IMAGE: "/upload/profile-image",
     COMPANY_LOGO: "/upload/company-logo",
   },
+
+  // Scheduling endpoints
+  AVAILABILITY: {
+    LIST: "/availability",
+    CREATE: "/availability",
+    DETAIL: (id: string) => `/availability/${id}`,
+    UPDATE: (id: string) => `/availability/${id}`,
+    DELETE: (id: string) => `/availability/${id}`,
+    TOGGLE_STATUS: (id: string) => `/availability/${id}/toggle-status`,
+    FOR_BOOKING: "/availability/booking/available",
+  },
+
+  // Interview endpoints
+  INTERVIEWS: {
+    BOOK: "/interviews/book",
+    MY_INTERVIEWS: "/interviews/my-interviews",
+    DETAIL: (id: string) => `/interviews/${id}`,
+    UPDATE_STATUS: (id: string) => `/interviews/${id}/status`,
+    RESCHEDULE: (id: string) => `/interviews/${id}/reschedule`,
+    CANCEL: (id: string) => `/interviews/${id}/cancel`,
+    STATS: "/interviews/stats/summary",
+  },
 } as const;
 
 // Query keys for React Query
@@ -187,5 +209,17 @@ export const QUERY_KEYS = {
   },
   NOTIFICATIONS: {
     LIST: (params?: any) => ["notifications", params] as const,
+  },
+  AVAILABILITY: {
+    ALL: ["availability"] as const,
+    LIST: (params?: any) => ["availability", "list", params] as const,
+    DETAIL: (id: string) => ["availability", "detail", id] as const,
+    FOR_BOOKING: (params?: any) => ["availability", "for-booking", params] as const,
+  },
+  INTERVIEWS: {
+    ALL: ["interviews"] as const,
+    MY_INTERVIEWS: (params?: any) => ["interviews", "my-interviews", params] as const,
+    DETAIL: (id: string) => ["interviews", "detail", id] as const,
+    STATS: ["interviews", "stats"] as const,
   },
 } as const;

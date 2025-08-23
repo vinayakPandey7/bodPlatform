@@ -473,6 +473,12 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             icon: Bookmark,
           },
           {
+            name: "Interviews",
+            href: "/candidate/interviews",
+            current: pathname === "/candidate/interviews",
+            icon: Calendar,
+          },
+          {
             name: "Profile",
             href: "/candidate/profile",
             current: pathname === "/candidate/profile",
@@ -499,6 +505,12 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             href: "/employer/saved-candidates",
             current: pathname === "/employer/saved-candidates",
             icon: Users,
+          },
+          {
+            name: "Calendar",
+            href: "/employer/calendar",
+            current: pathname === "/employer/calendar",
+            icon: Calendar,
           },
           // {
           //   name: "Notifications",

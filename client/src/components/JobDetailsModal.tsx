@@ -9,9 +9,14 @@ import {
   Send,
   Users,
   X,
+  Calendar,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import InterviewBookingWidget from "@/components/scheduling/InterviewBookingWidget";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { API_ENDPOINTS } from "@/lib/constants";
+import api from "@/lib/api";
 
 interface JobDetailsModalProps {
   jobId: string;
@@ -31,9 +36,36 @@ export default function JobDetailsModal({
 
   const [isAnimating, setIsAnimating] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [showInterviewBooking, setShowInterviewBooking] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
 
   // Extract job data from response (backend returns { job: ... })
   const jobData = (jobResponse as any)?.job || jobResponse;
+
+  // Book interview mutation
+  const bookInterviewMutation = useMutation({
+    mutationFn: async ({ slotId, jobId, notes, interviewType }: {
+      slotId: string;
+      jobId: string;
+      notes?: string;
+      interviewType?: string;
+    }) => {
+      const response = await api.post(API_ENDPOINTS.INTERVIEWS.BOOK, {
+        availabilitySlotId: slotId,
+        jobId,
+        candidateNotes: notes,
+        interviewType,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Interview booked successfully!");
+      setShowInterviewBooking(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to book interview");
+    },
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -92,6 +124,28 @@ export default function JobDetailsModal({
         },
       }
     );
+  };
+
+  const handleScheduleInterview = async () => {
+    if (!jobData?.employer?._id) {
+      toast.error("Employer information not available");
+      return;
+    }
+
+    try {
+      // Fetch available slots for this employer
+      const response = await api.get(API_ENDPOINTS.AVAILABILITY.FOR_BOOKING, {
+        params: { employerId: jobData.employer._id }
+      });
+      setAvailableSlots(response.data.slots || []);
+      setShowInterviewBooking(true);
+    } catch (error) {
+      toast.error("Failed to fetch available interview slots");
+    }
+  };
+
+  const handleBookInterview = async (slotId: string, jobId: string, notes?: string, interviewType?: string) => {
+    await bookInterviewMutation.mutateAsync({ slotId, jobId, notes, interviewType });
   };
 
   const formatSalary = (min?: number, max?: number, currency = "USD") => {
@@ -854,6 +908,15 @@ export default function JobDetailsModal({
                   </button>
 
                   <button
+                    onClick={handleScheduleInterview}
+                    disabled={bookInterviewMutation.isPending}
+                    className="flex items-center space-x-2 px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    <span>{bookInterviewMutation.isPending ? "Loading..." : "Schedule Interview"}</span>
+                  </button>
+
+                  <button
                     onClick={handleApplyToJob}
                     disabled={isApplying}
                     className="flex items-center space-x-2 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
@@ -867,6 +930,27 @@ export default function JobDetailsModal({
           </div>
         )}
       </div>
+
+      {/* Interview Booking Widget */}
+      {jobData && showInterviewBooking && (
+        <InterviewBookingWidget
+          job={{
+            _id: jobData._id,
+            title: jobData.title,
+            location: jobData.location || `${jobData.city}, ${jobData.state}`,
+            employer: {
+              _id: jobData.employer._id,
+              companyName: jobData.employer.companyName,
+              ownerName: jobData.employer.ownerName,
+            }
+          }}
+          availableSlots={availableSlots}
+          onBookInterview={handleBookInterview}
+          loading={bookInterviewMutation.isPending}
+          open={showInterviewBooking}
+          onClose={() => setShowInterviewBooking(false)}
+        />
+      )}
     </div>
   );
 }
