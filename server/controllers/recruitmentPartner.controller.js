@@ -752,6 +752,20 @@ exports.submitCandidate = async (req, res) => {
         .json({ message: "Recruitment partner profile not found" });
     }
 
+    // Helper function to handle duplicate form fields that come as arrays
+    const getStringValue = (value) => {
+      if (Array.isArray(value)) {
+        return value[0]; // Take the first value if it's an array
+      }
+      return value;
+    };
+
+    // Clean ALL string fields from req.body to handle duplicates
+    const cleanedBody = {};
+    for (const [key, value] of Object.entries(req.body)) {
+      cleanedBody[key] = getStringValue(value);
+    }
+
     const {
       submissionType,
       candidateId,
@@ -777,7 +791,7 @@ exports.submitCandidate = async (req, res) => {
       jobId,
       jobTitle,
       companyName,
-    } = req.body;
+    } = cleanedBody;
 
     // Validate required fields based on submission type
     if (!jobId || !coverLetter || !availability || !noticePeriod) {

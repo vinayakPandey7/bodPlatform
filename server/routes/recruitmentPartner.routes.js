@@ -75,12 +75,22 @@ router.post(
   (req, res, next) => {
     uploadToCloudinary.single("resume")(req, res, (err) => {
       if (err) {
-        console.error("Cloudinary upload error:", err);
+        // If it's an empty file error, just continue without the file
+        if (err.message && err.message.includes('Empty file')) {
+          console.log('No file provided or empty file, continuing without upload');
+          req.file = null;
+          return next();
+        }
+        
+        // For other errors, return the error
+        console.error('Upload error:', err);
         return res.status(400).json({
           message: "Resume upload failed",
           error: err.message,
         });
       }
+      
+      // File uploaded successfully or no file provided
       next();
     });
   },

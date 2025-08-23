@@ -31,6 +31,12 @@ const uploadToCloudinary = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
+    // Handle empty files
+    if (!file || file.size === 0) {
+      console.log('Empty file detected, skipping upload');
+      return cb(null, false); // Skip the file but don't error
+    }
+    
     const allowedTypes = [
       "application/pdf",
       "application/msword",
