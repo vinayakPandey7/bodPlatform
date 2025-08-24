@@ -228,7 +228,7 @@ exports.deleteAvailabilitySlot = async (req, res) => {
     // Check if slot has bookings
     if (slot.currentBookings > 0) {
       return res.status(400).json({ 
-        message: "Cannot delete slot with existing bookings. Cancel bookings first." 
+        message: "Cannot delete slot with existing bookings." 
       });
     }
 

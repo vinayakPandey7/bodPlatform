@@ -176,7 +176,7 @@ export default function EmployerCalendarPage() {
       toast.success("Availability slot deleted successfully");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete availability slot");
+      toast.error(error.data?.message || "Failed to delete availability slot");
     },
   });
 
