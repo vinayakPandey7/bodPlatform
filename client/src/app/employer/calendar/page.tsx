@@ -55,8 +55,8 @@ interface AvailabilitySlot {
   startTime: string;
   endTime: string;
   duration: number;
-  timezone: string;
-  isRecurring: boolean;
+  timezone?: string;
+  isRecurring?: boolean;
   status: "available" | "booked" | "cancelled";
   maxBookings: number;
   currentBookings: number;
@@ -67,9 +67,9 @@ interface AvailabilitySlot {
     phoneNumber?: string;
     instructions?: string;
   };
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Interview {
@@ -102,7 +102,9 @@ interface Interview {
 
 export default function EmployerCalendarPage() {
   const [currentTab, setCurrentTab] = useState(0);
-  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(
+    null
+  );
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [viewInterviewsDialog, setViewInterviewsDialog] = useState(false);
 
@@ -138,7 +140,10 @@ export default function EmployerCalendarPage() {
   // Create availability slot mutation
   const createSlotMutation = useMutation({
     mutationFn: async (slotData: any) => {
-      const response = await api.post(API_ENDPOINTS.AVAILABILITY.CREATE, slotData);
+      const response = await api.post(
+        API_ENDPOINTS.AVAILABILITY.CREATE,
+        slotData
+      );
       return response.data;
     },
     onSuccess: () => {
@@ -146,14 +151,19 @@ export default function EmployerCalendarPage() {
       toast.success("Availability slot created successfully");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create availability slot");
+      toast.error(
+        error.response?.data?.message || "Failed to create availability slot"
+      );
     },
   });
 
   // Update availability slot mutation
   const updateSlotMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await api.put(API_ENDPOINTS.AVAILABILITY.UPDATE(id), data);
+      const response = await api.put(
+        API_ENDPOINTS.AVAILABILITY.UPDATE(id),
+        data
+      );
       return response.data;
     },
     onSuccess: () => {
@@ -161,7 +171,9 @@ export default function EmployerCalendarPage() {
       toast.success("Availability slot updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update availability slot");
+      toast.error(
+        error.response?.data?.message || "Failed to update availability slot"
+      );
     },
   });
 
@@ -199,9 +211,14 @@ export default function EmployerCalendarPage() {
 
   // Get upcoming interviews
   const upcomingInterviews = interviews
-    .filter(interview => {
-      const interviewDate = new Date(`${interview.scheduledDate}T${interview.scheduledTime}`);
-      return interviewDate > new Date() && ['scheduled', 'confirmed'].includes(interview.status);
+    .filter((interview) => {
+      const interviewDate = new Date(
+        `${interview.scheduledDate}T${interview.scheduledTime}`
+      );
+      return (
+        interviewDate > new Date() &&
+        ["scheduled", "confirmed"].includes(interview.status)
+      );
     })
     .sort((a, b) => {
       const dateA = new Date(`${a.scheduledDate}T${a.scheduledTime}`);
@@ -213,17 +230,23 @@ export default function EmployerCalendarPage() {
   // Get meeting type icon
   const getMeetingTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return <VideoIcon fontSize="small" color="primary" />;
-      case 'phone': return <PhoneIcon fontSize="small" color="primary" />;
-      case 'in-person': return <LocationIcon fontSize="small" color="primary" />;
-      default: return <EventIcon fontSize="small" color="primary" />;
+      case "video":
+        return <VideoIcon fontSize="small" color="primary" />;
+      case "phone":
+        return <PhoneIcon fontSize="small" color="primary" />;
+      case "in-person":
+        return <LocationIcon fontSize="small" color="primary" />;
+      default:
+        return <EventIcon fontSize="small" color="primary" />;
     }
   };
 
-  const isLoading = slotsLoading || interviewsLoading || 
-                   createSlotMutation.isPending || 
-                   updateSlotMutation.isPending || 
-                   deleteSlotMutation.isPending;
+  const isLoading =
+    slotsLoading ||
+    interviewsLoading ||
+    createSlotMutation.isPending ||
+    updateSlotMutation.isPending ||
+    deleteSlotMutation.isPending;
 
   return (
     <ProtectedRoute allowedRoles={["employer"]}>
@@ -248,7 +271,7 @@ export default function EmployerCalendarPage() {
                     <CalendarIcon color="primary" />
                     <Box>
                       <Typography variant="h6" fontWeight="600">
-                        {slots.filter(s => s.status === 'available').length}
+                        {slots.filter((s) => s.status === "available").length}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Available Slots
@@ -302,7 +325,10 @@ export default function EmployerCalendarPage() {
                     <PeopleIcon color="warning" />
                     <Box>
                       <Typography variant="h6" fontWeight="600">
-                        {slots.reduce((sum, slot) => sum + slot.currentBookings, 0)}
+                        {slots.reduce(
+                          (sum, slot) => sum + slot.currentBookings,
+                          0
+                        )}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Booked Slots
@@ -320,7 +346,12 @@ export default function EmployerCalendarPage() {
             <Grid item xs={12} lg={8}>
               <Card>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={3}
+                  >
                     <Typography variant="h6" fontWeight="600">
                       Availability Calendar
                     </Typography>
@@ -346,7 +377,8 @@ export default function EmployerCalendarPage() {
                     <Box>
                       {slots.length === 0 ? (
                         <Alert severity="info">
-                          No availability slots created yet. Click "Add Availability" to get started.
+                          No availability slots created yet. Click "Add
+                          Availability" to get started.
                         </Alert>
                       ) : (
                         <List>
@@ -369,27 +401,49 @@ export default function EmployerCalendarPage() {
                                 </ListItemIcon>
                                 <ListItemText
                                   primary={
-                                    <Box display="flex" alignItems="center" gap={2}>
-                                      <Typography variant="subtitle1" fontWeight="600">
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={2}
+                                    >
+                                      <Typography
+                                        variant="subtitle1"
+                                        fontWeight="600"
+                                      >
                                         {slot.title}
                                       </Typography>
                                       <Chip
                                         label={slot.status}
                                         size="small"
                                         color={
-                                          slot.status === 'available' ? 'success' :
-                                          slot.status === 'booked' ? 'warning' : 'error'
+                                          slot.status === "available"
+                                            ? "success"
+                                            : slot.status === "booked"
+                                            ? "warning"
+                                            : "error"
                                         }
                                       />
                                     </Box>
                                   }
                                   secondary={
                                     <Box>
-                                      <Typography variant="body2" color="text.secondary">
-                                        {format(parseISO(slot.date), 'EEEE, MMMM d, yyyy')} • {slot.startTime} - {slot.endTime}
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        {format(
+                                          parseISO(slot.date),
+                                          "EEEE, MMMM d, yyyy"
+                                        )}{" "}
+                                        • {slot.startTime} - {slot.endTime}
                                       </Typography>
-                                      <Typography variant="body2" color="text.secondary">
-                                        {slot.currentBookings}/{slot.maxBookings} bookings • {slot.duration} minutes
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        {slot.currentBookings}/
+                                        {slot.maxBookings} bookings •{" "}
+                                        {slot.duration} minutes
                                       </Typography>
                                     </Box>
                                   }
@@ -411,7 +465,12 @@ export default function EmployerCalendarPage() {
               {/* Upcoming Interviews */}
               <Card sx={{ mb: 3 }}>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={2}
+                  >
                     <Typography variant="h6" fontWeight="600">
                       Upcoming Interviews
                     </Typography>
@@ -438,16 +497,28 @@ export default function EmployerCalendarPage() {
                           <ListItemText
                             primary={
                               <Typography variant="body2" fontWeight="600">
-                                {interview.candidate.firstName} {interview.candidate.lastName}
+                                {interview.candidate.firstName}{" "}
+                                {interview.candidate.lastName}
                               </Typography>
                             }
                             secondary={
                               <Box>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
                                   {interview.job.title}
                                 </Typography>
-                                <Typography variant="caption" display="block" color="text.secondary">
-                                  {format(parseISO(interview.scheduledDate), 'MMM d')} • {interview.scheduledTime}
+                                <Typography
+                                  variant="caption"
+                                  display="block"
+                                  color="text.secondary"
+                                >
+                                  {format(
+                                    parseISO(interview.scheduledDate),
+                                    "MMM d"
+                                  )}{" "}
+                                  • {interview.scheduledTime}
                                 </Typography>
                               </Box>
                             }
@@ -466,7 +537,7 @@ export default function EmployerCalendarPage() {
                     Quick Actions
                   </Typography>
                   <Box display="flex" flexDirection="column" gap={1}>
-                    <Button
+                    {/* <Button
                       variant="outlined"
                       startIcon={<CalendarIcon />}
                       fullWidth
@@ -476,7 +547,7 @@ export default function EmployerCalendarPage() {
                       }}
                     >
                       Add Availability
-                    </Button>
+                    </Button> */}
                     <Button
                       variant="outlined"
                       startIcon={<ScheduleIcon />}
@@ -485,13 +556,13 @@ export default function EmployerCalendarPage() {
                     >
                       View All Interviews
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="outlined"
                       startIcon={<SettingsIcon />}
                       fullWidth
                     >
                       Calendar Settings
-                    </Button>
+                    </Button> */}
                   </Box>
                 </CardContent>
               </Card>
@@ -504,21 +575,25 @@ export default function EmployerCalendarPage() {
             open={Boolean(menuAnchor)}
             onClose={() => setMenuAnchor(null)}
           >
-            <MenuItem onClick={() => {
-              // Handle edit
-              setMenuAnchor(null);
-            }}>
+            <MenuItem
+              onClick={() => {
+                // Handle edit
+                setMenuAnchor(null);
+              }}
+            >
               <ListItemIcon>
                 <EditIcon fontSize="small" />
               </ListItemIcon>
               Edit Slot
             </MenuItem>
-            <MenuItem onClick={() => {
-              if (selectedSlot) {
-                handleDeleteSlot(selectedSlot._id);
-              }
-              setMenuAnchor(null);
-            }}>
+            <MenuItem
+              onClick={() => {
+                if (selectedSlot) {
+                  handleDeleteSlot(selectedSlot._id);
+                }
+                setMenuAnchor(null);
+              }}
+            >
               <ListItemIcon>
                 <DeleteIcon fontSize="small" />
               </ListItemIcon>
@@ -536,9 +611,7 @@ export default function EmployerCalendarPage() {
             <DialogTitle>All Interviews</DialogTitle>
             <DialogContent>
               {interviews.length === 0 ? (
-                <Alert severity="info">
-                  No interviews scheduled yet
-                </Alert>
+                <Alert severity="info">No interviews scheduled yet</Alert>
               ) : (
                 <List>
                   {interviews.map((interview) => (
@@ -551,26 +624,41 @@ export default function EmployerCalendarPage() {
                           primary={
                             <Box display="flex" alignItems="center" gap={2}>
                               <Typography variant="subtitle1" fontWeight="600">
-                                {interview.candidate.firstName} {interview.candidate.lastName}
+                                {interview.candidate.firstName}{" "}
+                                {interview.candidate.lastName}
                               </Typography>
                               <Chip
                                 label={interview.status}
                                 size="small"
                                 color={
-                                  interview.status === 'scheduled' ? 'primary' :
-                                  interview.status === 'completed' ? 'success' :
-                                  interview.status.includes('cancelled') ? 'error' : 'default'
+                                  interview.status === "scheduled"
+                                    ? "primary"
+                                    : interview.status === "completed"
+                                    ? "success"
+                                    : interview.status.includes("cancelled")
+                                    ? "error"
+                                    : "default"
                                 }
                               />
                             </Box>
                           }
                           secondary={
                             <Box>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 {interview.job.title}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {format(parseISO(interview.scheduledDate), 'EEEE, MMMM d, yyyy')} • {interview.scheduledTime}
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {format(
+                                  parseISO(interview.scheduledDate),
+                                  "EEEE, MMMM d, yyyy"
+                                )}{" "}
+                                • {interview.scheduledTime}
                               </Typography>
                             </Box>
                           }

@@ -41,6 +41,7 @@ import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants';
 import { Client as apiClient } from '@/lib/api';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import CalendlyStyleScheduler from '@/components/scheduling/CalendlyStyleScheduler';
 
 interface AvailabilitySlot {
   _id: string;
@@ -83,6 +84,8 @@ const RecruiterCalendarContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showTimeSlotSelector, setShowTimeSlotSelector] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
   const [selectedJob, setSelectedJob] = useState('');
   const [candidateEmail, setCandidateEmail] = useState('');
 
@@ -151,6 +154,22 @@ const RecruiterCalendarContent = () => {
       case 'in-person': return <LocationIcon fontSize="small" />;
       default: return <EventIcon fontSize="small" />;
     }
+  };
+
+  // Handle date click to show time slots
+  const handleDateClick = (date: Date) => {
+    const isPastDate = isBefore(date, new Date().setHours(0, 0, 0, 0));
+    if (isPastDate) return;
+    
+    setSelectedCalendarDate(date);
+    setShowTimeSlotSelector(true);
+  };
+
+  // Handle time slot selection
+  const handleTimeSlotSelect = (slot: AvailabilitySlot) => {
+    setSelectedSlot(slot);
+    setShowTimeSlotSelector(false);
+    setShowScheduleModal(true);
   };
 
   // Handle schedule interview
@@ -312,7 +331,18 @@ const RecruiterCalendarContent = () => {
         </Button>
       </Box>
 
-      {/* Calendar Grid */}
+      {/* Calendly-Style Scheduler */}
+      <CalendlyStyleScheduler
+        availableSlots={filteredSlots}
+        onSlotSelect={(slot) => {
+          setSelectedSlot(slot);
+          setShowScheduleModal(true);
+        }}
+        title="Employer Availability Calendar"
+      />
+
+      {/* Old Calendar Grid - Replaced with CalendlyStyleScheduler */}
+      {false && (
       <Box sx={{ 
         backgroundColor: 'white',
         borderRadius: 3,
@@ -363,6 +393,7 @@ const RecruiterCalendarContent = () => {
             return (
               <Box
                 key={day.toISOString()}
+                onClick={() => handleDateClick(day)}
                 sx={{
                   minHeight: 100,
                   opacity: isCurrentMonth ? 1 : 0.4,
@@ -372,6 +403,11 @@ const RecruiterCalendarContent = () => {
                   borderColor: 'grey.200',
                   p: 1.5,
                   position: 'relative',
+                  cursor: isPastDate ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: isPastDate ? undefined : isToday(day) ? 'primary.100' : 'grey.50',
+                  },
                   '&:last-child': {
                     borderRight: index % 7 === 6 ? 'none' : '1px solid'
                   }
@@ -410,9 +446,8 @@ const RecruiterCalendarContent = () => {
                   {daySlots.slice(0, 3).map((slot: AvailabilitySlot) => (
                     <Box
                       key={slot._id}
-                      onClick={() => {
-                        setSelectedSlot(slot);
-                        setShowScheduleModal(true);
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering the day click
                       }}
                       sx={{
                         backgroundColor: 'success.50',
@@ -460,6 +495,7 @@ const RecruiterCalendarContent = () => {
           })}
         </Box>
       </Box>
+      )}
 
       {/* Schedule Interview Modal */}
       <Dialog 
@@ -594,6 +630,8 @@ const RecruiterCalendarContent = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+
     </Box>
   );
 };

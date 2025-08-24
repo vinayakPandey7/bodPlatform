@@ -40,6 +40,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants';
 import { Client as apiClient } from '@/lib/api';
+import TimeSlotSelector from './TimeSlotSelector';
 
 interface AvailabilitySlot {
   _id: string;
@@ -105,7 +106,8 @@ const RecruiterSchedulingWidget = ({
 }: RecruiterSchedulingWidgetProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
-  const [step, setStep] = useState<'calendar' | 'confirm'>('calendar');
+  const [step, setStep] = useState<'calendar' | 'timeslots' | 'confirm'>('calendar');
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
   const [candidateEmail, setCandidateEmail] = useState(candidate?.email || '');
   const [selectedJob, setSelectedJob] = useState(job?._id || '');
   const [notes, setNotes] = useState('');
@@ -177,6 +179,12 @@ const RecruiterSchedulingWidget = ({
     }
   };
 
+  // Handle date selection
+  const handleDateSelect = (date: Date) => {
+    setSelectedCalendarDate(date);
+    setStep('timeslots');
+  };
+
   // Handle slot selection
   const handleSlotSelect = (slot: AvailabilitySlot) => {
     setSelectedSlot(slot);
@@ -202,6 +210,7 @@ const RecruiterSchedulingWidget = ({
   const handleClose = () => {
     setStep('calendar');
     setSelectedSlot(null);
+    setSelectedCalendarDate(null);
     setCandidateEmail(candidate?.email || '');
     setSelectedJob(job?._id || '');
     setNotes('');
@@ -233,7 +242,8 @@ const RecruiterSchedulingWidget = ({
       }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            {step === 'calendar' ? 'Select Interview Time' : 'Confirm Interview'}
+            {step === 'calendar' ? 'Select Interview Date' : 
+             step === 'timeslots' ? 'Select Time Slot' : 'Confirm Interview'}
           </Typography>
           {employer && (
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
@@ -383,14 +393,13 @@ const RecruiterSchedulingWidget = ({
 
                       {/* Available slots */}
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                        {daySlots.slice(0, 2).map((slot) => (
+                        {daySlots.length > 0 && (
                           <Button
-                            key={slot._id}
-                            onClick={() => handleSlotSelect(slot)}
+                            onClick={() => handleDateSelect(day)}
                             size="small"
                             sx={{
-                              backgroundColor: 'success.50',
-                              color: 'success.700',
+                              backgroundColor: 'primary.50',
+                              color: 'primary.700',
                               fontSize: '0.7rem',
                               fontWeight: 500,
                               minHeight: 'auto',
@@ -398,29 +407,19 @@ const RecruiterSchedulingWidget = ({
                               px: 1,
                               borderRadius: 1,
                               border: '1px solid',
-                              borderColor: 'success.200',
+                              borderColor: 'primary.200',
                               '&:hover': {
-                                backgroundColor: 'success.100',
-                                borderColor: 'success.300',
+                                backgroundColor: 'primary.100',
+                                borderColor: 'primary.300',
                               },
                               textTransform: 'none',
+                              width: '100%',
                             }}
                           >
-                            {slot.startTime}
+                            {daySlots.length} slot{daySlots.length > 1 ? 's' : ''}
                           </Button>
-                        ))}
-                        {daySlots.length > 2 && (
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              color: 'text.secondary',
-                              fontSize: '0.65rem',
-                              textAlign: 'center'
-                            }}
-                          >
-                            +{daySlots.length - 2} more
-                          </Typography>
                         )}
+
                       </Box>
                     </Box>
                   );
@@ -428,6 +427,14 @@ const RecruiterSchedulingWidget = ({
               </Box>
             </Box>
           </Box>
+        ) : step === 'timeslots' ? (
+          <TimeSlotSelector
+            open={true}
+            onClose={() => setStep('calendar')}
+            selectedDate={selectedCalendarDate}
+            availableSlots={availableSlots}
+            onSlotSelect={handleSlotSelect}
+          />
         ) : (
           <Box sx={{ p: 4 }}>
             {/* Confirmation Step */}
@@ -589,9 +596,9 @@ const RecruiterSchedulingWidget = ({
         backgroundColor: 'grey.50',
         gap: 2
       }}>
-        {step === 'confirm' && (
+        {(step === 'confirm' || step === 'timeslots') && (
           <Button 
-            onClick={() => setStep('calendar')}
+            onClick={() => setStep(step === 'confirm' ? 'timeslots' : 'calendar')}
             sx={{
               color: 'text.secondary',
               fontWeight: 600,

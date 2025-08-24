@@ -1,13 +1,11 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
   Button,
   Card,
   CardContent,
-  Chip,
-  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -38,8 +36,9 @@ import {
   Check as CheckIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import { format, addDays, isSameDay, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import CalendlyStyleScheduler from "./CalendlyStyleScheduler";
 
 interface AvailabilitySlot {
   _id: string;
@@ -98,58 +97,26 @@ const InterviewBookingWidget: React.FC<InterviewBookingWidgetProps> = ({
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [candidateNotes, setCandidateNotes] = useState("");
   const [interviewType, setInterviewType] = useState("screening");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Group slots by date
-  const slotsByDate = useMemo(() => {
-    const grouped = availableSlots.reduce((acc, slot) => {
-      const dateKey = format(parseISO(slot.date), 'yyyy-MM-dd');
-      if (!acc[dateKey]) {
-        acc[dateKey] = [];
-      }
-      acc[dateKey].push(slot);
-      return acc;
-    }, {} as Record<string, AvailabilitySlot[]>);
 
-    // Sort slots within each date by start time
-    Object.keys(grouped).forEach(date => {
-      grouped[date].sort((a, b) => a.startTime.localeCompare(b.startTime));
-    });
 
-    return grouped;
-  }, [availableSlots]);
 
-  // Get available dates (next 30 days with slots)
-  const availableDates = useMemo(() => {
-    return Object.keys(slotsByDate)
-      .map(dateStr => parseISO(dateStr))
-      .sort((a, b) => a.getTime() - b.getTime())
-      .slice(0, 30); // Limit to next 30 days
-  }, [slotsByDate]);
-
-  const steps = ['Select Date', 'Choose Time', 'Confirm Details'];
+  const steps = ['Select Date & Time', 'Confirm Details'];
 
   // Reset state when modal opens
   React.useEffect(() => {
     if (open) {
       setCurrentStep(0);
       setSelectedSlot(null);
-      setSelectedDate(null);
       setCandidateNotes("");
       setInterviewType("screening");
     }
   }, [open]);
 
-  // Handle date selection
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-    setCurrentStep(1);
-  };
-
-  // Handle slot selection
-  const handleSlotSelect = (slot: AvailabilitySlot) => {
+  // Handle time slot selection from CalendlyStyleScheduler
+  const handleTimeSlotSelect = (slot: AvailabilitySlot) => {
     setSelectedSlot(slot);
-    setCurrentStep(2);
+    setCurrentStep(1);
   };
 
   // Handle booking confirmation
@@ -243,127 +210,27 @@ const InterviewBookingWidget: React.FC<InterviewBookingWidgetProps> = ({
           ))}
         </Stepper>
 
-        {/* Step 1: Date Selection */}
+        {/* Step 1: Date & Time Selection */}
         {currentStep === 0 && (
-          <Box>
-            <Typography variant="h6" mb={3} fontWeight="600">
-              Select a Date
-            </Typography>
-            {availableDates.length === 0 ? (
+          <Box sx={{ height: '500px', overflow: 'hidden' }}>
+            {availableSlots.length === 0 ? (
               <Alert severity="info">
                 No available interview slots at this time. Please check back later or contact the employer directly.
               </Alert>
             ) : (
-              <Grid container spacing={2}>
-                {availableDates.map((date) => {
-                  const dateSlots = slotsByDate[format(date, 'yyyy-MM-dd')];
-                  const availableCount = dateSlots.filter(slot => 
-                    slot.status === 'available' && slot.currentBookings < slot.maxBookings
-                  ).length;
-
-                  return (
-                    <Grid item xs={12} sm={6} md={4} key={date.toISOString()}>
-                      <Card
-                        sx={{
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: 3,
-                          },
-                          border: selectedDate && isSameDay(date, selectedDate) ? 2 : 1,
-                          borderColor: selectedDate && isSameDay(date, selectedDate) ? 'primary.main' : 'divider',
-                        }}
-                        onClick={() => handleDateSelect(date)}
-                      >
-                        <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                          <Typography variant="h6" fontWeight="600" color="primary.main">
-                            {format(date, 'MMM d')}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" mb={1}>
-                            {format(date, 'EEEE')}
-                          </Typography>
-                          <Chip
-                            label={`${availableCount} slot${availableCount !== 1 ? 's' : ''}`}
-                            size="small"
-                            color="success"
-                            variant="outlined"
-                          />
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  );
-                })}
-              </Grid>
+              <CalendlyStyleScheduler
+                availableSlots={availableSlots}
+                onSlotSelect={handleTimeSlotSelect}
+                title="Select Date & Time"
+              />
             )}
           </Box>
         )}
 
-        {/* Step 2: Time Selection */}
-        {currentStep === 1 && selectedDate && (
-          <Box>
-            <Typography variant="h6" mb={3} fontWeight="600">
-              Choose a Time Slot
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={3}>
-              {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-            </Typography>
+        {/* Step 2: Time Selection - Now handled by TimeSlotSelector popup */}
 
-            <Grid container spacing={2}>
-              {slotsByDate[format(selectedDate, 'yyyy-MM-dd')]?.map((slot) => {
-                const isAvailable = slot.status === 'available' && slot.currentBookings < slot.maxBookings;
-                
-                return (
-                  <Grid item xs={12} sm={6} key={slot._id}>
-                    <Card
-                      sx={{
-                        cursor: isAvailable ? 'pointer' : 'not-allowed',
-                        opacity: isAvailable ? 1 : 0.6,
-                        transition: 'all 0.2s',
-                        '&:hover': isAvailable ? {
-                          transform: 'translateY(-1px)',
-                          boxShadow: 2,
-                        } : {},
-                        border: selectedSlot?._id === slot._id ? 2 : 1,
-                        borderColor: selectedSlot?._id === slot._id ? 'primary.main' : 'divider',
-                      }}
-                      onClick={() => isAvailable && handleSlotSelect(slot)}
-                    >
-                      <CardContent>
-                        <Box display="flex" alignItems="center" gap={2} mb={2}>
-                          <TimeIcon color="primary" />
-                          <Typography variant="h6" fontWeight="600">
-                            {slot.startTime} - {slot.endTime}
-                          </Typography>
-                        </Box>
-                        
-                        <Box display="flex" alignItems="center" gap={1} mb={1}>
-                          {getMeetingTypeIcon(slot.meetingType)}
-                          <Typography variant="body2">
-                            {getMeetingTypeLabel(slot.meetingType)}
-                          </Typography>
-                        </Box>
-
-                        <Typography variant="body2" color="text.secondary">
-                          Duration: {slot.duration} minutes
-                        </Typography>
-
-                        {slot.meetingDetails.instructions && (
-                          <Typography variant="body2" color="text.secondary" mt={1}>
-                            {slot.meetingDetails.instructions}
-                          </Typography>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Box>
-        )}
-
-        {/* Step 3: Confirmation */}
-        {currentStep === 2 && selectedSlot && (
+        {/* Step 2: Confirmation */}
+        {currentStep === 1 && selectedSlot && (
           <Box>
             <Typography variant="h6" mb={3} fontWeight="600">
               Confirm Your Interview
@@ -488,6 +355,8 @@ const InterviewBookingWidget: React.FC<InterviewBookingWidgetProps> = ({
           </Button>
         )}
       </DialogActions>
+
+
     </Dialog>
   );
 };
