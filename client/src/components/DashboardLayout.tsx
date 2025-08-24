@@ -564,12 +564,18 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             current: pathname === "/recruitment-partner/applications",
             icon: FileText,
           },
-          // {
-          //   name: "Interviews",
-          //   href: "/recruitment-partner/interviews",
-          //   current: pathname === "/recruitment-partner/interviews",
-          //   icon: Calendar,
-          // },
+          {
+            name: "Calendar",
+            href: "/recruiter/calendar",
+            current: pathname === "/recruiter/calendar",
+            icon: Calendar,
+          },
+          {
+            name: "Interviews",
+            href: "/recruiter/interviews",
+            current: pathname === "/recruiter/interviews",
+            icon: Users,
+          },
           // {
           //   name: "Reports",
           //   href: "/recruitment-partner/reports",

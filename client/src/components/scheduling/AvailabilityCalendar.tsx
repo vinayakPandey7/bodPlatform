@@ -33,7 +33,18 @@ import {
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
 } from "@mui/icons-material";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, isBefore } from "date-fns";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  addMonths,
+  subMonths,
+  isToday,
+  isBefore,
+} from "date-fns";
 import { toast } from "sonner";
 
 interface AvailabilitySlot {
@@ -91,7 +102,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   // Group slots by date
   const slotsByDate = useMemo(() => {
     return slots.reduce((acc, slot) => {
-      const dateKey = format(new Date(slot.date), 'yyyy-MM-dd');
+      const dateKey = format(new Date(slot.date), "yyyy-MM-dd");
       if (!acc[dateKey]) {
         acc[dateKey] = [];
       }
@@ -102,7 +113,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
 
   // Get slots for a specific date
   const getSlotsForDate = (date: Date) => {
-    const dateKey = format(date, 'yyyy-MM-dd');
+    const dateKey = format(date, "yyyy-MM-dd");
     return slotsByDate[dateKey] || [];
   };
 
@@ -126,7 +137,9 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
 
   // Handle slot delete
   const handleSlotDelete = async (slotId: string) => {
-    if (window.confirm("Are you sure you want to delete this availability slot?")) {
+    if (
+      window.confirm("Are you sure you want to delete this availability slot?")
+    ) {
       try {
         await onDeleteSlot(slotId);
         toast.success("Availability slot deleted successfully");
@@ -139,39 +152,114 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   // Get meeting type icon
   const getMeetingTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return <VideoIcon fontSize="small" />;
-      case 'phone': return <PhoneIcon fontSize="small" />;
-      case 'in-person': return <LocationIcon fontSize="small" />;
-      default: return <EventIcon fontSize="small" />;
+      case "video":
+        return <VideoIcon fontSize="small" />;
+      case "phone":
+        return <PhoneIcon fontSize="small" />;
+      case "in-person":
+        return <LocationIcon fontSize="small" />;
+      default:
+        return <EventIcon fontSize="small" />;
     }
   };
 
   // Get status color
-  const getStatusColor = (status: string, currentBookings: number, maxBookings: number) => {
-    if (status === 'cancelled') return 'error';
-    if (currentBookings >= maxBookings) return 'warning';
-    return 'success';
+  const getStatusColor = (
+    status: string,
+    currentBookings: number,
+    maxBookings: number
+  ) => {
+    if (status === "cancelled") return "error";
+    if (currentBookings >= maxBookings) return "warning";
+    return "success";
   };
 
   return (
     <Box>
-      {/* Calendar Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <IconButton onClick={goToPreviousMonth} disabled={loading}>
-            <ChevronLeft />
+      {/* Calendar Header - Calendly Style */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 4,
+          pb: 3,
+          borderBottom: "1px solid",
+          borderColor: "grey.200",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton
+            onClick={goToPreviousMonth}
+            disabled={loading}
+            sx={{
+              width: 40,
+              height: 40,
+              border: "1px solid",
+              borderColor: "grey.300",
+              borderRadius: 2,
+              "&:hover": {
+                backgroundColor: "grey.50",
+                borderColor: "grey.400",
+              },
+            }}
+          >
+            <ChevronLeft sx={{ fontSize: 20 }} />
           </IconButton>
-          <Typography variant="h5" fontWeight="600">
-            {format(currentDate, 'MMMM yyyy')}
+
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "text.primary",
+              mx: 3,
+              minWidth: 200,
+              textAlign: "center",
+            }}
+          >
+            {format(currentDate, "MMMM yyyy")}
           </Typography>
-          <IconButton onClick={goToNextMonth} disabled={loading}>
-            <ChevronRight />
+
+          <IconButton
+            onClick={goToNextMonth}
+            disabled={loading}
+            sx={{
+              width: 40,
+              height: 40,
+              border: "1px solid",
+              borderColor: "grey.300",
+              borderRadius: 2,
+              "&:hover": {
+                backgroundColor: "grey.50",
+                borderColor: "grey.400",
+              },
+            }}
+          >
+            <ChevronRight sx={{ fontSize: 20 }} />
           </IconButton>
         </Box>
-        <Box display="flex" gap={2}>
-          <Button variant="outlined" onClick={goToToday} disabled={loading}>
+
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={goToToday}
+            disabled={loading}
+            sx={{
+              borderColor: "grey.300",
+              color: "text.primary",
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              "&:hover": {
+                backgroundColor: "grey.50",
+                borderColor: "grey.400",
+              },
+            }}
+          >
             Today
           </Button>
+
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -182,10 +270,18 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
             }}
             disabled={loading}
             sx={{
-              background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #2563eb, #7c3aed)',
-              }
+              backgroundColor: "#006BFF",
+              color: "white",
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              textTransform: "none",
+              boxShadow: "0 2px 8px rgba(0, 107, 255, 0.2)",
+              "&:hover": {
+                backgroundColor: "#0056CC",
+                boxShadow: "0 4px 12px rgba(0, 107, 255, 0.3)",
+              },
             }}
           >
             Add Availability
@@ -193,94 +289,225 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         </Box>
       </Box>
 
-      {/* Calendar Grid */}
-      <Grid container spacing={1}>
+      {/* Calendar Grid - Calendly Style */}
+      <Box
+        sx={{
+          backgroundColor: "white",
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "grey.200",
+          overflow: "hidden",
+        }}
+      >
         {/* Day headers */}
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <Grid item xs={1.714} key={day}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            backgroundColor: "grey.50",
+            borderBottom: "1px solid",
+            borderColor: "grey.200",
+          }}
+        >
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <Box
-              textAlign="center"
-              py={1}
-              fontWeight="600"
-              color="text.secondary"
-              fontSize="0.875rem"
+              key={day}
+              sx={{
+                textAlign: "center",
+                py: 2,
+                fontWeight: 600,
+                color: "text.secondary",
+                fontSize: "0.875rem",
+                borderRight: "1px solid",
+                borderColor: "grey.200",
+                "&:last-child": {
+                  borderRight: "none",
+                },
+              }}
             >
               {day}
             </Box>
-          </Grid>
-        ))}
+          ))}
+        </Box>
 
         {/* Calendar days */}
-        {calendarDays.map((day) => {
-          const daySlots = getSlotsForDate(day);
-          const isCurrentMonth = isSameMonth(day, currentDate);
-          const isPastDate = isBefore(day, new Date().setHours(0, 0, 0, 0));
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            minHeight: "600px",
+          }}
+        >
+          {calendarDays.map((day, index) => {
+            const daySlots = getSlotsForDate(day);
+            const isCurrentMonth = isSameMonth(day, currentDate);
+            const isPastDate = isBefore(day, new Date().setHours(0, 0, 0, 0));
+            const isWeekStart = index % 7 === 0;
 
-          return (
-            <Grid item xs={1.714} key={day.toISOString()}>
-              <Card
+            return (
+              <Box
+                key={day.toISOString()}
                 sx={{
-                  minHeight: 120,
-                  cursor: isPastDate ? 'not-allowed' : 'pointer',
-                  opacity: isCurrentMonth ? 1 : 0.5,
-                  backgroundColor: isToday(day) ? 'action.selected' : 'background.paper',
-                  border: isToday(day) ? '2px solid' : '1px solid',
-                  borderColor: isToday(day) ? 'primary.main' : 'divider',
-                  '&:hover': {
-                    backgroundColor: isPastDate ? undefined : 'action.hover',
+                  minHeight: 100,
+                  cursor: isPastDate ? "not-allowed" : "pointer",
+                  opacity: isCurrentMonth ? 1 : 0.4,
+                  backgroundColor: isToday(day) ? "primary.50" : "white",
+                  borderRight: "1px solid",
+                  borderBottom: "1px solid",
+                  borderColor: "grey.200",
+                  p: 1.5,
+                  position: "relative",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: isPastDate
+                      ? undefined
+                      : isToday(day)
+                      ? "primary.100"
+                      : "grey.50",
+                  },
+                  "&:last-child": {
+                    borderRight: index % 7 === 6 ? "none" : "1px solid",
                   },
                 }}
                 onClick={() => !isPastDate && handleDateClick(day)}
               >
-                <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
-                  <Typography
-                    variant="body2"
-                    fontWeight={isToday(day) ? 600 : 400}
-                    color={isToday(day) ? 'primary.main' : 'text.primary'}
-                    mb={1}
-                  >
-                    {format(day, 'd')}
-                  </Typography>
+                {/* Date number */}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: isToday(day) ? 700 : isCurrentMonth ? 600 : 400,
+                    color: isToday(day)
+                      ? "primary.main"
+                      : isCurrentMonth
+                      ? "text.primary"
+                      : "text.disabled",
+                    mb: 1,
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  {format(day, "d")}
+                </Typography>
 
-                  {/* Slots for this day */}
-                  <Box display="flex" flexDirection="column" gap={0.5}>
-                    {daySlots.slice(0, 2).map((slot) => (
-                      <Chip
-                        key={slot._id}
-                        label={`${slot.startTime} - ${slot.endTime}`}
-                        size="small"
-                        color={getStatusColor(slot.status, slot.currentBookings, slot.maxBookings)}
-                        icon={getMeetingTypeIcon(slot.meetingType)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSlotEdit(slot);
-                        }}
-                        onDelete={slot.currentBookings === 0 ? (e) => {
-                          e.stopPropagation();
-                          handleSlotDelete(slot._id);
-                        } : undefined}
-                        deleteIcon={<DeleteIcon />}
-                        sx={{
-                          fontSize: '0.7rem',
-                          height: 20,
-                          '& .MuiChip-label': {
-                            px: 0.5,
-                          },
-                        }}
-                      />
-                    ))}
-                    {daySlots.length > 2 && (
-                      <Typography variant="caption" color="text.secondary">
-                        +{daySlots.length - 2} more
-                      </Typography>
-                    )}
+                {/* Available slots indicator */}
+                {daySlots.length > 0 && (
+                  <Box sx={{ position: "absolute", top: 8, right: 8 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        backgroundColor: daySlots.some(
+                          (slot) => slot.status === "available"
+                        )
+                          ? "success.main"
+                          : "warning.main",
+                      }}
+                    />
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
+                )}
+
+                {/* Slots preview */}
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  {daySlots.slice(0, 3).map((slot) => (
+                    <Box
+                      key={slot._id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSlotEdit(slot);
+                      }}
+                      sx={{
+                        backgroundColor:
+                          slot.status === "available"
+                            ? "success.50"
+                            : slot.status === "booked"
+                            ? "warning.50"
+                            : "error.50",
+                        color:
+                          slot.status === "available"
+                            ? "success.700"
+                            : slot.status === "booked"
+                            ? "warning.700"
+                            : "error.700",
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1,
+                        fontSize: "0.7rem",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        border: "1px solid",
+                        borderColor:
+                          slot.status === "available"
+                            ? "success.200"
+                            : slot.status === "booked"
+                            ? "warning.200"
+                            : "error.200",
+                        "&:hover": {
+                          backgroundColor:
+                            slot.status === "available"
+                              ? "success.100"
+                              : slot.status === "booked"
+                              ? "warning.100"
+                              : "error.100",
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        {getMeetingTypeIcon(slot.meetingType)}
+                        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                          {slot.startTime}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                  {daySlots.length > 3 && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.65rem",
+                        textAlign: "center",
+                        mt: 0.5,
+                      }}
+                    >
+                      +{daySlots.length - 3} more
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Add slot button for empty days */}
+                {daySlots.length === 0 && !isPastDate && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      bottom: 8,
+                      left: 8,
+                      right: 8,
+                      height: 24,
+                      border: "2px dashed",
+                      borderColor: "grey.300",
+                      borderRadius: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: 0,
+                      transition: "opacity 0.2s ease",
+                      ".MuiBox-root:hover &": {
+                        opacity: 1,
+                      },
+                    }}
+                  >
+                    <AddIcon sx={{ fontSize: 16, color: "grey.400" }} />
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
 
       {/* Slot Creation/Edit Modal */}
       <SlotModal
@@ -317,17 +544,17 @@ const SlotModal: React.FC<SlotModalProps> = ({
   loading,
 }) => {
   const [formData, setFormData] = useState({
-    title: '',
-    startTime: '09:00',
-    endTime: '10:00',
+    title: "",
+    startTime: "09:00",
+    endTime: "10:00",
     duration: 60,
-    meetingType: 'video' as 'video' | 'phone' | 'in-person',
+    meetingType: "video" as "video" | "phone" | "in-person",
     maxBookings: 1,
     meetingDetails: {
-      location: '',
-      videoLink: '',
-      phoneNumber: '',
-      instructions: '',
+      location: "",
+      videoLink: "",
+      phoneNumber: "",
+      instructions: "",
     },
     isRecurring: false,
   });
@@ -343,26 +570,26 @@ const SlotModal: React.FC<SlotModalProps> = ({
         meetingType: editingSlot.meetingType,
         maxBookings: editingSlot.maxBookings,
         meetingDetails: {
-          location: editingSlot.meetingDetails.location || '',
-          videoLink: editingSlot.meetingDetails.videoLink || '',
-          phoneNumber: editingSlot.meetingDetails.phoneNumber || '',
-          instructions: editingSlot.meetingDetails.instructions || '',
+          location: editingSlot.meetingDetails.location || "",
+          videoLink: editingSlot.meetingDetails.videoLink || "",
+          phoneNumber: editingSlot.meetingDetails.phoneNumber || "",
+          instructions: editingSlot.meetingDetails.instructions || "",
         },
         isRecurring: editingSlot.isRecurring,
       });
     } else {
       setFormData({
-        title: 'Interview Slot',
-        startTime: '09:00',
-        endTime: '10:00',
+        title: "Interview Slot",
+        startTime: "09:00",
+        endTime: "10:00",
         duration: 60,
-        meetingType: 'video',
+        meetingType: "video",
         maxBookings: 1,
         meetingDetails: {
-          location: '',
-          videoLink: '',
-          phoneNumber: '',
-          instructions: '',
+          location: "",
+          videoLink: "",
+          phoneNumber: "",
+          instructions: "",
         },
         isRecurring: false,
       });
@@ -375,7 +602,7 @@ const SlotModal: React.FC<SlotModalProps> = ({
     try {
       const slotData = {
         ...formData,
-        date: format(selectedDate, 'yyyy-MM-dd'),
+        date: format(selectedDate, "yyyy-MM-dd"),
       };
 
       if (editingSlot) {
@@ -383,56 +610,169 @@ const SlotModal: React.FC<SlotModalProps> = ({
       } else {
         await onCreateSlot(slotData);
       }
-      
-      toast.success(editingSlot ? 'Slot updated successfully' : 'Slot created successfully');
+
+      toast.success(
+        editingSlot ? "Slot updated successfully" : "Slot created successfully"
+      );
       onClose();
     } catch (error) {
-      toast.error(editingSlot ? 'Failed to update slot' : 'Failed to create slot');
+      toast.error(
+        editingSlot ? "Failed to update slot" : "Failed to create slot"
+      );
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {editingSlot ? 'Edit Availability Slot' : 'Create Availability Slot'}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)",
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          pb: 2,
+          borderBottom: "1px solid",
+          borderColor: "grey.200",
+          backgroundColor: "grey.50",
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: 700, color: "text.primary" }}
+        >
+          {editingSlot ? "Edit Availability" : "Add Availability"}
+        </Typography>
         {selectedDate && (
-          <Typography variant="body2" color="text.secondary">
-            {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+            {format(selectedDate, "EEEE, MMMM d, yyyy")}
           </Typography>
         )}
       </DialogTitle>
-      <DialogContent>
-        <Box display="flex" flexDirection="column" gap={3} pt={2}>
+      <DialogContent style={{ paddingTop: 12 }} sx={{ p: 4 }}>
+        <Box display="flex" flexDirection="column" gap={3}>
           <TextField
-            label="Slot Title"
+            label="Event Title"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, title: e.target.value })
+            }
             fullWidth
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                backgroundColor: "white",
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#006BFF",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#006BFF",
+                  borderWidth: 2,
+                },
+              },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#006BFF",
+              },
+            }}
           />
 
-          <Box display="flex" gap={2}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 120px",
+              gap: 2,
+              alignItems: "end",
+            }}
+          >
             <TextField
               label="Start Time"
               type="time"
               value={formData.startTime}
-              onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, startTime: e.target.value })
+              }
               InputLabelProps={{ shrink: true }}
-              sx={{ flex: 1 }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  backgroundColor: "white",
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#006BFF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#006BFF",
+                    borderWidth: 2,
+                  },
+                },
+                "& .MuiInputLabel-root.Mui-focused": {
+                  color: "#006BFF",
+                },
+              }}
             />
             <TextField
               label="End Time"
               type="time"
               value={formData.endTime}
-              onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, endTime: e.target.value })
+              }
               InputLabelProps={{ shrink: true }}
-              sx={{ flex: 1 }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  backgroundColor: "white",
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#006BFF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#006BFF",
+                    borderWidth: 2,
+                  },
+                },
+                "& .MuiInputLabel-root.Mui-focused": {
+                  color: "#006BFF",
+                },
+              }}
             />
             <TextField
-              label="Duration (minutes)"
+              label="Duration"
               type="number"
               value={formData.duration}
-              onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-              sx={{ flex: 1 }}
+              onChange={(e) =>
+                setFormData({ ...formData, duration: parseInt(e.target.value) })
+              }
+              InputProps={{
+                endAdornment: (
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", ml: 1 }}
+                  >
+                    min
+                  </Typography>
+                ),
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  backgroundColor: "white",
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#006BFF",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#006BFF",
+                    borderWidth: 2,
+                  },
+                },
+                "& .MuiInputLabel-root.Mui-focused": {
+                  color: "#006BFF",
+                },
+              }}
             />
           </Box>
 
@@ -460,40 +800,55 @@ const SlotModal: React.FC<SlotModalProps> = ({
           </Box> */}
 
           {/* Meeting Details */}
-          {formData.meetingType === 'video' && (
+          {formData.meetingType === "video" && (
             <TextField
               label="Video Link (optional)"
               value={formData.meetingDetails.videoLink}
-              onChange={(e) => setFormData({
-                ...formData,
-                meetingDetails: { ...formData.meetingDetails, videoLink: e.target.value }
-              })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  meetingDetails: {
+                    ...formData.meetingDetails,
+                    videoLink: e.target.value,
+                  },
+                })
+              }
               fullWidth
               placeholder="https://zoom.us/j/..."
             />
           )}
 
-          {formData.meetingType === 'phone' && (
+          {formData.meetingType === "phone" && (
             <TextField
               label="Phone Number (optional)"
               value={formData.meetingDetails.phoneNumber}
-              onChange={(e) => setFormData({
-                ...formData,
-                meetingDetails: { ...formData.meetingDetails, phoneNumber: e.target.value }
-              })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  meetingDetails: {
+                    ...formData.meetingDetails,
+                    phoneNumber: e.target.value,
+                  },
+                })
+              }
               fullWidth
               placeholder="+1 (555) 123-4567"
             />
           )}
 
-          {formData.meetingType === 'in-person' && (
+          {formData.meetingType === "in-person" && (
             <TextField
               label="Location"
               value={formData.meetingDetails.location}
-              onChange={(e) => setFormData({
-                ...formData,
-                meetingDetails: { ...formData.meetingDetails, location: e.target.value }
-              })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  meetingDetails: {
+                    ...formData.meetingDetails,
+                    location: e.target.value,
+                  },
+                })
+              }
               fullWidth
               placeholder="Office address or meeting room"
             />
@@ -502,10 +857,15 @@ const SlotModal: React.FC<SlotModalProps> = ({
           <TextField
             label="Instructions (optional)"
             value={formData.meetingDetails.instructions}
-            onChange={(e) => setFormData({
-              ...formData,
-              meetingDetails: { ...formData.meetingDetails, instructions: e.target.value }
-            })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                meetingDetails: {
+                  ...formData.meetingDetails,
+                  instructions: e.target.value,
+                },
+              })
+            }
             fullWidth
             multiline
             rows={3}
@@ -523,8 +883,31 @@ const SlotModal: React.FC<SlotModalProps> = ({
           /> */}
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+      <DialogActions
+        sx={{
+          p: 4,
+          pt: 2,
+          borderTop: "1px solid",
+          borderColor: "grey.200",
+          backgroundColor: "grey.50",
+          gap: 2,
+        }}
+      >
+        <Button
+          onClick={onClose}
+          disabled={loading}
+          sx={{
+            color: "text.secondary",
+            fontWeight: 600,
+            px: 3,
+            py: 1.5,
+            borderRadius: 2,
+            textTransform: "none",
+            "&:hover": {
+              backgroundColor: "grey.100",
+            },
+          }}
+        >
           Cancel
         </Button>
         <Button
@@ -532,13 +915,21 @@ const SlotModal: React.FC<SlotModalProps> = ({
           variant="contained"
           disabled={loading}
           sx={{
-            background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)',
-            '&:hover': {
-              background: 'linear-gradient(45deg, #2563eb, #7c3aed)',
-            }
+            backgroundColor: "#006BFF",
+            color: "white",
+            fontWeight: 600,
+            px: 4,
+            py: 1.5,
+            borderRadius: 2,
+            textTransform: "none",
+            boxShadow: "0 2px 8px rgba(0, 107, 255, 0.2)",
+            "&:hover": {
+              backgroundColor: "#0056CC",
+              boxShadow: "0 4px 12px rgba(0, 107, 255, 0.3)",
+            },
           }}
         >
-          {editingSlot ? 'Update' : 'Create'} Slot
+          {editingSlot ? "Update" : "Create"} Availability
         </Button>
       </DialogActions>
     </Dialog>
