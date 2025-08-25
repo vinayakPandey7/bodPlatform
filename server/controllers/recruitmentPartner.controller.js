@@ -1031,6 +1031,29 @@ exports.submitCandidate = async (req, res) => {
       await candidateUser.save();
     }
 
+    // Create interview invitation
+    try {
+      const { createInterviewInvitation } = require("./interviewBooking.controller");
+      const applicationId = candidateUser.applications[candidateUser.applications.length - 1]._id;
+      
+      const invitation = await createInterviewInvitation(
+        candidateUser, 
+        jobId, 
+        job.employer, 
+        applicationId, 
+        recruitmentPartner._id
+      );
+      
+      if (invitation) {
+        console.log("Interview invitation created successfully for candidate:", candidateUser.email);
+      } else {
+        console.log("No invitation created - no available slots for employer:", job.employer);
+      }
+    } catch (invitationError) {
+      console.error("Error creating interview invitation:", invitationError.message);
+      // Don't fail the candidate submission if interview invitation fails
+    }
+
     res.status(201).json({
       success: true,
       message: "Candidate submitted successfully for the job",
@@ -1082,6 +1105,22 @@ exports.getApplications = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
+    // Get interview bookings for this recruitment partner
+    const InterviewBooking = require("../models/interviewBooking.model");
+    const interviewBookings = await InterviewBooking.find({
+      recruitmentPartner: recruitmentPartner._id,
+    })
+      .populate('job', 'title')
+      .populate('employer', 'companyName')
+      .select('candidate job employer status scheduledDateTime interviewDetails tokenExpiresAt bookedAt');
+
+    // Create a map of interview bookings by candidate and job
+    const bookingMap = new Map();
+    interviewBookings.forEach(booking => {
+      const key = `${booking.candidate}_${booking.job._id}`;
+      bookingMap.set(key, booking);
+    });
+
     // Transform the data to show all applications
     const applications = [];
 
@@ -1092,6 +1131,27 @@ exports.getApplications = async (req, res) => {
 
       if (candidate.applications && candidate.applications.length > 0) {
         candidate.applications.forEach((application) => {
+          // Get interview booking info for this candidate-job combination
+          const bookingKey = `${candidate._id}_${application.job?._id || application.job}`;
+          const interviewBooking = bookingMap.get(bookingKey);
+
+          let interviewStatus = 'no_interview';
+          let interviewDetails = null;
+
+          if (interviewBooking) {
+            interviewStatus = interviewBooking.status;
+            interviewDetails = {
+              _id: interviewBooking._id,
+              status: interviewBooking.status,
+              scheduledDateTime: interviewBooking.scheduledDateTime,
+              interviewType: interviewBooking.interviewDetails?.type,
+              tokenExpiresAt: interviewBooking.tokenExpiresAt,
+              bookedAt: interviewBooking.bookedAt,
+              employer: interviewBooking.employer?.companyName,
+              jobTitle: interviewBooking.job?.title
+            };
+          }
+
           applications.push({
             _id: application._id || `${candidate._id}_${application.job}`,
             candidate: {
@@ -1118,6 +1178,9 @@ exports.getApplications = async (req, res) => {
             submittedAt: application.appliedAt || candidate.createdAt,
             coverLetter: application.coverLetter || "",
             customFields: application.customFields || [],
+            // Interview information
+            interviewStatus,
+            interviewDetails,
           });
         });
       } else {
@@ -1146,6 +1209,9 @@ exports.getApplications = async (req, res) => {
           submittedAt: candidate.createdAt,
           coverLetter: "",
           customFields: [],
+          // No interview for candidates without applications
+          interviewStatus: 'no_interview',
+          interviewDetails: null,
         });
       }
     });
@@ -1173,6 +1239,11 @@ exports.getApplications = async (req, res) => {
         awaitingPlacement: applications.filter(
           (app) => app.status === "awaiting_placement"
         ).length,
+        // Interview status summary
+        interviewInvited: applications.filter((app) => app.interviewStatus === "pending").length,
+        interviewBooked: applications.filter((app) => app.interviewStatus === "confirmed").length,
+        interviewCompleted: applications.filter((app) => app.interviewStatus === "completed").length,
+        noInterview: applications.filter((app) => app.interviewStatus === "no_interview").length,
       },
     });
   } catch (error) {
@@ -1180,6 +1251,148 @@ exports.getApplications = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error while fetching applications",
+      error: error.message,
+    });
+  }
+};
+
+// Get submitted candidates for a specific job
+exports.getJobSubmissions = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    
+    const recruitmentPartner = await RecruitmentPartner.findOne({
+      user: req.user.id,
+    });
+
+    if (!recruitmentPartner) {
+      return res
+        .status(404)
+        .json({ message: "Recruitment partner profile not found" });
+    }
+
+    // Verify job exists
+    const Job = require("../models/job.model");
+    const job = await Job.findById(jobId).populate('employer', 'companyName ownerName');
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    // Find all candidates submitted for this specific job
+    const candidates = await User.find({
+      role: "candidate",
+      addedByRecruitmentPartner: recruitmentPartner._id,
+      "applications.job": jobId,
+    })
+      .select(
+        "firstName lastName email phoneNumber applications personalInfo resume createdAt"
+      )
+      .sort({ createdAt: -1 });
+
+    // Get interview bookings for this job and recruitment partner
+    const InterviewBooking = require("../models/interviewBooking.model");
+    const interviewBookings = await InterviewBooking.find({
+      recruitmentPartner: recruitmentPartner._id,
+      job: jobId,
+    })
+      .populate('employer', 'companyName')
+      .select('candidate status scheduledDateTime interviewDetails tokenExpiresAt bookedAt createdAt');
+
+    // Create a map of interview bookings by candidate
+    const bookingMap = new Map();
+    interviewBookings.forEach(booking => {
+      bookingMap.set(booking.candidate.toString(), booking);
+    });
+
+    // Transform the data to show submissions for this job
+    const submissions = candidates.map((candidate) => {
+      const candidateName =
+        `${candidate.firstName || ""} ${candidate.lastName || ""}`.trim() ||
+        candidate.email.split("@")[0];
+
+      // Find the application for this specific job
+      const application = candidate.applications.find(
+        app => app.job.toString() === jobId
+      );
+
+      // Get interview booking info for this candidate
+      const interviewBooking = bookingMap.get(candidate._id.toString());
+
+      let interviewStatus = 'no_interview';
+      let interviewDetails = null;
+
+      if (interviewBooking) {
+        interviewStatus = interviewBooking.status;
+        interviewDetails = {
+          _id: interviewBooking._id,
+          status: interviewBooking.status,
+          scheduledDateTime: interviewBooking.scheduledDateTime,
+          interviewType: interviewBooking.interviewDetails?.type,
+          tokenExpiresAt: interviewBooking.tokenExpiresAt,
+          bookedAt: interviewBooking.bookedAt,
+          createdAt: interviewBooking.createdAt,
+          employer: interviewBooking.employer?.companyName,
+        };
+      }
+
+      return {
+        _id: application._id || `${candidate._id}_${jobId}`,
+        candidate: {
+          _id: candidate._id,
+          name: candidateName,
+          email: candidate.email,
+          phone: candidate.phoneNumber || candidate.personalInfo?.phone || "N/A",
+          resume: candidate.resume || null,
+        },
+        application: {
+          status: application?.status || "pending",
+          appliedAt: application?.appliedAt || candidate.createdAt,
+          coverLetter: application?.coverLetter || "",
+          customFields: application?.customFields || [],
+        },
+        // Interview information
+        interviewStatus,
+        interviewDetails,
+        submittedAt: application?.appliedAt || candidate.createdAt,
+      };
+    });
+
+    // Sort by submission date (most recent first)
+    submissions.sort(
+      (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
+    );
+
+    res.json({
+      success: true,
+      job: {
+        _id: job._id,
+        title: job.title,
+        location: job.location,
+        employer: job.employer,
+      },
+      submissions,
+      total: submissions.length,
+      summary: {
+        totalSubmissions: submissions.length,
+        pending: submissions.filter((sub) => sub.application.status === "pending").length,
+        shortlisted: submissions.filter((sub) => sub.application.status === "shortlist").length,
+        interviewing: submissions.filter((sub) =>
+          ["phone_interview", "in_person_interview"].includes(sub.application.status)
+        ).length,
+        hired: submissions.filter((sub) => sub.application.status === "hired").length,
+        rejected: submissions.filter((sub) => sub.application.status === "rejected").length,
+        // Interview status summary
+        interviewInvited: submissions.filter((sub) => sub.interviewStatus === "pending").length,
+        interviewBooked: submissions.filter((sub) => sub.interviewStatus === "confirmed").length,
+        interviewCompleted: submissions.filter((sub) => sub.interviewStatus === "completed").length,
+        noInterview: submissions.filter((sub) => sub.interviewStatus === "no_interview").length,
+      },
+    });
+  } catch (error) {
+    console.error("Get job submissions error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching job submissions",
       error: error.message,
     });
   }

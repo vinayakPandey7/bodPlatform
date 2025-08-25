@@ -23,6 +23,7 @@ const insuranceAgentRoutes = require("./routes/insuranceAgent.routes");
 const insuranceClientRoutes = require("./routes/insuranceClient.routes");
 const availabilityRoutes = require("./routes/availability.routes");
 const interviewRoutes = require("./routes/interview.routes");
+const interviewBookingRoutes = require("./routes/interviewBooking.routes");
 
 // Initialize express app
 const app = express();
@@ -83,6 +84,7 @@ app.use("/api/insurance-agents", insuranceAgentRoutes);
 app.use("/api/insurance-clients", insuranceClientRoutes);
 app.use("/api/availability", availabilityRoutes);
 app.use("/api/interviews", interviewRoutes);
+app.use("/api/interview-booking", interviewBookingRoutes);
 
 // Root route
 app.get("/", (req, res) => {

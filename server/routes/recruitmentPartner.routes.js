@@ -67,6 +67,14 @@ router.get(
   recruitmentPartnerController.getApplications
 );
 
+// Get job submissions route
+router.get(
+  "/jobs/:jobId/submissions",
+  auth,
+  authorizeRoles("recruitment_partner"),
+  recruitmentPartnerController.getJobSubmissions
+);
+
 // Submit candidate to job route
 router.post(
   "/submit-candidate",

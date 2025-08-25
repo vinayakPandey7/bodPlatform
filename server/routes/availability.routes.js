@@ -11,11 +11,25 @@ router.get(
   availabilityController.getAvailabilitySlots
 );
 
+router.get(
+  "/day/:date",
+  auth,
+  authorizeRoles("employer"),
+  availabilityController.getDayAvailability
+);
+
 router.post(
   "/",
   auth,
   authorizeRoles("employer"),
   availabilityController.createAvailabilitySlot
+);
+
+router.post(
+  "/bulk",
+  auth,
+  authorizeRoles("employer"),
+  availabilityController.createMultipleSlots
 );
 
 router.put(

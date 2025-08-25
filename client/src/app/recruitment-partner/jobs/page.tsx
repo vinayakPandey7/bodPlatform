@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import SubmitCandidateModal from "@/components/SubmitCandidateModal";
+import SubmittedCandidatesModal from "@/components/recruitment-partner/SubmittedCandidatesModal";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import {
@@ -109,7 +110,10 @@ export default function RecruitmentPartnerJobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [submittedCandidatesOpen, setSubmittedCandidatesOpen] = useState(false);
   const [selectedJobForSubmission, setSelectedJobForSubmission] =
+    useState<Job | null>(null);
+  const [selectedJobForCandidates, setSelectedJobForCandidates] =
     useState<Job | null>(null);
   const [showQuickSubmit, setShowQuickSubmit] = useState(false);
 
@@ -241,6 +245,16 @@ export default function RecruitmentPartnerJobsPage() {
     // Optional: You could refresh the jobs list or update UI state here
     // Optional: Track analytics or update local state
     // fetchAllJobs(); // Uncomment if you want to refresh jobs
+  };
+
+  const handleViewSubmittedCandidates = (job: Job) => {
+    setSelectedJobForCandidates(job);
+    setSubmittedCandidatesOpen(true);
+  };
+
+  const handleSubmittedCandidatesClose = () => {
+    setSubmittedCandidatesOpen(false);
+    setSelectedJobForCandidates(null);
   };
 
   const handleCreateJob = () => {
@@ -596,7 +610,7 @@ export default function RecruitmentPartnerJobsPage() {
                       </div>
                     </div>
 
-                    <div className="ml-6">
+                    <div className="ml-6 flex flex-col space-y-2">
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -609,11 +623,34 @@ export default function RecruitmentPartnerJobsPage() {
                             backgroundColor: "#4338ca",
                           },
                           borderRadius: "6px",
-                          padding: "12px 24px",
+                          padding: "10px 20px",
                           fontWeight: 500,
+                          fontSize: "14px",
                         }}
                       >
                         Submit Candidates
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewSubmittedCandidates(job);
+                        }}
+                        variant="outlined"
+                        sx={{
+                          marginTop: "12px",
+                          borderColor: "#4f46e5",
+                          color: "#4f46e5",
+                          "&:hover": {
+                            borderColor: "#4338ca",
+                            backgroundColor: "#f8fafc",
+                          },
+                          borderRadius: "6px",
+                          padding: "10px 20px",
+                          fontWeight: 500,
+                          fontSize: "14px",
+                        }}
+                      >
+                        View Submitted Candidates
                       </Button>
                     </div>
                   </div>
@@ -1068,6 +1105,17 @@ export default function RecruitmentPartnerJobsPage() {
               jobTitle={selectedJobForSubmission.title}
               companyName={getCompanyName(selectedJobForSubmission)}
               onSuccess={handleSubmitSuccess}
+            />
+          )}
+
+          {/* Submitted Candidates Modal */}
+          {selectedJobForCandidates && (
+            <SubmittedCandidatesModal
+              open={submittedCandidatesOpen}
+              onClose={handleSubmittedCandidatesClose}
+              jobId={selectedJobForCandidates._id}
+              jobTitle={selectedJobForCandidates.title}
+              companyName={getCompanyName(selectedJobForCandidates)}
             />
           )}
         </div>

@@ -106,6 +106,28 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
   }
 };
 
+// General email sending function
+const sendEmail = async ({ to, subject, html, text = null }) => {
+  try {
+    const transporter = createTransporter();
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>/g, ''), // Strip HTML if no text provided
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", result.messageId);
+    return { success: true, messageId: result.messageId };
+  } catch (error) {
+    console.error("Error sending email:", error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Test email configuration
 const testEmailConfig = async () => {
   try {
@@ -121,5 +143,6 @@ const testEmailConfig = async () => {
 
 module.exports = {
   sendPasswordResetEmail,
+  sendEmail,
   testEmailConfig,
 };
