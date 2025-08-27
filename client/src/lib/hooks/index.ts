@@ -7,3 +7,4 @@ export * from "./admin.hooks";
 export * from "./notification.hooks";
 export * from "./upload.hooks";
 export * from './salesPerson.hooks';
+export * from './interview.hooks';

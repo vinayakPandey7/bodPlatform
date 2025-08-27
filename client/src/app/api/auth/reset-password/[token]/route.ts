@@ -9,7 +9,7 @@ export async function PUT(
     const { token } = await params;
 
     // Forward request to backend
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+    const backendUrl = process.env.BACKEND_URL || "https://bodplatform.onrender.com";
     const response = await fetch(
       `${backendUrl}/api/auth/reset-password/${token}`,
       {

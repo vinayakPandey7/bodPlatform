@@ -13,6 +13,8 @@ import {
   Eye,
   Settings,
   BarChart3,
+  Calendar,
+  Clock,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -20,6 +22,8 @@ interface DashboardStats {
   totalActiveJobs: number;
   totalSelectedCandidates: number;
   totalPositionsPublished: number;
+  upcomingInterviews: number;
+  totalInterviews: number;
 }
 
 export default function EmployerDashboard() {
@@ -29,6 +33,8 @@ export default function EmployerDashboard() {
     totalActiveJobs: 0,
     totalSelectedCandidates: 0,
     totalPositionsPublished: 0,
+    upcomingInterviews: 0,
+    totalInterviews: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +52,8 @@ export default function EmployerDashboard() {
             (sum: number, job: any) => sum + job.numberOfPositions,
             0
           ),
+          upcomingInterviews: 0, // This would need a separate API call
+          totalInterviews: 0, // This would need a separate API call
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -55,6 +63,8 @@ export default function EmployerDashboard() {
           totalActiveJobs: 8,
           totalSelectedCandidates: 0,
           totalPositionsPublished: 8,
+          upcomingInterviews: 3,
+          totalInterviews: 12,
         });
       } finally {
         setLoading(false);
@@ -74,6 +84,14 @@ export default function EmployerDashboard() {
 
   const handleManageJobs = () => {
     router.push("/employer/jobs");
+  };
+
+  const handleManageInterviews = () => {
+    router.push("/employer/interviews");
+  };
+
+  const handleCalendar = () => {
+    router.push("/employer/calendar");
   };
 
   if (loading) {
@@ -195,6 +213,52 @@ export default function EmployerDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Upcoming Interviews */}
+            <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg">
+                    <Calendar className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-800 group-hover:text-cyan-600 transition-colors">
+                      {stats.upcomingInterviews}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-600 group-hover:text-gray-800 transition-colors">
+                    Upcoming Interviews
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">Scheduled this week</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Interviews */}
+            <div className="group relative bg-white/60 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 hover:bg-white/80 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+                    <Clock className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                      {stats.totalInterviews}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-600 group-hover:text-gray-800 transition-colors">
+                    Total Interviews
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">All time</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -202,7 +266,7 @@ export default function EmployerDashboard() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Post New Job */}
               <button
                 onClick={handlePostNewJob}
@@ -250,6 +314,23 @@ export default function EmployerDashboard() {
                   <h3 className="text-xl font-bold mb-2">Manage Jobs</h3>
                   <p className="text-orange-100">
                     Edit and manage existing jobs
+                  </p>
+                </div>
+              </button>
+
+                            {/* Interview Calendar */}
+              <button
+                onClick={handleCalendar}
+                className="group relative bg-gradient-to-br from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 rounded-2xl p-8 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center">
+                  <div className="p-4 bg-white/20 rounded-xl w-fit mx-auto mb-4">
+                    <Calendar className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Interview Calendar</h3>
+                  <p className="text-teal-100">
+                    Manage your interview schedule
                   </p>
                 </div>
               </button>

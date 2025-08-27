@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Forward request to backend
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+    const backendUrl = process.env.BACKEND_URL || "https://bodplatform.onrender.com";
     const response = await fetch(`${backendUrl}/api/auth/forgot-password`, {
       method: "POST",
       headers: {

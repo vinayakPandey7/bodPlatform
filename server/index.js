@@ -21,6 +21,7 @@ const locationRoutes = require("./routes/location.routes");
 const clientRoutes = require("./routes/client.routes");
 const insuranceAgentRoutes = require("./routes/insuranceAgent.routes");
 const insuranceClientRoutes = require("./routes/insuranceClient.routes");
+const interviewRoutes = require("./routes/interview.routes");
 
 // Initialize express app
 const app = express();
@@ -79,6 +80,7 @@ app.use("/api/upload", cloudinaryRoutes); // Use Cloudinary for all uploads
 app.use("/api/location", locationRoutes);
 app.use("/api/insurance-agents", insuranceAgentRoutes);
 app.use("/api/insurance-clients", insuranceClientRoutes);
+app.use("/api/interviews", interviewRoutes);
 
 // Root route
 app.get("/", (req, res) => {

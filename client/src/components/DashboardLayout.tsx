@@ -500,6 +500,12 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
             current: pathname === "/employer/saved-candidates",
             icon: Users,
           },
+          {
+            name: "Interview Calendar",
+            href: "/employer/calendar",
+            current: pathname === "/employer/calendar",
+            icon: Calendar,
+          },
           // {
           //   name: "Notifications",
           //   href: "/employer/notifications",

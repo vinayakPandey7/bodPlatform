@@ -101,6 +101,17 @@ export const API_ENDPOINTS = {
     TOGGLE_STATUS: (id: string) => `/insurance-agents/${id}/toggle-status`,
   },
 
+  // Interview endpoints
+  INTERVIEWS: {
+    SET_AVAILABILITY: "/interviews/employer/availability",
+    GET_SLOTS: "/interviews/slots",
+    SCHEDULE: "/interviews/schedule",
+    SEND_INVITATION: "/interviews/employer/invitation",
+    GET_INVITATION: (token: string) => `/interviews/invitation/${token}`,
+    GET_CALENDAR: "/interviews/employer/calendar",
+    UPDATE_STATUS: (bookingId: string) => `/interviews/employer/interview/${bookingId}/status`,
+  },
+
   // Insurance Client endpoints
   INSURANCE_CLIENTS: {
     LIST: "/insurance-clients",
@@ -179,6 +190,13 @@ export const QUERY_KEYS = {
     ALL: ["insurance-agents"] as const,
     LIST: (params?: any) => ["insurance-agents", "list", params] as const,
     DETAIL: (id: string) => ["insurance-agents", "detail", id] as const,
+  },
+  INTERVIEWS: {
+    ALL: ["interviews"] as const,
+    AVAILABILITY: ["interviews", "availability"] as const,
+    SLOTS: (params?: any) => ["interviews", "slots", params] as const,
+    CALENDAR: (params?: any) => ["interviews", "calendar", params] as const,
+    INVITATION: (token: string) => ["interviews", "invitation", token] as const,
   },
   ADMIN: {
     DASHBOARD: ["admin", "dashboard"] as const,

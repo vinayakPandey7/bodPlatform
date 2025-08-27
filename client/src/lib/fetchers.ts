@@ -728,3 +728,108 @@ export const salesPersonFetchers = {
     return response.data;
   },
 };
+
+export interface InterviewSlot {
+  _id: string;
+  employer: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  timezone: string;
+  isAvailable: boolean;
+  maxCandidates: number;
+  currentBookings: number;
+  createdAt: string;
+}
+
+export interface InterviewBooking {
+  _id: string;
+  slot: string;
+  employer: string;
+  candidate: string;
+  recruitmentPartner?: string;
+  job: string;
+  candidateName: string;
+  candidateEmail: string;
+  candidatePhone?: string;
+  status: "scheduled" | "completed" | "cancelled" | "no_show";
+  interviewType: "phone" | "video" | "in_person";
+  meetingLink?: string;
+  notes?: string;
+  scheduledAt: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export interface InterviewInvitation {
+  _id: string;
+  booking: string;
+  invitationToken: string;
+  candidateEmail: string;
+  status: "sent" | "opened" | "scheduled" | "expired";
+  expiresAt: string;
+  sentAt: string;
+  scheduledAt?: string;
+}
+
+export interface AvailabilitySlot {
+  date: string;
+  startTime: string;
+  endTime: string;
+  timezone?: string;
+  isAvailable?: boolean;
+  maxCandidates?: number;
+}
+
+export interface ScheduleInterviewData {
+  slotId: string;
+  candidateName: string;
+  candidateEmail: string;
+  candidatePhone?: string;
+  jobId: string;
+}
+
+// Interview fetchers
+export const interviewFetchers = {
+  // Employer: Set availability calendar
+  setEmployerAvailability: async (slots: AvailabilitySlot[]) => {
+    const response = await Client.post(API_ENDPOINTS.INTERVIEWS.SET_AVAILABILITY, { slots });
+    return response.data;
+  },
+
+  // Get available slots for candidate selection
+  getAvailableSlots: async (params?: { employerId?: string; startDate?: string; endDate?: string }) => {
+    const response = await Client.get(API_ENDPOINTS.INTERVIEWS.GET_SLOTS, { params });
+    return response.data;
+  },
+
+  // Schedule interview (candidate selects slot)
+  scheduleInterview: async (data: ScheduleInterviewData) => {
+    const response = await Client.post(API_ENDPOINTS.INTERVIEWS.SCHEDULE, data);
+    return response.data;
+  },
+
+  // Employer: Send interview invitation
+  sendInterviewInvitation: async (data: { candidateId: string; jobId: string; recruitmentPartnerId?: string }) => {
+    const response = await Client.post(API_ENDPOINTS.INTERVIEWS.SEND_INVITATION, data);
+    return response.data;
+  },
+
+  // Get interview invitation details
+  getInterviewInvitation: async (token: string) => {
+    const response = await Client.get(API_ENDPOINTS.INTERVIEWS.GET_INVITATION(token));
+    return response.data;
+  },
+
+  // Employer: Get interview calendar
+  getEmployerCalendar: async (params?: { startDate?: string; endDate?: string }) => {
+    const response = await Client.get(API_ENDPOINTS.INTERVIEWS.GET_CALENDAR, { params });
+    return response.data;
+  },
+
+  // Employer: Update interview status
+  updateInterviewStatus: async (bookingId: string, data: { status: string; notes?: string }) => {
+    const response = await Client.put(API_ENDPOINTS.INTERVIEWS.UPDATE_STATUS(bookingId), data);
+    return response.data;
+  },
+};
