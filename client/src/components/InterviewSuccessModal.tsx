@@ -175,12 +175,12 @@ Please arrive 10 minutes early.`,
               Interview Details
             </Typography>
 
-            <Grid container spacing={2}>
+            {booking &&<Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <Building className="h-4 w-4 text-gray-500" />
                   <Typography variant="body2">
-                    <strong>Company:</strong> {booking.employer.companyName}
+                    <strong>Company:</strong> {booking?.employer?.companyName}
                   </Typography>
                 </Box>
               </Grid>
@@ -189,7 +189,7 @@ Please arrive 10 minutes early.`,
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <User className="h-4 w-4 text-gray-500" />
                   <Typography variant="body2">
-                    <strong>Position:</strong> {booking.job.title}
+                    <strong>Position:</strong> {booking?.job?.title}
                   </Typography>
                 </Box>
               </Grid>
@@ -198,7 +198,7 @@ Please arrive 10 minutes early.`,
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <Typography variant="body2">
-                    <strong>Date:</strong> {formatDate(booking.slotDate)}
+                    <strong>Date:</strong> {formatDate(booking?.slotDate)}
                   </Typography>
                 </Box>
               </Grid>
@@ -220,7 +220,7 @@ Please arrive 10 minutes early.`,
                   </Typography>
                 </Box>
               </Grid>
-            </Grid>
+            </Grid>}
 
             <Box mt={2}>
               <Chip

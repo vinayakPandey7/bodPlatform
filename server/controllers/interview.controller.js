@@ -75,50 +75,136 @@ const setEmployerAvailability = async (req, res) => {
   }
 };
 
+// Helper function to generate default time slots for a date
+const generateDefaultSlots = (employerId, date, employer) => {
+  const defaultSlots = [];
+  const workingHours = [
+    { start: "09:00", end: "10:00" },
+    { start: "10:00", end: "11:00" },
+    { start: "11:00", end: "12:00" },
+    { start: "14:00", end: "15:00" },
+    { start: "15:00", end: "16:00" },
+    { start: "16:00", end: "17:00" },
+  ];
+
+  workingHours.forEach(slot => {
+    defaultSlots.push({
+      id: `default-${employerId}-${date}-${slot.start}`,
+      startTime: slot.start,
+      endTime: slot.end,
+      timezone: "America/New_York",
+      availableSpots: 1,
+      employer: employer,
+      isDefault: true
+    });
+  });
+
+  return defaultSlots;
+};
+
 // 2. Get available slots for candidate selection
 const getAvailableSlots = async (req, res) => {
   try {
     const { jobId, employerId, startDate, endDate } = req.query;
 
-    const query = {
-      isAvailable: true,
-      currentBookings: { $lt: "$maxCandidates" },
+    if (!employerId) {
+      return res.status(400).json({
+        success: false,
+        message: "employerId is required"
+      });
+    }
+
+    // Get employer info
+    const Employer = require("../models/employer.model");
+    const employer = await Employer.findById(employerId).select('companyName');
+    if (!employer) {
+      return res.status(404).json({
+        success: false,
+        message: "Employer not found"
+      });
+    }
+
+    // Set date range - default to next 30 days if not provided
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    const matchQuery = {
+      employer: employerId,
+      date: { $gte: start, $lte: end }
     };
 
-    if (employerId) {
-      query.employer = employerId;
+    // Get existing slots (both available and unavailable)
+    const existingSlots = await InterviewSlot.aggregate([
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: "employers",
+          localField: "employer",
+          foreignField: "_id",
+          as: "employer",
+          pipeline: [{ $project: { companyName: 1 } }]
+        }
+      },
+      { $unwind: "$employer" },
+      { $sort: { date: 1, startTime: 1 } }
+    ]);
+
+    // Generate date range for default availability
+    const dateRange = [];
+    const currentDate = new Date(start);
+    while (currentDate <= end) {
+      // Skip weekends
+      if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+        dateRange.push(new Date(currentDate));
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    if (startDate && endDate) {
-      query.date = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      };
-    }
-
-    const slots = await InterviewSlot.find(query)
-      .populate("employer", "companyName")
-      .sort({ date: 1, startTime: 1 });
-
-    // Group slots by date for easier frontend consumption
-    const groupedSlots = slots.reduce((acc, slot) => {
+    // Group existing slots by date
+    const existingSlotsByDate = {};
+    existingSlots.forEach(slot => {
       const dateKey = slot.date.toISOString().split("T")[0];
-      if (!acc[dateKey]) {
-        acc[dateKey] = {
+      if (!existingSlotsByDate[dateKey]) {
+        existingSlotsByDate[dateKey] = [];
+      }
+      existingSlotsByDate[dateKey].push(slot);
+    });
+
+    // Build final grouped slots
+    const groupedSlots = {};
+
+    dateRange.forEach(date => {
+      const dateKey = date.toISOString().split("T")[0];
+      const existingSlotsForDate = existingSlotsByDate[dateKey] || [];
+      
+      // If employer has set specific slots for this date, use only available ones
+      if (existingSlotsForDate.length > 0) {
+        const availableSlots = existingSlotsForDate.filter(slot => 
+          slot.isAvailable && slot.currentBookings < slot.maxCandidates
+        );
+        
+        if (availableSlots.length > 0) {
+          groupedSlots[dateKey] = {
+            date: dateKey,
+            slots: availableSlots.map(slot => ({
+              id: slot._id,
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              timezone: slot.timezone,
+              availableSpots: slot.maxCandidates - slot.currentBookings,
+              employer: slot.employer,
+            }))
+          };
+        }
+      } else {
+        // No specific slots set - generate default availability
+        const defaultSlots = generateDefaultSlots(employerId, dateKey, employer);
+        groupedSlots[dateKey] = {
           date: dateKey,
-          slots: [],
+          slots: defaultSlots
         };
       }
-      acc[dateKey].slots.push({
-        id: slot._id,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        timezone: slot.timezone,
-        availableSpots: slot.maxCandidates - slot.currentBookings,
-        employer: slot.employer,
-      });
-      return acc;
-    }, {});
+    });
 
     res.status(200).json({
       success: true,
@@ -139,35 +225,101 @@ const scheduleInterview = async (req, res) => {
   try {
     const { slotId, candidateName, candidateEmail, candidatePhone, jobId } = req.body;
 
-    // Validate slot availability
-    const slot = await InterviewSlot.findById(slotId);
-    if (!slot) {
-      return res.status(404).json({
-        success: false,
-        message: "Interview slot not found",
+    let slot;
+    let isDefaultSlot = false;
+
+    // Check if this is a default slot (starts with 'default-')
+    if (slotId.startsWith('default-')) {
+      isDefaultSlot = true;
+      // Parse default slot info: default-{employerId}-{YYYY-MM-DD}-{HH:MM}
+      const parts = slotId.split('-');
+      const employerId = parts[1];
+      const date = `${parts[2]}-${parts[3]}-${parts[4]}`; // Reconstruct YYYY-MM-DD
+      const startTime = `${parts[5]}:${parts[6]}`; // Reconstruct HH:MM
+      
+      // Create the slot in database first
+      const endTime = startTime === "09:00" ? "10:00" :
+                     startTime === "10:00" ? "11:00" :
+                     startTime === "11:00" ? "12:00" :
+                     startTime === "14:00" ? "15:00" :
+                     startTime === "15:00" ? "16:00" :
+                     startTime === "16:00" ? "17:00" : "18:00";
+
+      slot = await InterviewSlot.create({
+        employer: employerId,
+        date: new Date(date + 'T00:00:00.000Z'), // Ensure UTC parsing to avoid timezone issues
+        startTime: startTime,
+        endTime: endTime,
+        timezone: "America/New_York",
+        isAvailable: true,
+        maxCandidates: 1,
+        currentBookings: 0
+      });
+    } else {
+      // Regular slot - validate it exists
+      slot = await InterviewSlot.findById(slotId);
+      if (!slot) {
+        return res.status(404).json({
+          success: false,
+          message: "Interview slot not found",
+        });
+      }
+
+      if (!slot.isAvailable || slot.currentBookings >= slot.maxCandidates) {
+        return res.status(400).json({
+          success: false,
+          message: "This slot is no longer available",
+        });
+      }
+    }
+
+    // For interview bookings, we'll create a minimal candidate record with default values
+    const Candidate = require("../models/candidate.model");
+    let candidate = await Candidate.findOne({ email: candidateEmail });
+    
+    if (!candidate) {
+      // Create minimal candidate record with required defaults
+      candidate = await Candidate.create({
+        job: jobId,
+        recruitmentPartner: slot.employer, // Use employer as recruitment partner for now
+        name: candidateName,
+        phone: candidatePhone || "000-000-0000",
+        dateOfBirth: new Date('1990-01-01'), // Default date
+        email: candidateEmail,
+        address: "TBD",
+        zipCode: "00000",
+        city: "TBD",
+        state: "TBD",
+        country: "United States",
+        location: {
+          type: "Point",
+          coordinates: [-74.0060, 40.7128] // Default to NYC coordinates
+        },
+        locationDetected: false,
+        gender: "other",
+        resume: "Interview booking - resume pending",
+        status: "shortlist"
       });
     }
 
-    if (!slot.isAvailable || slot.currentBookings >= slot.maxCandidates) {
-      return res.status(400).json({
-        success: false,
-        message: "This slot is no longer available",
-      });
-    }
+    // Generate unique booking token
+    const bookingToken = uuidv4();
 
     // Create interview booking
     const booking = await InterviewBooking.create({
-      slot: slotId,
+      slot: slot._id,
       employer: slot.employer,
+      candidate: candidate._id,
       job: jobId,
       candidateName,
       candidateEmail,
       candidatePhone,
+      bookingToken,
       status: "scheduled",
     });
 
     // Update slot booking count
-    await InterviewSlot.findByIdAndUpdate(slotId, {
+    await InterviewSlot.findByIdAndUpdate(slot._id, {
       $inc: { currentBookings: 1 },
     });
 
@@ -446,12 +598,23 @@ const updateInterviewStatus = async (req, res) => {
 
 // Helper function to get available slots for employer
 const getAvailableSlotsForEmployer = async (employerId) => {
-  const slots = await InterviewSlot.find({
-    employer: employerId,
-    isAvailable: true,
-    currentBookings: { $lt: "$maxCandidates" },
-    date: { $gte: new Date() },
-  }).sort({ date: 1, startTime: 1 });
+  const slots = await InterviewSlot.aggregate([
+    {
+      $match: {
+        employer: employerId,
+        isAvailable: true,
+        date: { $gte: new Date() }
+      }
+    },
+    {
+      $match: {
+        $expr: { $lt: ["$currentBookings", "$maxCandidates"] }
+      }
+    },
+    {
+      $sort: { date: 1, startTime: 1 }
+    }
+  ]);
 
   return slots.map(slot => ({
     id: slot._id,
@@ -463,14 +626,28 @@ const getAvailableSlotsForEmployer = async (employerId) => {
 };
 
 // Email helper functions
-const sendInterviewConfirmationEmails = async (booking, invitationToken) => {
+const sendInterviewConfirmationEmails = async (booking) => {
   try {
     const slot = await InterviewSlot.findById(booking.slot);
     const employer = await require("../models/employer.model").findById(booking.employer);
     const job = await require("../models/job.model").findById(booking.job);
+    
+    // Check if job has recruitment partner
+    let recruitmentPartner = null;
+    if (job.recruitmentPartner) {
+      recruitmentPartner = await require("../models/recruitmentPartner.model").findById(job.recruitmentPartner);
+    }
 
     // Generate calendar attachment for candidate
     const calendarAttachment = await generateCalendarAttachment(booking, job, employer);
+
+    const formattedDate = new Date(slot.date).toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      timeZone: 'UTC'
+    });
 
     // Email to candidate
     await sendEmail({
@@ -482,7 +659,7 @@ const sendInterviewConfirmationEmails = async (booking, invitationToken) => {
         <p>Your interview has been scheduled successfully.</p>
         <p><strong>Company:</strong> ${employer.companyName}</p>
         <p><strong>Position:</strong> ${job.title}</p>
-        <p><strong>Date:</strong> ${slot.date.toDateString()}</p>
+        <p><strong>Date:</strong> ${formattedDate}</p>
         <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
         <p>Please find the calendar invitation attached to this email. You can add this to your Google Calendar, Outlook, or any other calendar application.</p>
         <p><strong>How to add to your calendar:</strong></p>
@@ -505,11 +682,36 @@ const sendInterviewConfirmationEmails = async (booking, invitationToken) => {
         <p>A new interview has been scheduled.</p>
         <p><strong>Candidate:</strong> ${booking.candidateName}</p>
         <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+        <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
         <p><strong>Position:</strong> ${job.title}</p>
-        <p><strong>Date:</strong> ${slot.date.toDateString()}</p>
-        <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime}</p>
+        <p><strong>Date:</strong> ${formattedDate}</p>
+        <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
+        <p>Please be prepared for the interview at the scheduled time.</p>
       `,
+      attachments: calendarAttachment ? [calendarAttachment] : undefined,
     });
+
+    // Email to recruitment partner if exists
+    if (recruitmentPartner) {
+      await sendEmail({
+        to: recruitmentPartner.email,
+        subject: "Interview Scheduled for Your Job Posting - BOD Platform",
+        html: `
+          <h2>Interview Scheduled</h2>
+          <p>Dear ${recruitmentPartner.ownerName},</p>
+          <p>An interview has been scheduled for one of your job postings.</p>
+          <p><strong>Company:</strong> ${employer.companyName}</p>
+          <p><strong>Position:</strong> ${job.title}</p>
+          <p><strong>Candidate:</strong> ${booking.candidateName}</p>
+          <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+          <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
+          <p><strong>Date:</strong> ${formattedDate}</p>
+          <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
+          <p>The interview will be conducted by ${employer.companyName}.</p>
+        `,
+        attachments: calendarAttachment ? [calendarAttachment] : undefined,
+      });
+    }
   } catch (error) {
     console.error("Error sending confirmation emails:", error);
   }

@@ -119,7 +119,31 @@ const testEmailConfig = async () => {
   }
 };
 
+// General email sending function
+const sendEmail = async (options) => {
+  try {
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+      attachments: options.attachments,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", result.messageId);
+    return { success: true, messageId: result.messageId };
+  } catch (error) {
+    console.error("Error sending email:", error);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   sendPasswordResetEmail,
   testEmailConfig,
+  sendEmail,
 };

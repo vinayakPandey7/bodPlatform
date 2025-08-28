@@ -3,6 +3,7 @@ const RecruitmentPartner = require("../models/recruitmentPartner.model");
 const Job = require("../models/job.model");
 const Employer = require("../models/employer.model");
 const User = require("../models/user.model");
+const { sendEmail } = require("../utils/email");
 const {
   getCoordinatesFromZipCode,
   isWithinUSBounds,
@@ -639,6 +640,7 @@ exports.updateCandidateStatus = async (req, res) => {
     }
 
     const { status, interviewDate } = req.body;
+    const previousStatus = candidate.status;
 
     candidate.status = status;
     if (interviewDate) {
@@ -647,6 +649,17 @@ exports.updateCandidateStatus = async (req, res) => {
     candidate.updatedAt = Date.now();
 
     await candidate.save();
+
+    // Send interview invitation for interview-related status changes
+    const interviewStatuses = ['phone_interview', 'in_person_interview', 'assessment'];
+    if (interviewStatuses.includes(status) && status !== previousStatus) {
+      try {
+        await sendInterviewInvitationForCandidate(candidate, employer, status);
+      } catch (emailError) {
+        console.error("Error sending interview invitation:", emailError);
+        // Don't fail the status update if email fails
+      }
+    }
 
     res.json({
       message: "Candidate status updated successfully",
@@ -760,5 +773,142 @@ exports.getSavedCandidates = async (req, res) => {
   } catch (error) {
     console.error("Get saved candidates error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Helper function to send interview invitation for candidate
+const sendInterviewInvitationForCandidate = async (candidate, employer, status) => {
+  try {
+    const { InterviewBooking, InterviewInvitation } = require("../models/interview.model");
+    const { v4: uuidv4 } = require("uuid");
+
+    // Create a placeholder booking for invitation
+    const booking = await InterviewBooking.create({
+      employer: employer._id,
+      job: candidate.job._id,
+      candidate: candidate._id,
+      recruitmentPartner: candidate.recruitmentPartner,
+      candidateName: candidate.name,
+      candidateEmail: candidate.email,
+      candidatePhone: candidate.phone,
+      status: "scheduled",
+    });
+
+    // Generate invitation token
+    const invitationToken = uuidv4();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+
+    await InterviewInvitation.create({
+      booking: booking._id,
+      invitationToken,
+      candidateEmail: candidate.email,
+      expiresAt,
+    });
+
+    // Send invitation email using the existing function
+    const statusMessages = {
+      phone_interview: "Phone Interview",
+      in_person_interview: "In-Person Interview", 
+      assessment: "Assessment"
+    };
+
+    const statusTitle = statusMessages[status] || status;
+    const invitationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/interview/schedule/${invitationToken}`;
+
+    await sendEmail({
+      to: candidate.email,
+      subject: `Interview Invitation - ${statusTitle} | ${employer.companyName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+            .button { display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+            .info-box { background-color: #e0f2fe; border-left: 4px solid #0288d1; padding: 15px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🎉 Interview Invitation</h1>
+            </div>
+            <div class="content">
+              <p>Dear ${candidate.name},</p>
+              
+              <p>Congratulations! Your application has been reviewed and we would like to invite you for an interview.</p>
+              
+              <div class="info-box">
+                <p><strong>Company:</strong> ${employer.companyName}</p>
+                <p><strong>Position:</strong> ${candidate.job?.title || 'Position'}</p>
+                <p><strong>Interview Type:</strong> ${statusTitle}</p>
+                ${candidate.interviewDate ? `<p><strong>Scheduled Date:</strong> ${new Date(candidate.interviewDate).toLocaleDateString()}</p>` : ''}
+              </div>
+              
+              <p>Please click the button below to access your interview scheduling portal where you can select your preferred time slot:</p>
+              
+              <div style="text-align: center;">
+                <a href="${invitationLink}" class="button" style="color: white !important;">Schedule Your Interview</a>
+              </div>
+              
+              <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; background-color: #e5e7eb; padding: 10px; border-radius: 4px; font-family: monospace;">${invitationLink}</p>
+              
+              <p><strong>Next Steps:</strong></p>
+              <ul>
+                <li>Click the link above to access the scheduling portal</li>
+                <li>Select your preferred interview time from available slots</li>
+                <li>You will receive a calendar invitation once confirmed</li>
+                <li>Prepare any required documents or portfolio items</li>
+              </ul>
+              
+              <p>We look forward to speaking with you soon!</p>
+              
+              <p>Best regards,<br>
+              ${employer.companyName} Hiring Team</p>
+            </div>
+            <div class="footer">
+              <p>This is an automated message from the BOD Platform.</p>
+              <p>&copy; 2025 BOD Platform. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        Interview Invitation - ${statusTitle}
+        
+        Dear ${candidate.name},
+        
+        Congratulations! Your application has been reviewed and we would like to invite you for an interview.
+        
+        Company: ${employer.companyName}
+        Position: ${candidate.job?.title || 'Position'}
+        Interview Type: ${statusTitle}
+        ${candidate.interviewDate ? `Scheduled Date: ${new Date(candidate.interviewDate).toLocaleDateString()}` : ''}
+        
+        Please visit the following link to schedule your interview:
+        ${invitationLink}
+        
+        We look forward to speaking with you soon!
+        
+        Best regards,
+        ${employer.companyName} Hiring Team
+        
+        ---
+        This is an automated message from the BOD Platform.
+      `
+    });
+
+    console.log(`Interview invitation sent to ${candidate.email} for ${statusTitle} with token: ${invitationToken}`);
+    return { success: true, invitationToken, bookingId: booking._id };
+  } catch (error) {
+    console.error("Error sending interview invitation for candidate:", error);
+    throw error;
   }
 };

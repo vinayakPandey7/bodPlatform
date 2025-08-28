@@ -2,25 +2,30 @@
 import React, { useState, Fragment } from "react";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   Button,
   Box,
   Typography,
   Grid,
   Card,
   CardContent,
-  CardActions,
-  Chip,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
+  Avatar,
+  IconButton,
+  Chip,
+  Paper,
 } from "@mui/material";
-import { Calendar, Clock, Users, Check, User, Mail, Phone } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
+  Clock,
+  Globe,
+  User,
+  Mail,
+  Phone,
+  Settings,
+} from "lucide-react";
 import { useAvailableSlots, useScheduleInterview } from "@/lib/hooks/interview.hooks";
 import InterviewSuccessModal from "./InterviewSuccessModal";
 
@@ -30,6 +35,9 @@ interface InterviewSlotSelectorProps {
   employerId?: string;
   jobId?: string;
   invitationToken?: string;
+  employerName?: string;
+  employerAvatar?: string;
+  sessionDuration?: number;
 }
 
 interface SlotSelection {
@@ -46,7 +54,12 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
   employerId,
   jobId,
   invitationToken,
+  employerName = "Jane Smith",
+  employerAvatar,
+  sessionDuration = 30,
 }) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<SlotSelection | null>(null);
   const [candidateInfo, setCandidateInfo] = useState({
     name: "",
@@ -54,19 +67,74 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
     phone: "",
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [bookingData, setBookingData] = useState<any>(null);
 
   const { data: availableSlots, isLoading } = useAvailableSlots({ employerId });
   const { mutate: scheduleInterview, isPending } = useScheduleInterview();
 
+  // Calendar navigation
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    setCurrentDate(newDate);
+    setSelectedDate(null);
+    setSelectedSlot(null);
+  };
+
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+    const days = [];
+    const current = new Date(startDate);
+
+    for (let i = 0; i < 42; i++) {
+      days.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+
+    return days;
+  };
+
+  // Check if date has available slots
+  const hasAvailableSlots = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    return availableSlots?.data?.some((day: any) => 
+      day.date.split('T')[0] === dateString && day.slots.length > 0
+    );
+  };
+
+  // Get slots for selected date
+  const getSlotsForDate = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    const dayData = availableSlots?.data?.find((day: any) => 
+      day.date.split('T')[0] === dateString
+    );
+    return dayData?.slots || [];
+  };
+
+  const handleDateSelect = (date: Date) => {
+    if (hasAvailableSlots(date)) {
+      setSelectedDate(date);
+      setSelectedSlot(null);
+    }
+  };
+
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot({
       slotId: slot.id,
-      date: slot.date,
+      date: selectedDate?.toISOString() || '',
       startTime: slot.startTime,
       endTime: slot.endTime,
       availableSpots: slot.availableSpots,
     });
+    setShowDetailsModal(true);
   };
 
   const handleSchedule = () => {
@@ -85,7 +153,6 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
       },
       {
         onSuccess: (data) => {
-          // Prepare booking data for success modal
           const booking = {
             candidateName: candidateInfo.name,
             candidateEmail: candidateInfo.email,
@@ -109,173 +176,355 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
     );
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(":");
     const hour = parseInt(hours);
-    const ampm = hour >= 12 ? "PM" : "AM";
+    const ampm = hour >= 12 ? "pm" : "am";
     const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
+    return `${displayHour}:${minutes}${ampm}`;
   };
+
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+  const calendarDays = generateCalendarDays();
+  const selectedDateSlots = selectedDate ? getSlotsForDate(selectedDate) : [];
 
   return (
     <Fragment>
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box display="flex" alignItems="center" gap={1}>
-          <Calendar className="h-5 w-5" />
-          Select Interview Slot
-        </Box>
-      </DialogTitle>
-      <DialogContent>
-        <Grid container spacing={3}>
-          {/* Available Slots */}
-          <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom>
-              Available Time Slots
-            </Typography>
-            
-            {isLoading ? (
-              <Typography>Loading available slots...</Typography>
-            ) : availableSlots?.data?.length === 0 ? (
-              <Alert severity="info">No available slots found for this employer.</Alert>
-            ) : (
-              <Box maxHeight={400} overflow="auto">
-                {availableSlots?.data?.map((day: any) => (
-                  <Box key={day.date} mb={3}>
-                    <Typography variant="subtitle1" color="primary" gutterBottom>
-                      {formatDate(day.date)}
+      <Dialog 
+        open={open} 
+        onClose={onClose} 
+        maxWidth="lg" 
+        fullWidth
+        PaperProps={{
+          sx: { 
+            borderRadius: 3,
+            maxHeight: '90vh',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <DialogContent sx={{ p: 0, height: '80vh' }}>
+          <Box sx={{ height: '100%', p: 3 }}>
+            {/* Header */}
+            <Box display="flex" alignItems="center" justifyContent="between" mb={3}>
+              <Box display="flex" alignItems="center">
+                <IconButton onClick={onClose} sx={{ mr: 2 }}>
+                  <ArrowLeft size={20} />
+                </IconButton>
+                <Box display="flex" alignItems="center">
+                  <Avatar
+                    src={employerAvatar}
+                    sx={{ width: 48, height: 48, mr: 2 }}
+                  >
+                    {employerName.charAt(0)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight={600}>
+                      {employerName}
                     </Typography>
-                    <Grid container spacing={1}>
-                      {day.slots.map((slot: any) => (
-                        <Grid item xs={12} key={slot.id}>
-                          <Card
-                            variant={selectedSlot?.slotId === slot.id ? "elevation" : "outlined"}
+                    <Typography variant="body2" color="text.secondary">
+                      {sessionDuration} min session
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Typography variant="h5" fontWeight={600} mb={3} textAlign="center">
+              Select a Date & Time
+            </Typography>
+
+            <Grid container spacing={3} md={12}>
+              {/* Calendar */}
+              <Grid item xs={12} md={8} sx={{ width: '63%' }}>
+                <Box>
+                  {/* Calendar Header */}
+                  <Box display="flex" alignItems="center" justifyContent="between" mb={2}>
+                    <Typography variant="h6" fontWeight={600}>
+                      {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                    </Typography>
+                    <Box>
+                      <IconButton onClick={() => navigateMonth('prev')} size="small">
+                        <ChevronLeft size={20} />
+                      </IconButton>
+                      <IconButton onClick={() => navigateMonth('next')} size="small">
+                        <ChevronRight size={20} />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  {/* Calendar Grid */}
+                  <Box 
+                    sx={{ 
+                      border: 1, 
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {/* Day Headers */}
+                    <Box 
+                      display="grid" 
+                      gridTemplateColumns="repeat(7, 1fr)"
+                      sx={{ backgroundColor: 'grey.50' }}
+                    >
+                      {dayNames.map((day) => (
+                        <Box
+                          key={day}
+                          display="flex"
+                          justifyContent="center"
+                          alignItems="center"
+                          py={1.5}
+                          sx={{ borderRight: 1, borderColor: 'divider' }}
+                        >
+                          <Typography 
+                            variant="caption" 
+                            color="text.secondary" 
+                            fontWeight={600}
+                            textTransform="uppercase"
+                          >
+                            {day}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+
+                    {/* Calendar Days Grid */}
+                    <Box 
+                      display="grid" 
+                      gridTemplateColumns="repeat(7, 1fr)"
+                      sx={{ backgroundColor: 'white' }}
+                    >
+                      {calendarDays.map((date, index) => {
+                        const isCurrentMonth = date.getMonth() === currentDate.getMonth();
+                        const isToday = date.toDateString() === new Date().toDateString();
+                        const isSelected = selectedDate?.toDateString() === date.toDateString();
+                        const hasSlots = hasAvailableSlots(date);
+                        const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+
+                        return (
+                          <Box
+                            key={index}
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                            height={48}
+                            position="relative"
                             sx={{
-                              cursor: "pointer",
-                              borderColor: selectedSlot?.slotId === slot.id ? "primary.main" : "divider",
-                              "&:hover": {
-                                borderColor: "primary.main",
+                              cursor: hasSlots && !isPast ? 'pointer' : 'default',
+                              borderRight: (index + 1) % 7 !== 0 ? 1 : 0,
+                              borderBottom: index < 35 ? 1 : 0,
+                              borderColor: 'divider',
+                              backgroundColor: isSelected ? 'primary.main' : 
+                                              isToday ? 'primary.50' : 'transparent',
+                              '&:hover': hasSlots && !isPast ? {
+                                backgroundColor: isSelected ? 'primary.dark' : 'grey.100',
+                              } : {},
+                              transition: 'all 0.2s ease',
+                            }}
+                            onClick={() => !isPast && hasSlots && handleDateSelect(date)}
+                          >
+                            <Typography 
+                              variant="body2" 
+                              sx={{
+                                color: isSelected ? 'white' : 
+                                       isToday ? 'primary.main' :
+                                       !isCurrentMonth || isPast ? 'text.disabled' :
+                                       hasSlots ? 'text.primary' : 'text.secondary',
+                                fontWeight: isSelected || isToday || hasSlots ? 600 : 400,
+                                fontSize: '14px'
+                              }}
+                            >
+                              {date.getDate()}
+                            </Typography>
+                            
+                            {/* Available slots indicator */}
+                            {hasSlots && !isSelected && (
+                              <Box
+                                position="absolute"
+                                bottom={4}
+                                left="50%"
+                                sx={{
+                                  transform: 'translateX(-50%)',
+                                  width: 4,
+                                  height: 4,
+                                  borderRadius: '50%',
+                                  backgroundColor: 'primary.main'
+                                }}
+                              />
+                            )}
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+
+                  {/* Timezone */}
+                  <Box mt={3} display="flex" alignItems="center" gap={1}>
+                    <Globe size={16} />
+                    <Typography variant="body2" color="text.secondary">
+                      Eastern Time - US & Canada (4:58pm)
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Time Slots */}
+              <Grid item xs={12} md={4}>
+                {selectedDate && (
+                  <Box>
+                    <Typography variant="h6" fontWeight={600} mb={2}>
+                      {selectedDate.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </Typography>
+
+                    <Box display="flex" flexDirection="column" gap={1}>
+                      {selectedDateSlots.length > 0 ? (
+                        selectedDateSlots.map((slot: any) => (
+                          <Paper
+                            key={slot.id}
+                            elevation={0}
+                            sx={{
+                              p: 2,
+                              border: 1,
+                              borderColor: 'divider',
+                              cursor: 'pointer',
+                              borderRadius: 2,
+                              '&:hover': {
+                                borderColor: 'primary.main',
+                                backgroundColor: 'primary.light',
                               },
                             }}
                             onClick={() => handleSlotSelect(slot)}
                           >
-                            <CardContent sx={{ py: 2 }}>
-                              <Box display="flex" alignItems="center" gap={1} mb={1}>
-                                <Clock className="h-4 w-4 text-gray-500" />
-                                <Typography variant="body1" fontWeight="medium">
-                                  {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                                </Typography>
-                              </Box>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Users className="h-4 w-4 text-gray-500" />
-                                <Chip
-                                  label={`${slot.availableSpots} spot${slot.availableSpots > 1 ? "s" : ""} available`}
-                                  size="small"
-                                  color="success"
-                                />
-                              </Box>
-                            </CardContent>
-                            {selectedSlot?.slotId === slot.id && (
-                              <CardActions>
-                                <Check className="h-4 w-4 text-primary" />
-                                <Typography variant="body2" color="primary">
-                                  Selected
-                                </Typography>
-                              </CardActions>
-                            )}
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
+                            <Typography 
+                              variant="body1" 
+                              fontWeight={600}
+                              color="text.primary"
+                            >
+                              {formatTime(slot.startTime)}
+                            </Typography>
+                          </Paper>
+                        ))
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No available slots for this date.
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
-                ))}
-              </Box>
-            )}
-          </Grid>
+                )}
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+      </Dialog>
 
-          {/* Candidate Information */}
-          <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom>
-              Your Information
+      {/* Details Modal */}
+      <Dialog
+        open={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3 }
+        }}
+      >
+        <DialogContent sx={{ p: 4 }}>
+          <Box display="flex" alignItems="center" mb={3}>
+            <IconButton 
+              onClick={() => setShowDetailsModal(false)} 
+              sx={{ mr: 2 }}
+            >
+              <ArrowLeft size={20} />
+            </IconButton>
+            <Typography variant="h5" fontWeight={600}>
+              Enter Your Details
             </Typography>
-            
-            <Box display="flex" flexDirection="column" gap={2}>
-              <TextField
-                label="Full Name"
-                value={candidateInfo.name}
-                onChange={(e) => setCandidateInfo({ ...candidateInfo, name: e.target.value })}
-                required
-                fullWidth
-                InputProps={{
-                  startAdornment: <User className="h-4 w-4 text-gray-500 mr-2" />,
-                }}
-              />
-              
-              <TextField
-                label="Email Address"
-                type="email"
-                value={candidateInfo.email}
-                onChange={(e) => setCandidateInfo({ ...candidateInfo, email: e.target.value })}
-                required
-                fullWidth
-                InputProps={{
-                  startAdornment: <Mail className="h-4 w-4 text-gray-500 mr-2" />,
-                }}
-              />
-              
-              <TextField
-                label="Phone Number (Optional)"
-                value={candidateInfo.phone}
-                onChange={(e) => setCandidateInfo({ ...candidateInfo, phone: e.target.value })}
-                fullWidth
-                InputProps={{
-                  startAdornment: <Phone className="h-4 w-4 text-gray-500 mr-2" />,
-                }}
-              />
-            </Box>
+          </Box>
 
-            {/* Selected Slot Summary */}
-            {selectedSlot && (
-              <Box mt={3} p={2} border={1} borderColor="primary.main" borderRadius={1}>
-                <Typography variant="h6" color="primary" gutterBottom>
-                  Selected Interview Slot
-                </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
-                  <Typography variant="body2">
-                    <strong>Date:</strong> {formatDate(selectedSlot.date)}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Time:</strong> {formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Available Spots:</strong> {selectedSlot.availableSpots}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          onClick={handleSchedule}
-          variant="contained"
-          disabled={isPending || !selectedSlot || !candidateInfo.name || !candidateInfo.email}
-        >
-          {isPending ? "Scheduling..." : "Schedule Interview"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+          {selectedSlot && selectedDate && (
+            <Box mb={3} p={2} bgcolor="grey.50" borderRadius={2}>
+              <Typography variant="h6" color="primary" gutterBottom>
+                Selected Time Slot
+              </Typography>
+              <Typography variant="body2">
+                <strong>Date:</strong> {selectedDate.toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  month: 'long', 
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Time:</strong> {formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Duration:</strong> {sessionDuration} minutes
+              </Typography>
+            </Box>
+          )}
+
+          <Box display="flex" flexDirection="column" gap={3}>
+            <TextField
+              label="Full Name"
+              value={candidateInfo.name}
+              onChange={(e) => setCandidateInfo({ ...candidateInfo, name: e.target.value })}
+              required
+              fullWidth
+              InputProps={{
+                startAdornment: <User size={16} style={{ marginRight: 8, color: '#666' }} />,
+              }}
+            />
+            
+            <TextField
+              label="Email Address"
+              type="email"
+              value={candidateInfo.email}
+              onChange={(e) => setCandidateInfo({ ...candidateInfo, email: e.target.value })}
+              required
+              fullWidth
+              InputProps={{
+                startAdornment: <Mail size={16} style={{ marginRight: 8, color: '#666' }} />,
+              }}
+            />
+            
+            <TextField
+              label="Phone Number"
+              value={candidateInfo.phone}
+              onChange={(e) => setCandidateInfo({ ...candidateInfo, phone: e.target.value })}
+              fullWidth
+              InputProps={{
+                startAdornment: <Phone size={16} style={{ marginRight: 8, color: '#666' }} />,
+              }}
+            />
+
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              onClick={handleSchedule}
+              disabled={isPending || !candidateInfo.name || !candidateInfo.email}
+              sx={{ 
+                borderRadius: 2,
+                py: 1.5,
+                fontWeight: 600,
+                mt: 2
+              }}
+            >
+              {isPending ? "Scheduling..." : "Confirm Interview"}
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
 
       {/* Success Modal */}
       <InterviewSuccessModal

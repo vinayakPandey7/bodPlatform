@@ -78,6 +78,11 @@ const interviewBookingSchema = new mongoose.Schema({
   candidatePhone: {
     type: String,
   },
+  bookingToken: {
+    type: String,
+    unique: true,
+    sparse: true, // Allow null values but ensure uniqueness when present
+  },
   status: {
     type: String,
     enum: ["scheduled", "completed", "cancelled", "no_show"],

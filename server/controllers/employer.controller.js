@@ -2,6 +2,7 @@ const Employer = require("../models/employer.model");
 const User = require("../models/user.model");
 const Job = require("../models/job.model");
 const Candidate = require("../models/candidate.model");
+const { sendEmail } = require("../utils/email");
 const {
   getCoordinatesFromZipCode,
   isWithinUSBounds,
@@ -281,6 +282,13 @@ exports.getJobApplications = async (req, res) => {
 
 // Update application status
 exports.updateCandidateStatus = async (req, res) => {
+  console.log("🎯 DEBUG: updateCandidateStatus called with:", {
+    candidateId: req.params.candidateId,
+    applicationId: req.params.applicationId,
+    status: req.body.status,
+    userId: req.user?.id
+  });
+
   try {
     const { candidateId, applicationId } = req.params;
     const { status } = req.body;
@@ -335,10 +343,48 @@ exports.updateCandidateStatus = async (req, res) => {
       });
     }
 
+    // Store previous status for comparison
+    const previousStatus = application.status;
+    console.log("🔄 DEBUG: Status change detected:", { 
+      previousStatus, 
+      newStatus: status, 
+      candidateEmail: user.email,
+      applicationId: application._id 
+    });
+
     // Update the application status
     application.status = status;
     application.statusUpdatedAt = new Date();
     await user.save();
+    console.log("✅ DEBUG: Application status updated in database");
+
+    // Send interview invitation for interview-related status changes
+    const interviewStatuses = ['assessment', 'phone_interview', 'in_person_interview'];
+    console.log("🔍 DEBUG: Checking if email should be sent:", {
+      currentStatus: status,
+      previousStatus,
+      isInterviewStatus: interviewStatuses.includes(status),
+      isStatusChanged: status !== previousStatus,
+      shouldSendEmail: interviewStatuses.includes(status) && status !== previousStatus
+    });
+
+    if (interviewStatuses.includes(status) && status !== previousStatus) {
+      console.log("📧 DEBUG: Triggering interview invitation email...");
+      try {
+        const result = await sendInterviewInvitationForApplication(user, employer, application, status, candidateId);
+        console.log("✅ DEBUG: Interview invitation completed successfully:", result);
+      } catch (emailError) {
+        console.error("❌ DEBUG: Error sending interview invitation:", {
+          error: emailError.message,
+          stack: emailError.stack,
+          candidateEmail: user.email,
+          status: status
+        });
+        // Don't fail the status update if email fails
+      }
+    } else {
+      console.log("⏭️ DEBUG: Skipping email - not an interview status change");
+    }
 
     res.json({
       message: "Application status updated successfully",
@@ -826,5 +872,246 @@ exports.deleteApplicationNote = async (req, res) => {
   } catch (error) {
     console.error("Delete application note error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Helper function to send interview invitation for application
+const sendInterviewInvitationForApplication = async (user, employer, application, status, candidateId) => {
+  console.log("🚀 DEBUG: sendInterviewInvitationForApplication called with:", {
+    userEmail: user?.email,
+    employerCompany: employer?.companyName,
+    applicationId: application?._id,
+    status: status
+  });
+
+  try {
+    console.log("📧 DEBUG: Starting interview invitation process...");
+    
+    const { InterviewBooking, InterviewInvitation } = require("../models/interview.model");
+    const { v4: uuidv4 } = require("uuid");
+    console.log("✅ DEBUG: Required modules loaded successfully");
+
+    // Get job details
+    console.log("🔍 DEBUG: Fetching job details for application.job:", application.job);
+    const job = await Job.findById(application.job);
+    if (!job) {
+      console.error("❌ DEBUG: Job not found for application.job:", application.job);
+      throw new Error("Job not found for application");
+    }
+    console.log("✅ DEBUG: Job found:", { jobId: job._id, title: job.title });
+
+    // Create a placeholder slot for invitation (since slot is required)
+    console.log("📝 DEBUG: Creating placeholder interview slot...");
+    const { InterviewSlot } = require("../models/interview.model");
+    
+    const placeholderSlot = await InterviewSlot.create({
+      employer: employer._id,
+      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      startTime: "09:00",
+      endTime: "10:00",
+      timezone: "America/New_York",
+      isAvailable: true,
+      maxCandidates: 1,
+      currentBookings: 0
+    });
+    console.log("✅ DEBUG: Placeholder slot created:", placeholderSlot._id);
+
+    // Create a placeholder booking for invitation
+    console.log("📝 DEBUG: Creating interview booking...");
+    const bookingData = {
+      slot: placeholderSlot._id,
+      employer: employer._id,
+      candidate: candidateId, // Use the candidateId from params
+      job: application.job,
+      candidateName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      candidateEmail: user.email,
+      candidatePhone: user.phone || '',
+      status: "scheduled",
+    };
+    console.log("📝 DEBUG: Booking data:", bookingData);
+    
+    const booking = await InterviewBooking.create(bookingData);
+    console.log("✅ DEBUG: Interview booking created:", booking._id);
+
+    // Generate invitation token
+    console.log("🔑 DEBUG: Generating invitation token...");
+    const invitationToken = uuidv4();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+    console.log("✅ DEBUG: Token generated:", invitationToken);
+
+    console.log("📝 DEBUG: Creating interview invitation...");
+    const invitationData = {
+      booking: booking._id,
+      invitationToken,
+      candidateEmail: user.email,
+      expiresAt,
+    };
+    console.log("📝 DEBUG: Invitation data:", invitationData);
+
+    await InterviewInvitation.create(invitationData);
+    console.log("✅ DEBUG: Interview invitation created successfully");
+
+    // Send invitation email
+    console.log("📧 DEBUG: Preparing to send email...");
+    const statusMessages = {
+      assessment: "Assessment",
+      phone_interview: "Phone Interview",
+      in_person_interview: "In-Person Interview"
+    };
+
+    const statusTitle = statusMessages[status] || status;
+    const invitationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/interview/schedule/${invitationToken}`;
+    const candidateName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+
+    console.log("📧 DEBUG: Email details:", {
+      to: user.email,
+      statusTitle,
+      invitationLink,
+      candidateName,
+      companyName: employer.companyName,
+      jobTitle: job.title
+    });
+
+    console.log("📧 DEBUG: Calling sendEmail function...");
+    const emailResult = await sendEmail({
+      to: user.email,
+      subject: `Interview Invitation - ${statusTitle} | ${employer.companyName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+            .button { display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+            .info-box { background-color: #e0f2fe; border-left: 4px solid #0288d1; padding: 15px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🎉 Interview Invitation</h1>
+            </div>
+            <div class="content">
+              <p>Dear ${candidateName},</p>
+              
+              <p>Congratulations! Your application has been reviewed and we would like to invite you for an interview.</p>
+              
+              <div class="info-box">
+                <p><strong>Company:</strong> ${employer.companyName}</p>
+                <p><strong>Position:</strong> ${job.title}</p>
+                <p><strong>Interview Type:</strong> ${statusTitle}</p>
+                <p><strong>Location:</strong> ${job.city && job.state ? `${job.city}, ${job.state}` : 'TBD'}</p>
+              </div>
+              
+              <p>Please click the button below to access your interview scheduling portal where you can select your preferred time slot:</p>
+              
+              <div style="text-align: center;">
+                <a href="${invitationLink}" class="button" style="color: white !important;">Schedule Your Interview</a>
+              </div>
+              
+              <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; background-color: #e5e7eb; padding: 10px; border-radius: 4px; font-family: monospace;">${invitationLink}</p>
+              
+              <p><strong>Next Steps:</strong></p>
+              <ul>
+                <li>Click the link above to access the scheduling portal</li>
+                <li>Select your preferred interview time from available slots</li>
+                <li>You will receive a calendar invitation once confirmed</li>
+                <li>Prepare any required documents or portfolio items</li>
+              </ul>
+              
+              <p>We look forward to speaking with you soon!</p>
+              
+              <p>Best regards,<br>
+              ${employer.companyName} Hiring Team</p>
+            </div>
+            <div class="footer">
+              <p>This is an automated message from the BOD Platform.</p>
+              <p>&copy; 2025 BOD Platform. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        Interview Invitation - ${statusTitle}
+        
+        Dear ${candidateName},
+        
+        Congratulations! Your application has been reviewed and we would like to invite you for an interview.
+        
+        Company: ${employer.companyName}
+        Position: ${job.title}
+        Interview Type: ${statusTitle}
+        Location: ${job.city && job.state ? `${job.city}, ${job.state}` : 'TBD'}
+        
+        Please visit the following link to schedule your interview:
+        ${invitationLink}
+        
+        We look forward to speaking with you soon!
+        
+        Best regards,
+        ${employer.companyName} Hiring Team
+        
+        ---
+        This is an automated message from the BOD Platform.
+      `
+    });
+
+    console.log("✅ DEBUG: sendEmail function completed, result:", emailResult);
+    console.log(`🎉 DEBUG: Interview invitation sent to ${user.email} for ${statusTitle} with token: ${invitationToken}`);
+    return { success: true, invitationToken, bookingId: booking._id };
+  } catch (error) {
+    // vinayak 2
+    console.error("❌ DEBUG: Error in sendInterviewInvitationForApplication:", {
+      message: error.message,
+      stack: error.stack,
+      userEmail: user?.email,
+      status: status
+    });
+    throw error;
+  }
+};
+
+// Test email function - for debugging purposes
+exports.testEmail = async (req, res) => {
+  console.log("🧪 DEBUG: testEmail function called");
+  try {
+    const testResult = await sendEmail({
+      to: "vinayak.pandey779@gmail.com",
+      subject: "Test Email from BOD Platform - Debug",
+      html: `
+        <h2>Test Email</h2>
+        <p>This is a test email to verify email configuration is working.</p>
+        <p>Timestamp: ${new Date().toISOString()}</p>
+        <p>If you receive this, email sending is working correctly.</p>
+      `,
+      text: `
+        Test Email
+        
+        This is a test email to verify email configuration is working.
+        Timestamp: ${new Date().toISOString()}
+        If you receive this, email sending is working correctly.
+      `
+    });
+
+    console.log("✅ DEBUG: Test email result:", testResult);
+    res.json({
+      success: true,
+      message: "Test email sent successfully",
+      result: testResult
+    });
+  } catch (error) {
+    console.error("❌ DEBUG: Test email failed:", error);
+    res.status(500).json({
+      success: false,
+      message: "Test email failed",
+      error: error.message
+    });
   }
 };
