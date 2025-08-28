@@ -752,32 +752,34 @@ exports.submitCandidate = async (req, res) => {
         .json({ message: "Recruitment partner profile not found" });
     }
 
-    const {
-      submissionType,
-      candidateId,
-      name,
-      email,
-      phone,
-      currentPosition,
-      currentCompany,
-      experience,
-      education,
-      skills,
-      expectedSalary,
-      zipcode,
-      address,
-      city,
-      state,
-      linkedIn,
-      portfolio,
-      coverLetter,
-      availability,
-      noticePeriod,
-      notes,
-      jobId,
-      jobTitle,
-      companyName,
-    } = req.body;
+
+  // Helper to get first value if array, else value
+  const getString = (val) => Array.isArray(val) ? val[0] : val;
+
+  const submissionType = getString(req.body.submissionType);
+  const candidateId = getString(req.body.candidateId);
+  const name = getString(req.body.name);
+  const email = getString(req.body.email);
+  const phone = getString(req.body.phone);
+  const currentPosition = getString(req.body.currentPosition);
+  const currentCompany = getString(req.body.currentCompany);
+  const experience = getString(req.body.experience);
+  const education = getString(req.body.education);
+  const skills = req.body.skills; // skills may be array or stringified array, handled below
+  const expectedSalary = getString(req.body.expectedSalary);
+  const zipcode = getString(req.body.zipcode);
+  const address = getString(req.body.address);
+  const city = getString(req.body.city);
+  const state = getString(req.body.state);
+  const linkedIn = getString(req.body.linkedIn);
+  const portfolio = getString(req.body.portfolio);
+  const coverLetter = getString(req.body.coverLetter);
+  const availability = getString(req.body.availability);
+  const noticePeriod = getString(req.body.noticePeriod);
+  const notes = getString(req.body.notes);
+  const jobId = getString(req.body.jobId);
+  const jobTitle = getString(req.body.jobTitle);
+  const companyName = getString(req.body.companyName);
 
     // Validate required fields based on submission type
     if (!jobId || !coverLetter || !availability || !noticePeriod) {

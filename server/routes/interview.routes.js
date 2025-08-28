@@ -4,19 +4,28 @@ const interviewController = require("../controllers/interview.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 
 // Employer routes (require authentication)
-router.use("/employer", authMiddleware.authenticateToken);
+router.use("/employer", authMiddleware.auth);
 
 // 1. Set employer availability calendar
-router.post("/employer/availability", interviewController.setEmployerAvailability);
+router.post(
+  "/employer/availability",
+  interviewController.setEmployerAvailability
+);
 
 // 2. Get employer's interview calendar
 router.get("/employer/calendar", interviewController.getEmployerCalendar);
 
 // 3. Update interview status
-router.put("/employer/interview/:bookingId/status", interviewController.updateInterviewStatus);
+router.put(
+  "/employer/interview/:bookingId/status",
+  interviewController.updateInterviewStatus
+);
 
 // 4. Send interview invitation to candidate
-router.post("/employer/invitation", interviewController.sendInterviewInvitation);
+router.post(
+  "/employer/invitation",
+  interviewController.sendInterviewInvitation
+);
 
 // Public routes (no authentication required)
 

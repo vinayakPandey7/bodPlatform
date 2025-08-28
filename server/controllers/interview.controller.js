@@ -4,9 +4,10 @@ const { generateCalendarAttachment } = require("../utils/calendarUtils");
 const { v4: uuidv4 } = require("uuid");
 
 // 1. Employer Calendar Management - Set unavailable slots
+const Employer = require("../models/employer.model");
 const setEmployerAvailability = async (req, res) => {
   try {
-    const { employerId } = req.user;
+    const { id, role } = req.user;
     const { slots } = req.body;
 
     if (!slots || !Array.isArray(slots)) {
@@ -15,6 +16,16 @@ const setEmployerAvailability = async (req, res) => {
         message: "Slots array is required",
       });
     }
+
+    // Find employer by user id
+    const employerDoc = await Employer.findOne({ user: id });
+    if (!employerDoc) {
+      return res.status(400).json({
+        success: false,
+        message: "Employer profile not found for this user.",
+      });
+    }
+    const employerId = employerDoc._id;
 
     // Delete existing slots for the date range
     const dateRange = slots.reduce((range, slot) => {
