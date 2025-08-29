@@ -87,4 +87,12 @@ router.post(
   recruitmentPartnerController.submitCandidate
 );
 
+// Get submitted candidates with interview details
+router.get(
+  "/submitted-candidates",
+  auth,
+  authorizeRoles("recruitment_partner"),
+  recruitmentPartnerController.getSubmittedCandidates
+);
+
 module.exports = router;

@@ -42,7 +42,10 @@ import {
   Filter,
   Search,
 } from "lucide-react";
-import { useEmployerCalendar, useUpdateInterviewStatus } from "@/lib/hooks/interview.hooks";
+import {
+  useEmployerCalendar,
+  useUpdateInterviewStatus,
+} from "@/lib/hooks/interview.hooks";
 
 interface InterviewStatusModalProps {
   open: boolean;
@@ -72,14 +75,18 @@ const InterviewStatusModal: React.FC<InterviewStatusModalProps> = ({
         <Box display="flex" flexDirection="column" gap={3} mt={2}>
           <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
-            <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              label="Status"
+            >
               <MenuItem value="scheduled">Scheduled</MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
               <MenuItem value="cancelled">Cancelled</MenuItem>
               <MenuItem value="no_show">No Show</MenuItem>
             </Select>
           </FormControl>
-          
+
           <TextField
             label="Notes"
             multiline
@@ -111,7 +118,11 @@ export default function EmployerCalendarPage() {
   const { data: calendarData, isLoading, refetch } = useEmployerCalendar();
   const { mutate: updateStatus, isPending } = useUpdateInterviewStatus();
 
-  const handleStatusUpdate = (bookingId: string, status: string, notes?: string) => {
+  const handleStatusUpdate = (
+    bookingId: string,
+    status: string,
+    notes?: string
+  ) => {
     updateStatus(
       { bookingId, data: { status, notes } },
       {
@@ -162,7 +173,7 @@ export default function EmployerCalendarPage() {
   };
 
   const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":");
+    const [hours, minutes] = time?.split(":");
     const hour = parseInt(hours);
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
@@ -174,7 +185,7 @@ export default function EmployerCalendarPage() {
     if (!calendarData?.data) return [];
 
     let allBookings: any[] = [];
-    
+
     calendarData.data.forEach((day: any) => {
       if (day.bookings) {
         day.bookings.forEach((booking: any) => {
@@ -190,24 +201,34 @@ export default function EmployerCalendarPage() {
 
     // Apply status filter
     if (statusFilter !== "all") {
-      allBookings = allBookings.filter(booking => booking.status === statusFilter);
+      allBookings = allBookings.filter(
+        (booking) => booking.status === statusFilter
+      );
     }
 
     // Apply search filter
     if (searchTerm) {
-      allBookings = allBookings.filter(booking =>
-        booking.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.job?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.candidateEmail.toLowerCase().includes(searchTerm.toLowerCase())
+      allBookings = allBookings.filter(
+        (booking) =>
+          booking.candidateName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking.job?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.candidateEmail
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
       );
     }
 
-    return allBookings.sort((a, b) => new Date(a.slotDate).getTime() - new Date(b.slotDate).getTime());
+    return allBookings.sort(
+      (a, b) => new Date(a.slotDate).getTime() - new Date(b.slotDate).getTime()
+    );
   }, [calendarData, statusFilter, searchTerm]);
 
   // Calculate statistics
   const stats = React.useMemo(() => {
-    if (!calendarData?.data) return { total: 0, scheduled: 0, completed: 0, cancelled: 0, noShow: 0 };
+    if (!calendarData?.data)
+      return { total: 0, scheduled: 0, completed: 0, cancelled: 0, noShow: 0 };
 
     let total = 0;
     let scheduled = 0;
@@ -245,7 +266,9 @@ export default function EmployerCalendarPage() {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Interview Calendar</h1>
+              <h1 className="text-3xl font-bold text-gray-800">
+                Interview Calendar
+              </h1>
               <p className="text-gray-600 mt-2">
                 Manage your interview schedule and candidate bookings
               </p>
@@ -279,7 +302,7 @@ export default function EmployerCalendarPage() {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card>
                 <CardContent>
@@ -297,7 +320,7 @@ export default function EmployerCalendarPage() {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card>
                 <CardContent>
@@ -315,7 +338,7 @@ export default function EmployerCalendarPage() {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card>
                 <CardContent>
@@ -346,7 +369,9 @@ export default function EmployerCalendarPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     InputProps={{
-                      startAdornment: <Search className="h-4 w-4 text-gray-400 mr-2" />,
+                      startAdornment: (
+                        <Search className="h-4 w-4 text-gray-400 mr-2" />
+                      ),
                     }}
                   />
                 </Grid>
@@ -392,7 +417,10 @@ export default function EmployerCalendarPage() {
           {/* Tabs */}
           <Card>
             <CardContent>
-              <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+              <Tabs
+                value={activeTab}
+                onChange={(e, newValue) => setActiveTab(newValue)}
+              >
                 <Tab label="All Interviews" />
                 <Tab label="Upcoming" />
                 <Tab label="Completed" />
@@ -408,7 +436,8 @@ export default function EmployerCalendarPage() {
                     ) : filteredBookings.length === 0 ? (
                       <Alert severity="info">
                         <Typography>
-                          No interviews found. Set your availability to start receiving interview bookings.
+                          No interviews found. Set your availability to start
+                          receiving interview bookings.
                         </Typography>
                       </Alert>
                     ) : (
@@ -416,53 +445,101 @@ export default function EmployerCalendarPage() {
                         {filteredBookings.map((booking) => (
                           <Card key={booking._id} variant="outlined">
                             <CardContent>
-                              <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                              <Box
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="flex-start"
+                              >
                                 <Box flex={1}>
-                                  <Box display="flex" alignItems="center" gap={2} mb={2}>
+                                  <Box
+                                    display="flex"
+                                    alignItems="center"
+                                    gap={2}
+                                    mb={2}
+                                  >
                                     <div className="p-2 bg-blue-100 rounded-full">
                                       <User className="h-4 w-4 text-blue-600" />
                                     </div>
                                     <Box>
-                                      <Typography variant="h6" fontWeight="medium">
+                                      <Typography
+                                        variant="h6"
+                                        fontWeight="medium"
+                                      >
                                         {booking.candidateName}
                                       </Typography>
-                                      <Typography variant="body2" color="text.secondary">
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
                                         {booking.job?.title}
                                       </Typography>
                                     </Box>
                                   </Box>
-                                  
-                                  <Box display="flex" flexDirection="column" gap={1} mb={2}>
-                                    <Box display="flex" alignItems="center" gap={1}>
+
+                                  <Box
+                                    display="flex"
+                                    flexDirection="column"
+                                    gap={1}
+                                    mb={2}
+                                  >
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={1}
+                                    >
                                       <Calendar className="h-4 w-4 text-gray-500" />
                                       <Typography variant="body2">
                                         {formatDate(booking.slotDate)}
                                       </Typography>
                                     </Box>
-                                    <Box display="flex" alignItems="center" gap={1}>
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={1}
+                                    >
                                       <Clock className="h-4 w-4 text-gray-500" />
                                       <Typography variant="body2">
-                                        {formatTime(booking.slotStartTime)} - {formatTime(booking.slotEndTime)}
+                                        {formatTime(booking.slotStartTime)} -{" "}
+                                        {formatTime(booking.slotEndTime)}
                                       </Typography>
                                     </Box>
-                                    <Box display="flex" alignItems="center" gap={1}>
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={1}
+                                    >
                                       <Mail className="h-4 w-4 text-gray-500" />
-                                      <Typography variant="body2">{booking.candidateEmail}</Typography>
+                                      <Typography variant="body2">
+                                        {booking.candidateEmail}
+                                      </Typography>
                                     </Box>
                                     {booking.candidatePhone && (
-                                      <Box display="flex" alignItems="center" gap={1}>
+                                      <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={1}
+                                      >
                                         <Phone className="h-4 w-4 text-gray-500" />
-                                        <Typography variant="body2">{booking.candidatePhone}</Typography>
+                                        <Typography variant="body2">
+                                          {booking.candidatePhone}
+                                        </Typography>
                                       </Box>
                                     )}
                                   </Box>
                                 </Box>
-                                
-                                <Box display="flex" flexDirection="column" alignItems="flex-end" gap={2}>
+
+                                <Box
+                                  display="flex"
+                                  flexDirection="column"
+                                  alignItems="flex-end"
+                                  gap={2}
+                                >
                                   <Chip
                                     icon={getStatusIcon(booking.status)}
                                     label={booking.status.replace("_", " ")}
-                                    color={getStatusColor(booking.status) as any}
+                                    color={
+                                      getStatusColor(booking.status) as any
+                                    }
                                     size="small"
                                   />
                                   <IconButton
@@ -486,54 +563,91 @@ export default function EmployerCalendarPage() {
 
                 {activeTab === 1 && (
                   <div>
-                    {filteredBookings.filter(b => b.status === "scheduled").length === 0 ? (
+                    {filteredBookings.filter((b) => b.status === "scheduled")
+                      .length === 0 ? (
                       <Alert severity="info">
                         <Typography>No upcoming interviews found.</Typography>
                       </Alert>
                     ) : (
                       <div className="space-y-4">
                         {filteredBookings
-                          .filter(b => b.status === "scheduled")
+                          .filter((b) => b.status === "scheduled")
                           .map((booking) => (
                             <Card key={booking._id} variant="outlined">
                               <CardContent>
-                                <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                                <Box
+                                  display="flex"
+                                  justifyContent="space-between"
+                                  alignItems="flex-start"
+                                >
                                   <Box flex={1}>
-                                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={2}
+                                      mb={2}
+                                    >
                                       <div className="p-2 bg-blue-100 rounded-full">
                                         <User className="h-4 w-4 text-blue-600" />
                                       </div>
                                       <Box>
-                                        <Typography variant="h6" fontWeight="medium">
+                                        <Typography
+                                          variant="h6"
+                                          fontWeight="medium"
+                                        >
                                           {booking.candidateName}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography
+                                          variant="body2"
+                                          color="text.secondary"
+                                        >
                                           {booking.job?.title}
                                         </Typography>
                                       </Box>
                                     </Box>
-                                    
-                                    <Box display="flex" flexDirection="column" gap={1} mb={2}>
-                                      <Box display="flex" alignItems="center" gap={1}>
+
+                                    <Box
+                                      display="flex"
+                                      flexDirection="column"
+                                      gap={1}
+                                      mb={2}
+                                    >
+                                      <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={1}
+                                      >
                                         <Calendar className="h-4 w-4 text-gray-500" />
                                         <Typography variant="body2">
                                           {formatDate(booking.slotDate)}
                                         </Typography>
                                       </Box>
-                                      <Box display="flex" alignItems="center" gap={1}>
+                                      <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={1}
+                                      >
                                         <Clock className="h-4 w-4 text-gray-500" />
                                         <Typography variant="body2">
-                                          {formatTime(booking.slotStartTime)} - {formatTime(booking.slotEndTime)}
+                                          {formatTime(booking.slotStartTime)} -{" "}
+                                          {formatTime(booking.slotEndTime)}
                                         </Typography>
                                       </Box>
                                     </Box>
                                   </Box>
-                                  
-                                  <Box display="flex" flexDirection="column" alignItems="flex-end" gap={2}>
+
+                                  <Box
+                                    display="flex"
+                                    flexDirection="column"
+                                    alignItems="flex-end"
+                                    gap={2}
+                                  >
                                     <Chip
                                       icon={getStatusIcon(booking.status)}
                                       label={booking.status.replace("_", " ")}
-                                      color={getStatusColor(booking.status) as any}
+                                      color={
+                                        getStatusColor(booking.status) as any
+                                      }
                                       size="small"
                                     />
                                     <IconButton
@@ -557,54 +671,91 @@ export default function EmployerCalendarPage() {
 
                 {activeTab === 2 && (
                   <div>
-                    {filteredBookings.filter(b => b.status === "completed").length === 0 ? (
+                    {filteredBookings.filter((b) => b.status === "completed")
+                      .length === 0 ? (
                       <Alert severity="info">
                         <Typography>No completed interviews found.</Typography>
                       </Alert>
                     ) : (
                       <div className="space-y-4">
                         {filteredBookings
-                          .filter(b => b.status === "completed")
+                          .filter((b) => b.status === "completed")
                           .map((booking) => (
                             <Card key={booking._id} variant="outlined">
                               <CardContent>
-                                <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                                <Box
+                                  display="flex"
+                                  justifyContent="space-between"
+                                  alignItems="flex-start"
+                                >
                                   <Box flex={1}>
-                                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={2}
+                                      mb={2}
+                                    >
                                       <div className="p-2 bg-green-100 rounded-full">
                                         <User className="h-4 w-4 text-green-600" />
                                       </div>
                                       <Box>
-                                        <Typography variant="h6" fontWeight="medium">
+                                        <Typography
+                                          variant="h6"
+                                          fontWeight="medium"
+                                        >
                                           {booking.candidateName}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography
+                                          variant="body2"
+                                          color="text.secondary"
+                                        >
                                           {booking.job?.title}
                                         </Typography>
                                       </Box>
                                     </Box>
-                                    
-                                    <Box display="flex" flexDirection="column" gap={1} mb={2}>
-                                      <Box display="flex" alignItems="center" gap={1}>
+
+                                    <Box
+                                      display="flex"
+                                      flexDirection="column"
+                                      gap={1}
+                                      mb={2}
+                                    >
+                                      <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={1}
+                                      >
                                         <Calendar className="h-4 w-4 text-gray-500" />
                                         <Typography variant="body2">
                                           {formatDate(booking.slotDate)}
                                         </Typography>
                                       </Box>
-                                      <Box display="flex" alignItems="center" gap={1}>
+                                      <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={1}
+                                      >
                                         <Clock className="h-4 w-4 text-gray-500" />
                                         <Typography variant="body2">
-                                          {formatTime(booking.slotStartTime)} - {formatTime(booking.slotEndTime)}
+                                          {formatTime(booking.slotStartTime)} -{" "}
+                                          {formatTime(booking.slotEndTime)}
                                         </Typography>
                                       </Box>
                                     </Box>
                                   </Box>
-                                  
-                                  <Box display="flex" flexDirection="column" alignItems="flex-end" gap={2}>
+
+                                  <Box
+                                    display="flex"
+                                    flexDirection="column"
+                                    alignItems="flex-end"
+                                    gap={2}
+                                  >
                                     <Chip
                                       icon={getStatusIcon(booking.status)}
                                       label={booking.status.replace("_", " ")}
-                                      color={getStatusColor(booking.status) as any}
+                                      color={
+                                        getStatusColor(booking.status) as any
+                                      }
                                       size="small"
                                     />
                                     <IconButton
@@ -630,7 +781,10 @@ export default function EmployerCalendarPage() {
           </Card>
 
           {/* Interview Calendar Modal */}
-          <EnhancedInterviewCalendar open={showCalendar} onClose={() => setShowCalendar(false)} />
+          <EnhancedInterviewCalendar
+            open={showCalendar}
+            onClose={() => setShowCalendar(false)}
+          />
 
           {/* Status Update Modal */}
           <InterviewStatusModal

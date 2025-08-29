@@ -37,7 +37,10 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
-import { useEmployerCalendar, useUpdateInterviewStatus } from "@/lib/hooks/interview.hooks";
+import {
+  useEmployerCalendar,
+  useUpdateInterviewStatus,
+} from "@/lib/hooks/interview.hooks";
 
 interface InterviewStatusModalProps {
   open: boolean;
@@ -67,14 +70,18 @@ const InterviewStatusModal: React.FC<InterviewStatusModalProps> = ({
         <Box display="flex" flexDirection="column" gap={3} mt={2}>
           <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
-            <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              label="Status"
+            >
               <MenuItem value="scheduled">Scheduled</MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
               <MenuItem value="cancelled">Cancelled</MenuItem>
               <MenuItem value="no_show">No Show</MenuItem>
             </Select>
           </FormControl>
-          
+
           <TextField
             label="Notes"
             multiline
@@ -103,7 +110,11 @@ export default function EmployerInterviewsPage() {
   const { data: calendarData, isLoading, refetch } = useEmployerCalendar();
   const { mutate: updateStatus, isPending } = useUpdateInterviewStatus();
 
-  const handleStatusUpdate = (bookingId: string, status: string, notes?: string) => {
+  const handleStatusUpdate = (
+    bookingId: string,
+    status: string,
+    notes?: string
+  ) => {
     updateStatus(
       { bookingId, data: { status, notes } },
       {
@@ -153,7 +164,7 @@ export default function EmployerInterviewsPage() {
   };
 
   const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":");
+    const [hours, minutes] = time?.split(":");
     const hour = parseInt(hours);
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
@@ -162,7 +173,8 @@ export default function EmployerInterviewsPage() {
 
   // Calculate statistics
   const stats = React.useMemo(() => {
-    if (!calendarData?.data) return { total: 0, scheduled: 0, completed: 0, cancelled: 0, noShow: 0 };
+    if (!calendarData?.data)
+      return { total: 0, scheduled: 0, completed: 0, cancelled: 0, noShow: 0 };
 
     let total = 0;
     let scheduled = 0;
@@ -200,7 +212,9 @@ export default function EmployerInterviewsPage() {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Interview Management</h1>
+              <h1 className="text-3xl font-bold text-gray-800">
+                Interview Management
+              </h1>
               <p className="text-gray-600 mt-2">
                 Manage your interview schedule and candidate bookings
               </p>
@@ -234,7 +248,7 @@ export default function EmployerInterviewsPage() {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card>
                 <CardContent>
@@ -252,7 +266,7 @@ export default function EmployerInterviewsPage() {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card>
                 <CardContent>
@@ -270,7 +284,7 @@ export default function EmployerInterviewsPage() {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card>
                 <CardContent>
@@ -293,10 +307,8 @@ export default function EmployerInterviewsPage() {
           {/* Interview Calendar */}
           <Card>
             <CardContent>
-              <Typography variant="h5" gutterBottom>
-                Interview Schedule
-              </Typography>
-              
+              <Typography gutterBottom>Interview Schedule</Typography>
+
               {isLoading ? (
                 <Box display="flex" justifyContent="center" py={4}>
                   <Typography>Loading interview schedule...</Typography>
@@ -304,7 +316,8 @@ export default function EmployerInterviewsPage() {
               ) : !calendarData?.data || calendarData.data.length === 0 ? (
                 <Alert severity="info">
                   <Typography>
-                    No interviews scheduled yet. Set your availability to start receiving interview bookings.
+                    No interviews scheduled yet. Set your availability to start
+                    receiving interview bookings.
                   </Typography>
                 </Alert>
               ) : (
@@ -312,44 +325,76 @@ export default function EmployerInterviewsPage() {
                   {calendarData.data.map((day: any) => (
                     <Box key={day.slot.date} mb={4}>
                       <Typography variant="h6" color="primary" gutterBottom>
-                        {formatDate(day.slot.date)} - {formatTime(day.slot.startTime)} to {formatTime(day.slot.endTime)}
+                        {formatDate(day.slot.date)} -{" "}
+                        {formatTime(day.slot.startTime)} to{" "}
+                        {formatTime(day.slot.endTime)}
                       </Typography>
-                      
+
                       <Grid container spacing={2}>
                         {day.bookings.map((booking: any) => (
                           <Grid item xs={12} md={6} key={booking._id}>
                             <Card variant="outlined">
                               <CardContent>
-                                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                                <Box
+                                  display="flex"
+                                  justifyContent="space-between"
+                                  alignItems="flex-start"
+                                  mb={2}
+                                >
                                   <Box>
-                                    <Typography variant="h6" fontWeight="medium">
+                                    <Typography
+                                      variant="h6"
+                                      fontWeight="medium"
+                                    >
                                       {booking.candidateName}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
                                       {booking.job.title}
                                     </Typography>
                                   </Box>
                                   <Chip
                                     icon={getStatusIcon(booking.status)}
                                     label={booking.status.replace("_", " ")}
-                                    color={getStatusColor(booking.status) as any}
+                                    color={
+                                      getStatusColor(booking.status) as any
+                                    }
                                     size="small"
                                   />
                                 </Box>
-                                
-                                <Box display="flex" flexDirection="column" gap={1} mb={2}>
-                                  <Box display="flex" alignItems="center" gap={1}>
+
+                                <Box
+                                  display="flex"
+                                  flexDirection="column"
+                                  gap={1}
+                                  mb={2}
+                                >
+                                  <Box
+                                    display="flex"
+                                    alignItems="center"
+                                    gap={1}
+                                  >
                                     <Mail className="h-4 w-4 text-gray-500" />
-                                    <Typography variant="body2">{booking.candidateEmail}</Typography>
+                                    <Typography variant="body2">
+                                      {booking.candidateEmail}
+                                    </Typography>
                                   </Box>
                                   {booking.candidatePhone && (
-                                    <Box display="flex" alignItems="center" gap={1}>
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={1}
+                                    >
                                       <Phone className="h-4 w-4 text-gray-500" />
-                                      <Typography variant="body2">{booking.candidatePhone}</Typography>
+                                      <Typography variant="body2">
+                                        {booking.candidatePhone}
+                                      </Typography>
                                     </Box>
                                   )}
                                 </Box>
-                                
+
                                 <Box display="flex" gap={1}>
                                   <IconButton
                                     size="small"
@@ -374,7 +419,10 @@ export default function EmployerInterviewsPage() {
           </Card>
 
           {/* Interview Calendar Modal */}
-          <EnhancedInterviewCalendar open={showCalendar} onClose={() => setShowCalendar(false)} />
+          <EnhancedInterviewCalendar
+            open={showCalendar}
+            onClose={() => setShowCalendar(false)}
+          />
 
           {/* Status Update Modal */}
           <InterviewStatusModal

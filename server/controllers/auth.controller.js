@@ -11,18 +11,23 @@ const {
 } = require("../utils/geoUtils");
 
 // Generate JWT token
-const generateToken = (user) => {
-  return jwt.sign(
-    {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    }
-  );
+const generateToken = (user, profile = null) => {
+  const tokenData = {
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  };
+
+  // Add role-specific IDs for easier access in controllers
+  if (user.role === "employer" && profile) {
+    tokenData.employerId = profile._id;
+  } else if (user.role === "recruitment_partner" && profile) {
+    tokenData.recruitmentPartnerId = profile._id;
+  }
+
+  return jwt.sign(tokenData, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 };
 
 // Register new user - Routes to appropriate specialized registration method
@@ -88,9 +93,6 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Generate token
-    const token = generateToken(user);
-
     // Get user profile based on role
     let profile = null;
     if (user.role === "employer") {
@@ -100,6 +102,9 @@ exports.login = async (req, res) => {
     } else if (user.role === "sales_person") {
       profile = await SalesPerson.findOne({ user: user._id });
     }
+
+    // Generate token with profile information
+    const token = generateToken(user, profile);
 
     res.json({
       token,

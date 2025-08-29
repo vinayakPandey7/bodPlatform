@@ -55,7 +55,7 @@ const interviewBookingSchema = new mongoose.Schema({
   },
   candidate: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Candidate",
+    ref: "User",
     required: true,
   },
   recruitmentPartner: {
@@ -123,6 +123,7 @@ const interviewInvitationSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
+    index: true,
   },
   candidateEmail: {
     type: String,
@@ -156,8 +157,14 @@ interviewInvitationSchema.index({ invitationToken: 1 });
 interviewInvitationSchema.index({ candidateEmail: 1, status: 1 });
 
 const InterviewSlot = mongoose.model("InterviewSlot", interviewSlotSchema);
-const InterviewBooking = mongoose.model("InterviewBooking", interviewBookingSchema);
-const InterviewInvitation = mongoose.model("InterviewInvitation", interviewInvitationSchema);
+const InterviewBooking = mongoose.model(
+  "InterviewBooking",
+  interviewBookingSchema
+);
+const InterviewInvitation = mongoose.model(
+  "InterviewInvitation",
+  interviewInvitationSchema
+);
 
 module.exports = {
   InterviewSlot,

@@ -26,7 +26,10 @@ import {
   Phone,
   Settings,
 } from "lucide-react";
-import { useAvailableSlots, useScheduleInterview } from "@/lib/hooks/interview.hooks";
+import {
+  useAvailableSlots,
+  useScheduleInterview,
+} from "@/lib/hooks/interview.hooks";
 import InterviewSuccessModal from "./InterviewSuccessModal";
 
 interface InterviewSlotSelectorProps {
@@ -74,9 +77,9 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
   const { mutate: scheduleInterview, isPending } = useScheduleInterview();
 
   // Calendar navigation
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  const navigateMonth = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    newDate.setMonth(currentDate.getMonth() + (direction === "next" ? 1 : -1));
     setCurrentDate(newDate);
     setSelectedDate(null);
     setSelectedSlot(null);
@@ -104,17 +107,27 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
 
   // Check if date has available slots
   const hasAvailableSlots = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    return availableSlots?.data?.some((day: any) => 
-      day.date.split('T')[0] === dateString && day.slots.length > 0
+    // Use local date formatting to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}`;
+
+    return availableSlots?.data?.some(
+      (day: any) => day.date === dateString && day.slots.length > 0
     );
   };
 
   // Get slots for selected date
   const getSlotsForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    const dayData = availableSlots?.data?.find((day: any) => 
-      day.date.split('T')[0] === dateString
+    // Use local date formatting to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}`;
+
+    const dayData = availableSlots?.data?.find(
+      (day: any) => day.date === dateString
     );
     return dayData?.slots || [];
   };
@@ -129,7 +142,7 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot({
       slotId: slot.id,
-      date: selectedDate?.toISOString() || '',
+      date: selectedDate?.toISOString() || "",
       startTime: slot.startTime,
       endTime: slot.endTime,
       availableSpots: slot.availableSpots,
@@ -138,7 +151,12 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
   };
 
   const handleSchedule = () => {
-    if (!selectedSlot || !candidateInfo.name || !candidateInfo.email || !jobId) {
+    if (
+      !selectedSlot ||
+      !candidateInfo.name ||
+      !candidateInfo.email ||
+      !jobId
+    ) {
       alert("Please fill in all required fields");
       return;
     }
@@ -159,10 +177,17 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
             slotDate: selectedSlot.date,
             slotStartTime: selectedSlot.startTime,
             slotEndTime: selectedSlot.endTime,
-            job: data.job || { title: "Interview", description: "", location: "TBD" },
-            employer: data.employer || { companyName: "Company", email: "company@example.com" },
+            job: data.job || {
+              title: "Interview",
+              description: "",
+              location: "TBD",
+            },
+            employer: data.employer || {
+              companyName: "Company",
+              email: "company@example.com",
+            },
           };
-          
+
           setBookingData(booking);
           setShowSuccessModal(true);
           onClose();
@@ -170,7 +195,7 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
           setCandidateInfo({ name: "", email: "", phone: "" });
         },
         onError: (error) => {
-          alert("Failed to schedule interview. Please try again.");
+          // alert("Failed to schedule interview. Please try again.");
         },
       }
     );
@@ -185,8 +210,18 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
   };
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -196,23 +231,28 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
 
   return (
     <Fragment>
-      <Dialog 
-        open={open} 
-        onClose={onClose} 
-        maxWidth="lg" 
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="lg"
         fullWidth
         PaperProps={{
-          sx: { 
+          sx: {
             borderRadius: 3,
-            maxHeight: '90vh',
-            overflow: 'hidden'
-          }
+            maxHeight: "90vh",
+            overflow: "hidden",
+          },
         }}
       >
-        <DialogContent sx={{ p: 0, height: '80vh' }}>
-          <Box sx={{ height: '100%', p: 3 }}>
+        <DialogContent sx={{ p: 0, height: "80vh" }}>
+          <Box sx={{ height: "100%", p: 3 }}>
             {/* Header */}
-            <Box display="flex" alignItems="center" justifyContent="between" mb={3}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="between"
+              mb={3}
+            >
               <Box display="flex" alignItems="center">
                 <IconButton onClick={onClose} sx={{ mr: 2 }}>
                   <ArrowLeft size={20} />
@@ -241,37 +281,49 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
 
             <Grid container spacing={3} md={12}>
               {/* Calendar */}
-              <Grid item xs={12} md={8} sx={{ width: '63%' }}>
+              <Grid item xs={12} md={8} sx={{ width: "63%" }}>
                 <Box>
                   {/* Calendar Header */}
-                  <Box display="flex" alignItems="center" justifyContent="between" mb={2}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="between"
+                    mb={2}
+                  >
                     <Typography variant="h6" fontWeight={600}>
-                      {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                      {monthNames[currentDate.getMonth()]}{" "}
+                      {currentDate.getFullYear()}
                     </Typography>
                     <Box>
-                      <IconButton onClick={() => navigateMonth('prev')} size="small">
+                      <IconButton
+                        onClick={() => navigateMonth("prev")}
+                        size="small"
+                      >
                         <ChevronLeft size={20} />
                       </IconButton>
-                      <IconButton onClick={() => navigateMonth('next')} size="small">
+                      <IconButton
+                        onClick={() => navigateMonth("next")}
+                        size="small"
+                      >
                         <ChevronRight size={20} />
                       </IconButton>
                     </Box>
                   </Box>
 
                   {/* Calendar Grid */}
-                  <Box 
-                    sx={{ 
-                      border: 1, 
-                      borderColor: 'divider',
+                  <Box
+                    sx={{
+                      border: 1,
+                      borderColor: "divider",
                       borderRadius: 2,
-                      overflow: 'hidden'
+                      overflow: "hidden",
                     }}
                   >
                     {/* Day Headers */}
-                    <Box 
-                      display="grid" 
+                    <Box
+                      display="grid"
                       gridTemplateColumns="repeat(7, 1fr)"
-                      sx={{ backgroundColor: 'grey.50' }}
+                      sx={{ backgroundColor: "grey.50" }}
                     >
                       {dayNames.map((day) => (
                         <Box
@@ -280,11 +332,11 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
                           justifyContent="center"
                           alignItems="center"
                           py={1.5}
-                          sx={{ borderRight: 1, borderColor: 'divider' }}
+                          sx={{ borderRight: 1, borderColor: "divider" }}
                         >
-                          <Typography 
-                            variant="caption" 
-                            color="text.secondary" 
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
                             fontWeight={600}
                             textTransform="uppercase"
                           >
@@ -295,17 +347,21 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
                     </Box>
 
                     {/* Calendar Days Grid */}
-                    <Box 
-                      display="grid" 
+                    <Box
+                      display="grid"
                       gridTemplateColumns="repeat(7, 1fr)"
-                      sx={{ backgroundColor: 'white' }}
+                      sx={{ backgroundColor: "white" }}
                     >
                       {calendarDays.map((date, index) => {
-                        const isCurrentMonth = date.getMonth() === currentDate.getMonth();
-                        const isToday = date.toDateString() === new Date().toDateString();
-                        const isSelected = selectedDate?.toDateString() === date.toDateString();
+                        const isCurrentMonth =
+                          date.getMonth() === currentDate.getMonth();
+                        const isToday =
+                          date.toDateString() === new Date().toDateString();
+                        const isSelected =
+                          selectedDate?.toDateString() === date.toDateString();
                         const hasSlots = hasAvailableSlots(date);
-                        const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+                        const isPast =
+                          date < new Date(new Date().setHours(0, 0, 0, 0));
 
                         return (
                           <Box
@@ -316,33 +372,50 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
                             height={48}
                             position="relative"
                             sx={{
-                              cursor: hasSlots && !isPast ? 'pointer' : 'default',
+                              cursor:
+                                hasSlots && !isPast ? "pointer" : "default",
                               borderRight: (index + 1) % 7 !== 0 ? 1 : 0,
                               borderBottom: index < 35 ? 1 : 0,
-                              borderColor: 'divider',
-                              backgroundColor: isSelected ? 'primary.main' : 
-                                              isToday ? 'primary.50' : 'transparent',
-                              '&:hover': hasSlots && !isPast ? {
-                                backgroundColor: isSelected ? 'primary.dark' : 'grey.100',
-                              } : {},
-                              transition: 'all 0.2s ease',
+                              borderColor: "divider",
+                              backgroundColor: isSelected
+                                ? "primary.main"
+                                : isToday
+                                ? "primary.50"
+                                : "transparent",
+                              "&:hover":
+                                hasSlots && !isPast
+                                  ? {
+                                      backgroundColor: isSelected
+                                        ? "primary.dark"
+                                        : "grey.100",
+                                    }
+                                  : {},
+                              transition: "all 0.2s ease",
                             }}
-                            onClick={() => !isPast && hasSlots && handleDateSelect(date)}
+                            onClick={() =>
+                              !isPast && hasSlots && handleDateSelect(date)
+                            }
                           >
-                            <Typography 
-                              variant="body2" 
+                            <Typography
+                              variant="body2"
                               sx={{
-                                color: isSelected ? 'white' : 
-                                       isToday ? 'primary.main' :
-                                       !isCurrentMonth || isPast ? 'text.disabled' :
-                                       hasSlots ? 'text.primary' : 'text.secondary',
-                                fontWeight: isSelected || isToday || hasSlots ? 600 : 400,
-                                fontSize: '14px'
+                                color: isSelected
+                                  ? "white"
+                                  : isToday
+                                  ? "primary.main"
+                                  : !isCurrentMonth || isPast
+                                  ? "text.disabled"
+                                  : hasSlots
+                                  ? "text.primary"
+                                  : "text.secondary",
+                                fontWeight:
+                                  isSelected || isToday || hasSlots ? 600 : 400,
+                                fontSize: "14px",
                               }}
                             >
                               {date.getDate()}
                             </Typography>
-                            
+
                             {/* Available slots indicator */}
                             {hasSlots && !isSelected && (
                               <Box
@@ -350,11 +423,11 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
                                 bottom={4}
                                 left="50%"
                                 sx={{
-                                  transform: 'translateX(-50%)',
+                                  transform: "translateX(-50%)",
                                   width: 4,
                                   height: 4,
-                                  borderRadius: '50%',
-                                  backgroundColor: 'primary.main'
+                                  borderRadius: "50%",
+                                  backgroundColor: "primary.main",
                                 }}
                               />
                             )}
@@ -376,52 +449,54 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
 
               {/* Time Slots */}
               <Grid item xs={12} md={4}>
-                {selectedDate && (
-                  <Box>
-                    <Typography variant="h6" fontWeight={600} mb={2}>
-                      {selectedDate.toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
-                    </Typography>
+                <div className="h-[400px] overflow-y-auto">
+                  {selectedDate && (
+                    <Box>
+                      <Typography variant="h6" fontWeight={600} mb={2}>
+                        {selectedDate.toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </Typography>
 
-                    <Box display="flex" flexDirection="column" gap={1}>
-                      {selectedDateSlots.length > 0 ? (
-                        selectedDateSlots.map((slot: any) => (
-                          <Paper
-                            key={slot.id}
-                            elevation={0}
-                            sx={{
-                              p: 2,
-                              border: 1,
-                              borderColor: 'divider',
-                              cursor: 'pointer',
-                              borderRadius: 2,
-                              '&:hover': {
-                                borderColor: 'primary.main',
-                                backgroundColor: 'primary.light',
-                              },
-                            }}
-                            onClick={() => handleSlotSelect(slot)}
-                          >
-                            <Typography 
-                              variant="body1" 
-                              fontWeight={600}
-                              color="text.primary"
+                      <Box display="flex" flexDirection="column" gap={1}>
+                        {selectedDateSlots.length > 0 ? (
+                          selectedDateSlots.map((slot: any) => (
+                            <Paper
+                              key={slot.id}
+                              elevation={0}
+                              sx={{
+                                p: 2,
+                                border: 1,
+                                borderColor: "divider",
+                                cursor: "pointer",
+                                borderRadius: 2,
+                                "&:hover": {
+                                  borderColor: "primary.main",
+                                  backgroundColor: "primary.light",
+                                },
+                              }}
+                              onClick={() => handleSlotSelect(slot)}
                             >
-                              {formatTime(slot.startTime)}
-                            </Typography>
-                          </Paper>
-                        ))
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          No available slots for this date.
-                        </Typography>
-                      )}
+                              <Typography
+                                variant="body1"
+                                fontWeight={600}
+                                color="text.primary"
+                              >
+                                {formatTime(slot.startTime)}
+                              </Typography>
+                            </Paper>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No available slots for this date.
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
-                  </Box>
-                )}
+                  )}
+                </div>
               </Grid>
             </Grid>
           </Box>
@@ -435,13 +510,13 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: { borderRadius: 3 },
         }}
       >
         <DialogContent sx={{ p: 4 }}>
           <Box display="flex" alignItems="center" mb={3}>
-            <IconButton 
-              onClick={() => setShowDetailsModal(false)} 
+            <IconButton
+              onClick={() => setShowDetailsModal(false)}
               sx={{ mr: 2 }}
             >
               <ArrowLeft size={20} />
@@ -457,15 +532,17 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
                 Selected Time Slot
               </Typography>
               <Typography variant="body2">
-                <strong>Date:</strong> {selectedDate.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  month: 'long', 
-                  day: 'numeric',
-                  year: 'numeric'
+                <strong>Date:</strong>{" "}
+                {selectedDate.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
                 })}
               </Typography>
               <Typography variant="body2">
-                <strong>Time:</strong> {formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}
+                <strong>Time:</strong> {formatTime(selectedSlot.startTime)} -{" "}
+                {formatTime(selectedSlot.endTime)}
               </Typography>
               <Typography variant="body2">
                 <strong>Duration:</strong> {sessionDuration} minutes
@@ -477,33 +554,45 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
             <TextField
               label="Full Name"
               value={candidateInfo.name}
-              onChange={(e) => setCandidateInfo({ ...candidateInfo, name: e.target.value })}
+              onChange={(e) =>
+                setCandidateInfo({ ...candidateInfo, name: e.target.value })
+              }
               required
               fullWidth
               InputProps={{
-                startAdornment: <User size={16} style={{ marginRight: 8, color: '#666' }} />,
+                startAdornment: (
+                  <User size={16} style={{ marginRight: 8, color: "#666" }} />
+                ),
               }}
             />
-            
+
             <TextField
               label="Email Address"
               type="email"
               value={candidateInfo.email}
-              onChange={(e) => setCandidateInfo({ ...candidateInfo, email: e.target.value })}
+              onChange={(e) =>
+                setCandidateInfo({ ...candidateInfo, email: e.target.value })
+              }
               required
               fullWidth
               InputProps={{
-                startAdornment: <Mail size={16} style={{ marginRight: 8, color: '#666' }} />,
+                startAdornment: (
+                  <Mail size={16} style={{ marginRight: 8, color: "#666" }} />
+                ),
               }}
             />
-            
+
             <TextField
               label="Phone Number"
               value={candidateInfo.phone}
-              onChange={(e) => setCandidateInfo({ ...candidateInfo, phone: e.target.value })}
+              onChange={(e) =>
+                setCandidateInfo({ ...candidateInfo, phone: e.target.value })
+              }
               fullWidth
               InputProps={{
-                startAdornment: <Phone size={16} style={{ marginRight: 8, color: '#666' }} />,
+                startAdornment: (
+                  <Phone size={16} style={{ marginRight: 8, color: "#666" }} />
+                ),
               }}
             />
 
@@ -512,12 +601,14 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
               fullWidth
               size="large"
               onClick={handleSchedule}
-              disabled={isPending || !candidateInfo.name || !candidateInfo.email}
-              sx={{ 
+              disabled={
+                isPending || !candidateInfo.name || !candidateInfo.email
+              }
+              sx={{
                 borderRadius: 2,
                 py: 1.5,
                 fontWeight: 600,
-                mt: 2
+                mt: 2,
               }}
             >
               {isPending ? "Scheduling..." : "Confirm Interview"}

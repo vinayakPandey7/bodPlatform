@@ -1172,3 +1172,149 @@ exports.getApplications = async (req, res) => {
     });
   }
 };
+
+// Get submitted candidates with interview details
+exports.getSubmittedCandidates = async (req, res) => {
+  try {
+    const { jobId } = req.query; // Get job ID from query parameters
+    
+    const recruitmentPartner = await RecruitmentPartner.findOne({
+      user: req.user.id,
+    });
+
+    if (!recruitmentPartner) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruitment partner profile not found",
+      });
+    }
+
+    // Build query to filter candidates
+    let candidateQuery = {
+      role: "candidate",
+      addedByRecruitmentPartner: recruitmentPartner._id,
+      "applications.0": { $exists: true }, // Only candidates with applications
+    };
+
+    // If jobId is provided, filter candidates who applied to that specific job
+    if (jobId) {
+      candidateQuery["applications.job"] = jobId;
+    }
+
+    // Get candidates submitted by this recruitment partner (optionally filtered by job)
+    const candidates = await User.find(candidateQuery)
+      .populate({
+        path: "applications.job",
+        populate: {
+          path: "employer",
+          select: "companyName ownerName",
+        },
+      })
+      .select("firstName lastName email phoneNumber applications createdAt resume")
+      .sort({ updatedAt: -1 });
+
+    // Import InterviewBooking model
+    const InterviewBooking = require("../models/interview.model").InterviewBooking;
+
+    // Format candidates with interview details
+    const submittedCandidates = [];
+
+    for (const candidate of candidates) {
+      const candidateName = `${candidate.firstName || ""} ${candidate.lastName || ""}`.trim() || candidate.email.split("@")[0];
+
+      // Filter applications by jobId if provided
+      const applicationsToProcess = jobId 
+        ? candidate.applications.filter(app => app.job._id.toString() === jobId)
+        : candidate.applications;
+
+      for (const application of applicationsToProcess) {
+        // Check for interview bookings for this candidate and job
+        const interviewBookings = await InterviewBooking.find({
+          candidate: candidate._id,
+          job: application.job._id,
+        })
+          .populate("slot", "date startTime endTime timezone")
+          .populate("job", "title location")
+          .sort({ createdAt: 1 });
+
+        const candidateData = {
+          _id: candidate._id,
+          name: candidateName,
+          email: candidate.email,
+          phone: candidate.phoneNumber || "N/A",
+          resume: candidate.resume || null,
+          submittedAt: application.appliedAt,
+          job: {
+            _id: application.job._id,
+            title: application.job.title,
+            location: application.job.location,
+            employer: {
+              companyName: application.job.employer?.companyName || "Company Not Specified",
+            },
+          },
+          applicationStatus: application.status,
+          coverLetter: application.coverLetter || "",
+          customFields: application.customFields || [],
+          // Interview details
+          interviews: interviewBookings.map(booking => ({
+            _id: booking._id,
+            status: booking.status,
+            interviewType: booking.interviewType,
+            meetingLink: booking.meetingLink,
+            notes: booking.notes,
+            scheduledAt: booking.scheduledAt,
+            slot: booking.slot ? {
+              date: booking.slot.date,
+              startTime: booking.slot.startTime,
+              endTime: booking.slot.endTime,
+              timezone: booking.slot.timezone,
+            } : null,
+          })),
+          hasScheduledInterview: interviewBookings.some(booking => booking.status === "scheduled"),
+          latestInterviewStatus: interviewBookings.length > 0 ? interviewBookings[interviewBookings.length - 1].status : null,
+        };
+
+        submittedCandidates.push(candidateData);
+      }
+    }
+
+    // Sort by submission date (most recent first)
+    submittedCandidates.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+
+    // Generate summary statistics
+    const summary = {
+      totalSubmitted: submittedCandidates.length,
+      withScheduledInterviews: submittedCandidates.filter(c => c.hasScheduledInterview).length,
+      applicationStatuses: {
+        pending: submittedCandidates.filter(c => c.applicationStatus === "pending").length,
+        shortlisted: submittedCandidates.filter(c => c.applicationStatus === "shortlist").length,
+        interviewing: submittedCandidates.filter(c => 
+          ["phone_interview", "in_person_interview"].includes(c.applicationStatus)
+        ).length,
+        hired: submittedCandidates.filter(c => c.applicationStatus === "hired").length,
+        rejected: submittedCandidates.filter(c => c.applicationStatus === "rejected").length,
+      },
+      interviewStatuses: {
+        scheduled: submittedCandidates.filter(c => c.latestInterviewStatus === "scheduled").length,
+        completed: submittedCandidates.filter(c => c.latestInterviewStatus === "completed").length,
+        cancelled: submittedCandidates.filter(c => c.latestInterviewStatus === "cancelled").length,
+        no_show: submittedCandidates.filter(c => c.latestInterviewStatus === "no_show").length,
+      },
+    };
+
+    res.json({
+      success: true,
+      candidates: submittedCandidates,
+      total: submittedCandidates.length,
+      summary,
+    });
+
+  } catch (error) {
+    console.error("Get submitted candidates error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching submitted candidates",
+      error: error.message,
+    });
+  }
+};

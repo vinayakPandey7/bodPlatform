@@ -26,7 +26,10 @@ import {
   Phone,
   Settings,
 } from "lucide-react";
-import { useAvailableSlots, useScheduleInterview } from "@/lib/hooks/interview.hooks";
+import {
+  useAvailableSlots,
+  useScheduleInterview,
+} from "@/lib/hooks/interview.hooks";
 import InterviewSuccessModal from "./InterviewSuccessModal";
 
 interface ModernCalendarSchedulerProps {
@@ -73,9 +76,9 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
   const { mutate: scheduleInterview, isPending } = useScheduleInterview();
 
   // Calendar navigation
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  const navigateMonth = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    newDate.setMonth(currentDate.getMonth() + (direction === "next" ? 1 : -1));
     setCurrentDate(newDate);
     setSelectedDate(null);
     setSelectedSlot(null);
@@ -103,18 +106,44 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
 
   // Check if date has available slots
   const hasAvailableSlots = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    return availableSlots?.data?.some((day: any) => 
-      day.date.split('T')[0] === dateString && day.slots.length > 0
-    );
+    // Use local date formatting to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}`;
+
+    // Handle both direct array and nested data structure
+    const slotsData = Array.isArray(availableSlots?.data)
+      ? availableSlots.data
+      : availableSlots;
+
+    if (!slotsData || !Array.isArray(slotsData)) {
+      return false;
+    }
+
+    return slotsData.some((day: any) => {
+      return day.date === dateString && day.slots && day.slots.length > 0;
+    });
   };
 
   // Get slots for selected date
   const getSlotsForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    const dayData = availableSlots?.data?.find((day: any) => 
-      day.date.split('T')[0] === dateString
-    );
+    // Use local date formatting to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}`;
+
+    // Handle both direct array and nested data structure
+    const slotsData = Array.isArray(availableSlots?.data)
+      ? availableSlots.data
+      : availableSlots;
+
+    if (!slotsData || !Array.isArray(slotsData)) {
+      return [];
+    }
+
+    const dayData = slotsData.find((day: any) => day.date === dateString);
     return dayData?.slots || [];
   };
 
@@ -128,7 +157,7 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot({
       slotId: slot.id,
-      date: selectedDate?.toISOString() || '',
+      date: selectedDate?.toISOString() || "",
       startTime: slot.startTime,
       endTime: slot.endTime,
       availableSpots: slot.availableSpots,
@@ -136,7 +165,12 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
   };
 
   const handleSchedule = () => {
-    if (!selectedSlot || !candidateInfo.name || !candidateInfo.email || !jobId) {
+    if (
+      !selectedSlot ||
+      !candidateInfo.name ||
+      !candidateInfo.email ||
+      !jobId
+    ) {
       alert("Please fill in all required fields");
       return;
     }
@@ -157,10 +191,17 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
             slotDate: selectedSlot.date,
             slotStartTime: selectedSlot.startTime,
             slotEndTime: selectedSlot.endTime,
-            job: data.job || { title: "Interview", description: "", location: "TBD" },
-            employer: data.employer || { companyName: "Company", email: "company@example.com" },
+            job: data.job || {
+              title: "Interview",
+              description: "",
+              location: "TBD",
+            },
+            employer: data.employer || {
+              companyName: "Company",
+              email: "company@example.com",
+            },
           };
-          
+
           setBookingData(booking);
           setShowSuccessModal(true);
           onClose();
@@ -168,7 +209,7 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
           setCandidateInfo({ name: "", email: "", phone: "" });
         },
         onError: (error) => {
-          alert("Failed to schedule interview. Please try again.");
+          // alert("Failed to schedule interview. Please try again.");
         },
       }
     );
@@ -183,8 +224,18 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
   };
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -194,23 +245,28 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
 
   return (
     <Fragment>
-      <Dialog 
-        open={open} 
-        onClose={onClose} 
-        maxWidth="lg" 
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="lg"
         fullWidth
         PaperProps={{
-          sx: { 
+          sx: {
             borderRadius: 3,
-            maxHeight: '90vh',
-            overflow: 'hidden'
-          }
+            maxHeight: "90vh",
+            overflow: "hidden",
+          },
         }}
       >
-        <DialogContent sx={{ p: 0, height: '80vh' }}>
-          <Grid container sx={{ height: '100%' }}>
+        <DialogContent sx={{ p: 0, height: "80vh" }}>
+          <Grid container sx={{ height: "100%" }}>
             {/* Left Panel - Profile & Info */}
-            <Grid item xs={12} md={4} sx={{ borderRight: 1, borderColor: 'divider', p: 3 }}>
+            <Grid
+              item
+              xs={12}
+              md={4}
+              sx={{ borderRight: 1, borderColor: "divider", p: 3 }}
+            >
               <Box display="flex" alignItems="center" mb={2}>
                 <IconButton onClick={onClose} sx={{ mr: 1 }}>
                   <ArrowLeft size={20} />
@@ -232,7 +288,7 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
               </Box>
 
               <Typography variant="h5" fontWeight={700} mb={1}>
-                {sessionDuration} min with {employerName.split(' ')[0]}
+                {sessionDuration} min with {employerName.split(" ")[0]}
               </Typography>
 
               <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -254,51 +310,87 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                 <TextField
                   label="Full Name"
                   value={candidateInfo.name}
-                  onChange={(e) => setCandidateInfo({ ...candidateInfo, name: e.target.value })}
+                  onChange={(e) =>
+                    setCandidateInfo({ ...candidateInfo, name: e.target.value })
+                  }
                   required
                   fullWidth
                   size="small"
                   InputProps={{
-                    startAdornment: <User size={16} style={{ marginRight: 8, color: '#666' }} />,
+                    startAdornment: (
+                      <User
+                        size={16}
+                        style={{ marginRight: 8, color: "#666" }}
+                      />
+                    ),
                   }}
                 />
-                
+
                 <TextField
                   label="Email Address"
                   type="email"
                   value={candidateInfo.email}
-                  onChange={(e) => setCandidateInfo({ ...candidateInfo, email: e.target.value })}
+                  onChange={(e) =>
+                    setCandidateInfo({
+                      ...candidateInfo,
+                      email: e.target.value,
+                    })
+                  }
                   required
                   fullWidth
                   size="small"
                   InputProps={{
-                    startAdornment: <Mail size={16} style={{ marginRight: 8, color: '#666' }} />,
+                    startAdornment: (
+                      <Mail
+                        size={16}
+                        style={{ marginRight: 8, color: "#666" }}
+                      />
+                    ),
                   }}
                 />
-                
+
                 <TextField
                   label="Phone Number"
                   value={candidateInfo.phone}
-                  onChange={(e) => setCandidateInfo({ ...candidateInfo, phone: e.target.value })}
+                  onChange={(e) =>
+                    setCandidateInfo({
+                      ...candidateInfo,
+                      phone: e.target.value,
+                    })
+                  }
                   fullWidth
                   size="small"
                   InputProps={{
-                    startAdornment: <Phone size={16} style={{ marginRight: 8, color: '#666' }} />,
+                    startAdornment: (
+                      <Phone
+                        size={16}
+                        style={{ marginRight: 8, color: "#666" }}
+                      />
+                    ),
                   }}
                 />
               </Box>
 
-              <Box mt={4} display="flex" alignItems="center" gap={1} color="text.secondary">
+              <Box
+                mt={4}
+                display="flex"
+                alignItems="center"
+                gap={1}
+                color="text.secondary"
+              >
                 <Settings size={16} />
-                <Typography variant="body2">
-                  Troubleshoot
-                </Typography>
+                <Typography variant="body2">Troubleshoot</Typography>
               </Box>
             </Grid>
 
             {/* Right Panel - Calendar */}
             <Grid item xs={12} md={8} sx={{ p: 3 }}>
-              <Typography variant="h5" fontWeight={600} mb={3} textAlign="center">
+              <Typography
+                variant="h5"
+                fontWeight={600}
+                mb={3}
+                textAlign="center"
+              >
                 Select a Date & Time
               </Typography>
 
@@ -307,15 +399,27 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                 <Grid item xs={12} md={7}>
                   <Box>
                     {/* Calendar Header */}
-                    <Box display="flex" alignItems="center" justifyContent="between" mb={2}>
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="between"
+                      mb={2}
+                    >
                       <Typography variant="h6" fontWeight={600}>
-                        {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                        {monthNames[currentDate.getMonth()]}{" "}
+                        {currentDate.getFullYear()}
                       </Typography>
                       <Box>
-                        <IconButton onClick={() => navigateMonth('prev')} size="small">
+                        <IconButton
+                          onClick={() => navigateMonth("prev")}
+                          size="small"
+                        >
                           <ChevronLeft size={20} />
                         </IconButton>
-                        <IconButton onClick={() => navigateMonth('next')} size="small">
+                        <IconButton
+                          onClick={() => navigateMonth("next")}
+                          size="small"
+                        >
                           <ChevronRight size={20} />
                         </IconButton>
                       </Box>
@@ -325,9 +429,9 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                     <Grid container>
                       {dayNames.map((day) => (
                         <Grid item xs key={day}>
-                          <Typography 
-                            variant="caption" 
-                            color="text.secondary" 
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
                             textAlign="center"
                             display="block"
                             py={1}
@@ -342,12 +446,16 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                     {/* Calendar Days */}
                     <Grid container>
                       {calendarDays.map((date, index) => {
-                        const isCurrentMonth = date.getMonth() === currentDate.getMonth();
-                        const isToday = date.toDateString() === new Date().toDateString();
-                        const isSelected = selectedDate?.toDateString() === date.toDateString();
+                        const isCurrentMonth =
+                          date.getMonth() === currentDate.getMonth();
+                        const isToday =
+                          date.toDateString() === new Date().toDateString();
+                        const isSelected =
+                          selectedDate?.toDateString() === date.toDateString();
                         const hasSlots = hasAvailableSlots(date);
-                        const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
-                        
+                        const isPast =
+                          date < new Date(new Date().setHours(0, 0, 0, 0));
+
                         return (
                           <Grid item xs key={index}>
                             <Box
@@ -356,21 +464,37 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                               alignItems="center"
                               height={40}
                               sx={{
-                                cursor: hasSlots && !isPast ? 'pointer' : 'default',
+                                cursor:
+                                  hasSlots && !isPast ? "pointer" : "default",
                                 borderRadius: 1,
                                 mx: 0.5,
                                 my: 0.25,
-                                backgroundColor: isSelected ? 'primary.main' : 
-                                                isToday ? 'primary.light' : 'transparent',
-                                color: isSelected ? 'white' : 
-                                       isToday ? 'primary.main' :
-                                       !isCurrentMonth || isPast ? 'text.disabled' :
-                                       hasSlots ? 'primary.main' : 'text.primary',
+                                backgroundColor: isSelected
+                                  ? "primary.main"
+                                  : isToday
+                                  ? "primary.light"
+                                  : "transparent",
+                                color: isSelected
+                                  ? "white"
+                                  : isToday
+                                  ? "primary.main"
+                                  : !isCurrentMonth || isPast
+                                  ? "text.disabled"
+                                  : hasSlots
+                                  ? "primary.main"
+                                  : "text.primary",
                                 fontWeight: hasSlots ? 600 : 400,
-                                '&:hover': hasSlots && !isPast ? {
-                                  backgroundColor: isSelected ? 'primary.dark' : 'primary.light',
-                                  color: isSelected ? 'white' : 'primary.main',
-                                } : {},
+                                "&:hover":
+                                  hasSlots && !isPast
+                                    ? {
+                                        backgroundColor: isSelected
+                                          ? "primary.dark"
+                                          : "primary.light",
+                                        color: isSelected
+                                          ? "white"
+                                          : "primary.main",
+                                      }
+                                    : {},
                               }}
                               onClick={() => !isPast && handleDateSelect(date)}
                             >
@@ -398,10 +522,10 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                   {selectedDate && (
                     <Box>
                       <Typography variant="h6" fontWeight={600} mb={2}>
-                        {selectedDate.toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          month: 'long', 
-                          day: 'numeric' 
+                        {selectedDate.toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
                         })}
                       </Typography>
 
@@ -414,21 +538,31 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                               sx={{
                                 p: 2,
                                 border: 1,
-                                borderColor: selectedSlot?.slotId === slot.id ? 'primary.main' : 'divider',
-                                backgroundColor: selectedSlot?.slotId === slot.id ? 'primary.light' : 'transparent',
-                                cursor: 'pointer',
+                                borderColor:
+                                  selectedSlot?.slotId === slot.id
+                                    ? "primary.main"
+                                    : "divider",
+                                backgroundColor:
+                                  selectedSlot?.slotId === slot.id
+                                    ? "primary.light"
+                                    : "transparent",
+                                cursor: "pointer",
                                 borderRadius: 2,
-                                '&:hover': {
-                                  borderColor: 'primary.main',
-                                  backgroundColor: 'primary.light',
+                                "&:hover": {
+                                  borderColor: "primary.main",
+                                  backgroundColor: "primary.light",
                                 },
                               }}
                               onClick={() => handleSlotSelect(slot)}
                             >
-                              <Typography 
-                                variant="body1" 
+                              <Typography
+                                variant="body1"
                                 fontWeight={600}
-                                color={selectedSlot?.slotId === slot.id ? 'primary.main' : 'text.primary'}
+                                color={
+                                  selectedSlot?.slotId === slot.id
+                                    ? "primary.main"
+                                    : "text.primary"
+                                }
                               >
                                 {formatTime(slot.startTime)}
                               </Typography>
@@ -448,8 +582,12 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                             fullWidth
                             size="large"
                             onClick={handleSchedule}
-                            disabled={isPending || !candidateInfo.name || !candidateInfo.email}
-                            sx={{ 
+                            disabled={
+                              isPending ||
+                              !candidateInfo.name ||
+                              !candidateInfo.email
+                            }
+                            sx={{
                               borderRadius: 2,
                               py: 1.5,
                               fontWeight: 600,

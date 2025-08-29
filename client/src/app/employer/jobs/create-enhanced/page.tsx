@@ -510,7 +510,7 @@ export default function CreateJobPageEnhanced() {
       }}
     >
       <CardContent>
-        <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+        <Typography sx={{ mb: 2, fontWeight: "bold" }}>
           Start with a template or create from scratch
         </Typography>
         <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>

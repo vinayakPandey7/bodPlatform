@@ -916,6 +916,11 @@ const sendInterviewInvitationForApplication = async (user, employer, application
     });
     console.log("✅ DEBUG: Placeholder slot created:", placeholderSlot._id);
 
+    // Generate tokens
+    console.log("🔑 DEBUG: Generating tokens...");
+    const invitationToken = uuidv4();
+    const bookingToken = uuidv4(); // Generate unique booking token
+
     // Create a placeholder booking for invitation
     console.log("📝 DEBUG: Creating interview booking...");
     const bookingData = {
@@ -926,16 +931,13 @@ const sendInterviewInvitationForApplication = async (user, employer, application
       candidateName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
       candidateEmail: user.email,
       candidatePhone: user.phone || '',
+      bookingToken: bookingToken, // Add unique booking token
       status: "scheduled",
     };
     console.log("📝 DEBUG: Booking data:", bookingData);
     
     const booking = await InterviewBooking.create(bookingData);
     console.log("✅ DEBUG: Interview booking created:", booking._id);
-
-    // Generate invitation token
-    console.log("🔑 DEBUG: Generating invitation token...");
-    const invitationToken = uuidv4();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
     console.log("✅ DEBUG: Token generated:", invitationToken);
@@ -1075,6 +1077,283 @@ const sendInterviewInvitationForApplication = async (user, employer, application
       status: status
     });
     throw error;
+  }
+};
+
+// Set employer availability slots
+exports.setAvailability = async (req, res) => {
+  try {
+    const { slots } = req.body;
+    
+    if (!slots || !Array.isArray(slots) || slots.length === 0) {
+      return res.status(400).json({ message: "Slots array is required" });
+    }
+
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    const { InterviewSlot } = require("../models/interview.model");
+    
+    // Create availability slots
+    const createdSlots = [];
+    for (const slot of slots) {
+      const { date, startTime, endTime, timezone, maxCandidates } = slot;
+      
+      // Validate required fields
+      if (!date || !startTime || !endTime) {
+        return res.status(400).json({ 
+          message: "Date, startTime, and endTime are required for each slot" 
+        });
+      }
+
+      const newSlot = await InterviewSlot.create({
+        employer: employer._id,
+        date: new Date(date),
+        startTime,
+        endTime,
+        timezone: timezone || "America/New_York",
+        maxCandidates: maxCandidates || 1,
+        isAvailable: true,
+        currentBookings: 0
+      });
+      
+      createdSlots.push(newSlot);
+    }
+
+    res.status(201).json({
+      message: "Availability slots created successfully",
+      slots: createdSlots
+    });
+  } catch (error) {
+    console.error("Set availability error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get employer availability slots
+exports.getAvailability = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    const { InterviewSlot } = require("../models/interview.model");
+    
+    let query = { employer: employer._id };
+    
+    // Add date range filter if provided
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+
+    const slots = await InterviewSlot.find(query).sort({ date: 1, startTime: 1 });
+
+    res.json({
+      slots,
+      total: slots.length
+    });
+  } catch (error) {
+    console.error("Get availability error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get employer interview calendar
+exports.getInterviewCalendar = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    const { InterviewBooking } = require("../models/interview.model");
+    
+    let query = { employer: employer._id };
+    
+    // Add date range filter if provided
+    if (startDate || endDate) {
+      const { InterviewSlot } = require("../models/interview.model");
+      const dateFilter = {};
+      if (startDate) dateFilter.$gte = new Date(startDate);
+      if (endDate) dateFilter.$lte = new Date(endDate);
+      
+      const slots = await InterviewSlot.find({ 
+        employer: employer._id, 
+        date: dateFilter 
+      }).select('_id');
+      
+      query.slot = { $in: slots.map(s => s._id) };
+    }
+
+    const bookings = await InterviewBooking.find(query)
+      .populate('slot', 'date startTime endTime timezone')
+      .populate('job', 'title location')
+      .populate('candidate', 'firstName lastName email phoneNumber')
+      .sort({ 'slot.date': 1, 'slot.startTime': 1 });
+
+    // Format the response to include all necessary booking details
+    const formattedBookings = bookings.map(booking => ({
+      _id: booking._id,
+      candidateName: booking.candidateName,
+      candidateEmail: booking.candidateEmail,
+      candidatePhone: booking.candidatePhone,
+      status: booking.status,
+      interviewType: booking.interviewType,
+      meetingLink: booking.meetingLink,
+      notes: booking.notes,
+      scheduledAt: booking.scheduledAt,
+      completedAt: booking.completedAt,
+      slot: booking.slot ? {
+        _id: booking.slot._id,
+        date: booking.slot.date,
+        startTime: booking.slot.startTime,
+        endTime: booking.slot.endTime,
+        timezone: booking.slot.timezone
+      } : null,
+      job: booking.job ? {
+        _id: booking.job._id,
+        title: booking.job.title,
+        location: booking.job.location
+      } : null,
+      candidate: booking.candidate ? {
+        _id: booking.candidate._id,
+        firstName: booking.candidate.firstName,
+        lastName: booking.candidate.lastName,
+        email: booking.candidate.email,
+        phone: booking.candidate.phoneNumber
+      } : {
+        // Fallback to booking data if candidate reference is missing
+        firstName: booking.candidateName.split(' ')[0] || '',
+        lastName: booking.candidateName.split(' ').slice(1).join(' ') || '',
+        email: booking.candidateEmail,
+        phone: booking.candidatePhone
+      }
+    }));
+
+    res.json({
+      bookings: formattedBookings,
+      total: formattedBookings.length
+    });
+  } catch (error) {
+    console.error("Get interview calendar error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Update interview booking status
+exports.updateInterviewStatus = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { status, notes } = req.body;
+    
+    const validStatuses = ["scheduled", "completed", "cancelled", "no_show"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status. Valid statuses are: " + validStatuses.join(", ")
+      });
+    }
+
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    const { InterviewBooking } = require("../models/interview.model");
+    
+    const booking = await InterviewBooking.findOne({
+      _id: bookingId,
+      employer: employer._id
+    });
+
+    if (!booking) {
+      return res.status(404).json({ 
+        message: "Interview booking not found or unauthorized" 
+      });
+    }
+
+    booking.status = status;
+    if (notes) booking.notes = notes;
+    if (status === "completed") booking.completedAt = new Date();
+    
+    await booking.save();
+
+    res.json({
+      message: "Interview status updated successfully",
+      booking
+    });
+  } catch (error) {
+    console.error("Update interview status error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Send interview invitation manually
+exports.sendInterviewInvitation = async (req, res) => {
+  try {
+    const { candidateId, jobId, recruitmentPartnerId } = req.body;
+    
+    if (!candidateId || !jobId) {
+      return res.status(400).json({ 
+        message: "candidateId and jobId are required" 
+      });
+    }
+
+    const employer = await Employer.findOne({ user: req.user.id });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    // Verify job belongs to employer
+    const job = await Job.findOne({ _id: jobId, employer: employer._id });
+    if (!job) {
+      return res.status(404).json({ 
+        message: "Job not found or unauthorized" 
+      });
+    }
+
+    // Find candidate
+    const User = require("../models/user.model");
+    const candidate = await User.findById(candidateId);
+    if (!candidate || candidate.role !== "candidate") {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    // Find candidate's application for this job
+    const application = candidate.applications.find(
+      app => app.job.toString() === jobId
+    );
+    
+    if (!application) {
+      return res.status(404).json({ 
+        message: "Application not found for this candidate and job" 
+      });
+    }
+
+    // Send invitation
+    const result = await sendInterviewInvitationForApplication(
+      candidate, 
+      employer, 
+      application, 
+      "in_person_interview", 
+      candidateId
+    );
+
+    res.json({
+      message: "Interview invitation sent successfully",
+      result
+    });
+  } catch (error) {
+    console.error("Send interview invitation error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 

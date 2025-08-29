@@ -782,6 +782,10 @@ const sendInterviewInvitationForCandidate = async (candidate, employer, status) 
     const { InterviewBooking, InterviewInvitation } = require("../models/interview.model");
     const { v4: uuidv4 } = require("uuid");
 
+    // Generate tokens
+    const invitationToken = uuidv4();
+    const bookingToken = uuidv4();
+
     // Create a placeholder booking for invitation
     const booking = await InterviewBooking.create({
       employer: employer._id,
@@ -791,11 +795,9 @@ const sendInterviewInvitationForCandidate = async (candidate, employer, status) 
       candidateName: candidate.name,
       candidateEmail: candidate.email,
       candidatePhone: candidate.phone,
+      bookingToken: bookingToken,
       status: "scheduled",
     });
-
-    // Generate invitation token
-    const invitationToken = uuidv4();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
 

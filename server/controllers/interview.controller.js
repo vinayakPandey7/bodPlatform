@@ -1,7 +1,12 @@
-const { InterviewSlot, InterviewBooking, InterviewInvitation } = require("../models/interview.model");
+const {
+  InterviewSlot,
+  InterviewBooking,
+  InterviewInvitation,
+} = require("../models/interview.model");
 const { sendEmail } = require("../utils/email");
 const { generateCalendarAttachment } = require("../utils/calendarUtils");
 const { v4: uuidv4 } = require("uuid");
+const mongoose = require("mongoose");
 
 // 1. Employer Calendar Management - Set unavailable slots
 const Employer = require("../models/employer.model");
@@ -27,20 +32,18 @@ const setEmployerAvailability = async (req, res) => {
     }
     const employerId = employerDoc._id;
 
-    // Delete existing slots for the date range
-    const dateRange = slots.reduce((range, slot) => {
-      const date = new Date(slot.date);
-      if (!range.start || date < range.start) range.start = date;
-      if (!range.end || date > range.end) range.end = date;
-      return range;
-    }, {});
-
-    if (dateRange.start && dateRange.end) {
+    // Delete existing slots for each specific date
+    const uniqueDates = [...new Set(slots.map(slot => slot.date))];
+    
+    for (const dateStr of uniqueDates) {
+      const startOfDay = new Date(dateStr + 'T00:00:00.000Z');
+      const endOfDay = new Date(dateStr + 'T23:59:59.999Z');
+      
       await InterviewSlot.deleteMany({
         employer: employerId,
         date: {
-          $gte: dateRange.start,
-          $lte: dateRange.end,
+          $gte: startOfDay,
+          $lte: endOfDay,
         },
       });
     }
@@ -85,9 +88,10 @@ const generateDefaultSlots = (employerId, date, employer) => {
     { start: "14:00", end: "15:00" },
     { start: "15:00", end: "16:00" },
     { start: "16:00", end: "17:00" },
+    { start: "17:00", end: "18:00" }, // Added slot till 6 PM
   ];
 
-  workingHours.forEach(slot => {
+  workingHours.forEach((slot) => {
     defaultSlots.push({
       id: `default-${employerId}-${date}-${slot.start}`,
       startTime: slot.start,
@@ -95,11 +99,28 @@ const generateDefaultSlots = (employerId, date, employer) => {
       timezone: "America/New_York",
       availableSpots: 1,
       employer: employer,
-      isDefault: true
+      isDefault: true,
     });
   });
 
   return defaultSlots;
+};
+
+// Helper function to check if two time slots conflict
+const isTimeSlotConflicting = (slot1Start, slot1End, slot2Start, slot2End) => {
+  // Convert time strings to minutes for easier comparison
+  const timeToMinutes = (timeStr) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const slot1StartMin = timeToMinutes(slot1Start);
+  const slot1EndMin = timeToMinutes(slot1End);
+  const slot2StartMin = timeToMinutes(slot2Start);
+  const slot2EndMin = timeToMinutes(slot2End);
+
+  // Check if slots overlap
+  return slot1StartMin < slot2EndMin && slot2StartMin < slot1EndMin;
 };
 
 // 2. Get available slots for candidate selection
@@ -110,27 +131,29 @@ const getAvailableSlots = async (req, res) => {
     if (!employerId) {
       return res.status(400).json({
         success: false,
-        message: "employerId is required"
+        message: "employerId is required",
       });
     }
 
     // Get employer info
     const Employer = require("../models/employer.model");
-    const employer = await Employer.findById(employerId).select('companyName');
+    const employer = await Employer.findById(employerId).select("companyName");
     if (!employer) {
       return res.status(404).json({
         success: false,
-        message: "Employer not found"
+        message: "Employer not found",
       });
     }
 
     // Set date range - default to next 30 days if not provided
     const start = startDate ? new Date(startDate) : new Date();
-    const end = endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const end = endDate
+      ? new Date(endDate)
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     const matchQuery = {
-      employer: employerId,
-      date: { $gte: start, $lte: end }
+      employer: new mongoose.Types.ObjectId(employerId),
+      date: { $gte: start, $lte: end },
     };
 
     // Get existing slots (both available and unavailable)
@@ -142,11 +165,11 @@ const getAvailableSlots = async (req, res) => {
           localField: "employer",
           foreignField: "_id",
           as: "employer",
-          pipeline: [{ $project: { companyName: 1 } }]
-        }
+          pipeline: [{ $project: { companyName: 1 } }],
+        },
       },
       { $unwind: "$employer" },
-      { $sort: { date: 1, startTime: 1 } }
+      { $sort: { date: 1, startTime: 1 } },
     ]);
 
     // Generate date range for default availability
@@ -162,7 +185,7 @@ const getAvailableSlots = async (req, res) => {
 
     // Group existing slots by date
     const existingSlotsByDate = {};
-    existingSlots.forEach(slot => {
+    existingSlots.forEach((slot) => {
       const dateKey = slot.date.toISOString().split("T")[0];
       if (!existingSlotsByDate[dateKey]) {
         existingSlotsByDate[dateKey] = [];
@@ -173,35 +196,59 @@ const getAvailableSlots = async (req, res) => {
     // Build final grouped slots
     const groupedSlots = {};
 
-    dateRange.forEach(date => {
+    dateRange.forEach((date) => {
       const dateKey = date.toISOString().split("T")[0];
       const existingSlotsForDate = existingSlotsByDate[dateKey] || [];
-      
-      // If employer has set specific slots for this date, use only available ones
-      if (existingSlotsForDate.length > 0) {
-        const availableSlots = existingSlotsForDate.filter(slot => 
+
+      // Get available slots that employer has explicitly set
+      const availableSlots = existingSlotsForDate.filter(
+        (slot) =>
           slot.isAvailable && slot.currentBookings < slot.maxCandidates
-        );
-        
-        if (availableSlots.length > 0) {
-          groupedSlots[dateKey] = {
-            date: dateKey,
-            slots: availableSlots.map(slot => ({
-              id: slot._id,
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              timezone: slot.timezone,
-              availableSpots: slot.maxCandidates - slot.currentBookings,
-              employer: slot.employer,
-            }))
-          };
-        }
+      );
+
+      // Get unavailable time ranges
+      const unavailableSlots = existingSlotsForDate.filter(
+        (slot) => !slot.isAvailable
+      );
+
+      let finalSlots = [];
+
+      if (availableSlots.length > 0) {
+        // Use explicitly available slots
+        finalSlots = availableSlots.map((slot) => ({
+          id: slot._id,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          timezone: slot.timezone,
+          availableSpots: slot.maxCandidates - slot.currentBookings,
+          employer: slot.employer,
+        }));
       } else {
-        // No specific slots set - generate default availability
-        const defaultSlots = generateDefaultSlots(employerId, dateKey, employer);
+        // Generate default slots and filter out unavailable time ranges
+        const defaultSlots = generateDefaultSlots(
+          employerId,
+          dateKey,
+          employer
+        );
+
+        finalSlots = defaultSlots.filter((defaultSlot) => {
+          // Check if this default slot conflicts with any unavailable time range
+          return !unavailableSlots.some((unavailableSlot) => {
+            return isTimeSlotConflicting(
+              defaultSlot.startTime,
+              defaultSlot.endTime,
+              unavailableSlot.startTime,
+              unavailableSlot.endTime
+            );
+          });
+        });
+      }
+
+      // Only add to groupedSlots if there are final slots to show
+      if (finalSlots.length > 0) {
         groupedSlots[dateKey] = {
           date: dateKey,
-          slots: defaultSlots
+          slots: finalSlots,
         };
       }
     });
@@ -223,37 +270,61 @@ const getAvailableSlots = async (req, res) => {
 // 3. Schedule interview (called when candidate selects slot)
 const scheduleInterview = async (req, res) => {
   try {
-    const { slotId, candidateName, candidateEmail, candidatePhone, jobId } = req.body;
+    const { slotId, candidateName, candidateEmail, candidatePhone, jobId } =
+      req.body;
 
     let slot;
     let isDefaultSlot = false;
 
     // Check if this is a default slot (starts with 'default-')
-    if (slotId.startsWith('default-')) {
+    if (slotId.startsWith("default-")) {
       isDefaultSlot = true;
       // Parse default slot info: default-{employerId}-{YYYY-MM-DD}-{HH:MM}
-      const parts = slotId.split('-');
+      const parts = slotId.split("-");
       const employerId = parts[1];
       const date = `${parts[2]}-${parts[3]}-${parts[4]}`; // Reconstruct YYYY-MM-DD
       const startTime = `${parts[5]}:${parts[6]}`; // Reconstruct HH:MM
-      
+
+      // Check if employer has explicitly set unavailable slots for this time
+      const existingSlot = await InterviewSlot.findOne({
+        employer: employerId,
+        date: new Date(date + "T00:00:00.000Z"),
+        startTime: startTime,
+        isAvailable: false
+      });
+
+      if (existingSlot) {
+        return res.status(400).json({
+          success: false,
+          message: "This time slot is not available as per employer's schedule",
+        });
+      }
+
       // Create the slot in database first
-      const endTime = startTime === "09:00" ? "10:00" :
-                     startTime === "10:00" ? "11:00" :
-                     startTime === "11:00" ? "12:00" :
-                     startTime === "14:00" ? "15:00" :
-                     startTime === "15:00" ? "16:00" :
-                     startTime === "16:00" ? "17:00" : "18:00";
+      const endTime =
+        startTime === "09:00"
+          ? "10:00"
+          : startTime === "10:00"
+          ? "11:00"
+          : startTime === "11:00"
+          ? "12:00"
+          : startTime === "14:00"
+          ? "15:00"
+          : startTime === "15:00"
+          ? "16:00"
+          : startTime === "16:00"
+          ? "17:00"
+          : "18:00";
 
       slot = await InterviewSlot.create({
         employer: employerId,
-        date: new Date(date + 'T00:00:00.000Z'), // Ensure UTC parsing to avoid timezone issues
+        date: new Date(date + "T00:00:00.000Z"), // Ensure UTC parsing to avoid timezone issues
         startTime: startTime,
         endTime: endTime,
         timezone: "America/New_York",
         isAvailable: true,
         maxCandidates: 1,
-        currentBookings: 0
+        currentBookings: 0,
       });
     } else {
       // Regular slot - validate it exists
@@ -273,37 +344,28 @@ const scheduleInterview = async (req, res) => {
       }
     }
 
-    // For interview bookings, we'll create a minimal candidate record with default values
-    const Candidate = require("../models/candidate.model");
-    let candidate = await Candidate.findOne({ email: candidateEmail });
-    
+    // Find or create a User record for the candidate
+    const User = require("../models/user.model");
+    let candidate = await User.findOne({ email: candidateEmail, role: "candidate" });
+
     if (!candidate) {
-      // Create minimal candidate record with required defaults
-      candidate = await Candidate.create({
-        job: jobId,
-        recruitmentPartner: slot.employer, // Use employer as recruitment partner for now
-        name: candidateName,
-        phone: candidatePhone || "000-000-0000",
-        dateOfBirth: new Date('1990-01-01'), // Default date
+      // Create a minimal User record for the candidate
+      candidate = await User.create({
+        firstName: candidateName.split(' ')[0] || candidateName,
+        lastName: candidateName.split(' ').slice(1).join(' ') || '',
         email: candidateEmail,
-        address: "TBD",
-        zipCode: "00000",
-        city: "TBD",
-        state: "TBD",
-        country: "United States",
-        location: {
-          type: "Point",
-          coordinates: [-74.0060, 40.7128] // Default to NYC coordinates
-        },
-        locationDetected: false,
-        gender: "other",
-        resume: "Interview booking - resume pending",
-        status: "shortlist"
+        phoneNumber: candidatePhone || '',
+        role: "candidate",
+        password: "temp_password_" + Date.now(), // Temporary password
+        isVerified: false, // They can verify later if they want to create a full account
       });
     }
 
     // Generate unique booking token
     const bookingToken = uuidv4();
+
+    // Generate meeting link (placeholder for now)
+    const meetingLink = `https://meet.google.com/interview-${bookingToken.substring(0, 8)}`;
 
     // Create interview booking
     const booking = await InterviewBooking.create({
@@ -315,6 +377,7 @@ const scheduleInterview = async (req, res) => {
       candidateEmail,
       candidatePhone,
       bookingToken,
+      meetingLink,
       status: "scheduled",
     });
 
@@ -338,9 +401,11 @@ const scheduleInterview = async (req, res) => {
     // Get job and employer details for response
     const Job = require("../models/job.model");
     const Employer = require("../models/employer.model");
-    
+
     const job = await Job.findById(jobId).select("title description location");
-    const employer = await Employer.findById(slot.employer).select("companyName email address");
+    const employer = await Employer.findById(slot.employer).select(
+      "companyName email address"
+    );
 
     // Send confirmation emails
     await sendInterviewConfirmationEmails(booking, invitationToken);
@@ -394,6 +459,10 @@ const sendInterviewInvitation = async (req, res) => {
       });
     }
 
+    // Generate tokens
+    const invitationToken = uuidv4();
+    const bookingToken = uuidv4();
+
     // Create a placeholder booking for invitation
     const booking = await InterviewBooking.create({
       employer: employerId,
@@ -403,11 +472,9 @@ const sendInterviewInvitation = async (req, res) => {
       candidateName: `${candidate.firstName} ${candidate.lastName}`,
       candidateEmail: candidate.email,
       candidatePhone: candidate.phone,
+      bookingToken: bookingToken,
       status: "scheduled",
     });
-
-    // Generate invitation token
-    const invitationToken = uuidv4();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
 
@@ -470,7 +537,9 @@ const getInterviewInvitation = async (req, res) => {
     }
 
     // Get available slots for this employer
-    const availableSlots = await getAvailableSlotsForEmployer(invitation.booking.employer._id);
+    const availableSlots = await getAvailableSlotsForEmployer(
+      invitation.booking.employer._id
+    );
 
     res.status(200).json({
       success: true,
@@ -512,11 +581,14 @@ const getEmployerCalendar = async (req, res) => {
       .sort({ date: 1, startTime: 1 });
 
     // Get bookings for these slots
-    const slotIds = slots.map(slot => slot._id);
+    const slotIds = slots.map((slot) => slot._id);
     const bookings = await InterviewBooking.find({
       slot: { $in: slotIds },
-      status: { $in: ["scheduled", "completed"] },
-    }).populate("candidate", "firstName lastName email");
+      status: { $in: ["scheduled", "completed", "cancelled", "no_show"] },
+    }).populate([
+      { path: "candidate", select: "firstName lastName email" },
+      { path: "job", select: "title description" },
+    ]);
 
     // Group bookings by slot
     const bookingsBySlot = bookings.reduce((acc, booking) => {
@@ -528,7 +600,7 @@ const getEmployerCalendar = async (req, res) => {
     }, {});
 
     // Format response
-    const calendarData = slots.map(slot => ({
+    const calendarData = slots.map((slot) => ({
       slot: {
         id: slot._id,
         date: slot.date,
@@ -603,20 +675,20 @@ const getAvailableSlotsForEmployer = async (employerId) => {
       $match: {
         employer: employerId,
         isAvailable: true,
-        date: { $gte: new Date() }
-      }
+        date: { $gte: new Date() },
+      },
     },
     {
       $match: {
-        $expr: { $lt: ["$currentBookings", "$maxCandidates"] }
-      }
+        $expr: { $lt: ["$currentBookings", "$maxCandidates"] },
+      },
     },
     {
-      $sort: { date: 1, startTime: 1 }
-    }
+      $sort: { date: 1, startTime: 1 },
+    },
   ]);
 
-  return slots.map(slot => ({
+  return slots.map((slot) => ({
     id: slot._id,
     date: slot.date,
     startTime: slot.startTime,
@@ -629,24 +701,33 @@ const getAvailableSlotsForEmployer = async (employerId) => {
 const sendInterviewConfirmationEmails = async (booking) => {
   try {
     const slot = await InterviewSlot.findById(booking.slot);
-    const employer = await require("../models/employer.model").findById(booking.employer);
+    const employer = await require("../models/employer.model").findById(
+      booking.employer
+    );
     const job = await require("../models/job.model").findById(booking.job);
-    
+
     // Check if job has recruitment partner
     let recruitmentPartner = null;
     if (job.recruitmentPartner) {
-      recruitmentPartner = await require("../models/recruitmentPartner.model").findById(job.recruitmentPartner);
+      recruitmentPartner =
+        await require("../models/recruitmentPartner.model").findById(
+          job.recruitmentPartner
+        );
     }
 
     // Generate calendar attachment for candidate
-    const calendarAttachment = await generateCalendarAttachment(booking, job, employer);
+    const calendarAttachment = await generateCalendarAttachment(
+      booking,
+      job,
+      employer
+    );
 
-    const formattedDate = new Date(slot.date).toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      timeZone: 'UTC'
+    const formattedDate = new Date(slot.date).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
     });
 
     // Email to candidate
@@ -654,21 +735,43 @@ const sendInterviewConfirmationEmails = async (booking) => {
       to: booking.candidateEmail,
       subject: "Interview Confirmation - BOD Platform",
       html: `
-        <h2>Interview Confirmation</h2>
+        <h2>🎉 Interview Confirmation</h2>
         <p>Dear ${booking.candidateName},</p>
-        <p>Your interview has been scheduled successfully.</p>
-        <p><strong>Company:</strong> ${employer.companyName}</p>
-        <p><strong>Position:</strong> ${job.title}</p>
-        <p><strong>Date:</strong> ${formattedDate}</p>
-        <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
-        <p>Please find the calendar invitation attached to this email. You can add this to your Google Calendar, Outlook, or any other calendar application.</p>
-        <p><strong>How to add to your calendar:</strong></p>
-        <ul>
-          <li><strong>Gmail/Google Calendar:</strong> Open the attached .ics file and it will automatically open in Google Calendar</li>
-          <li><strong>Outlook:</strong> Double-click the .ics file to add it to your calendar</li>
-          <li><strong>Apple Calendar:</strong> Double-click the .ics file to import</li>
-        </ul>
-        <p>Good luck with your interview!</p>
+        <p>Your interview has been scheduled successfully!</p>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2563eb;">📅 Interview Details</h3>
+          <p><strong>Company:</strong> ${employer.companyName}</p>
+          <p><strong>Position:</strong> ${job.title}</p>
+          <p><strong>Date:</strong> ${formattedDate}</p>
+          <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
+        </div>
+
+        <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+          <h3 style="margin-top: 0; color: #2563eb;">🎥 Join Video Interview</h3>
+          <p><strong>Meeting Link:</strong></p>
+          <p><a href="${booking.meetingLink}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Join Meeting</a></p>
+          <p style="margin-top: 15px; font-size: 14px; color: #666;">
+            💡 <strong>Tip:</strong> Join the meeting 5 minutes early to test your audio and video setup.
+          </p>
+        </div>
+
+        <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <h4 style="margin-top: 0;">📎 Calendar Invitation</h4>
+          <p>A calendar invitation is attached to this email. You can add it to:</p>
+          <ul style="margin: 10px 0;">
+            <li><strong>Gmail/Google Calendar:</strong> Open the .ics file</li>
+            <li><strong>Outlook:</strong> Double-click the .ics file</li>
+            <li><strong>Apple Calendar:</strong> Double-click to import</li>
+          </ul>
+        </div>
+
+        <p style="margin-top: 30px;">Good luck with your interview! 🍀</p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="font-size: 12px; color: #666;">
+          If you have any questions, please contact ${employer.companyName} directly.
+        </p>
       `,
       attachments: calendarAttachment ? [calendarAttachment] : undefined,
     });
@@ -678,15 +781,38 @@ const sendInterviewConfirmationEmails = async (booking) => {
       to: employer.email,
       subject: "New Interview Scheduled - BOD Platform",
       html: `
-        <h2>New Interview Scheduled</h2>
-        <p>A new interview has been scheduled.</p>
-        <p><strong>Candidate:</strong> ${booking.candidateName}</p>
-        <p><strong>Email:</strong> ${booking.candidateEmail}</p>
-        <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
-        <p><strong>Position:</strong> ${job.title}</p>
-        <p><strong>Date:</strong> ${formattedDate}</p>
-        <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
-        <p>Please be prepared for the interview at the scheduled time.</p>
+        <h2>📅 New Interview Scheduled</h2>
+        <p>A new interview has been scheduled with a candidate.</p>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2563eb;">👤 Candidate Information</h3>
+          <p><strong>Name:</strong> ${booking.candidateName}</p>
+          <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+          <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
+          <p><strong>Position:</strong> ${job.title}</p>
+        </div>
+
+        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2563eb;">📅 Interview Details</h3>
+          <p><strong>Date:</strong> ${formattedDate}</p>
+          <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
+        </div>
+
+        <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+          <h3 style="margin-top: 0; color: #2563eb;">🎥 Video Interview Link</h3>
+          <p><strong>Meeting Link:</strong></p>
+          <p><a href="${booking.meetingLink}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Join Meeting</a></p>
+          <p style="margin-top: 15px; font-size: 14px; color: #666;">
+            The candidate has also received this meeting link in their confirmation email.
+          </p>
+        </div>
+
+        <p>Please be prepared for the interview at the scheduled time. The calendar invitation is attached to this email.</p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="font-size: 12px; color: #666;">
+          This interview was scheduled through the BOD Platform.
+        </p>
       `,
       attachments: calendarAttachment ? [calendarAttachment] : undefined,
     });
@@ -697,17 +823,36 @@ const sendInterviewConfirmationEmails = async (booking) => {
         to: recruitmentPartner.email,
         subject: "Interview Scheduled for Your Job Posting - BOD Platform",
         html: `
-          <h2>Interview Scheduled</h2>
+          <h2>📅 Interview Scheduled</h2>
           <p>Dear ${recruitmentPartner.ownerName},</p>
           <p>An interview has been scheduled for one of your job postings.</p>
-          <p><strong>Company:</strong> ${employer.companyName}</p>
-          <p><strong>Position:</strong> ${job.title}</p>
-          <p><strong>Candidate:</strong> ${booking.candidateName}</p>
-          <p><strong>Email:</strong> ${booking.candidateEmail}</p>
-          <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
-          <p><strong>Date:</strong> ${formattedDate}</p>
-          <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
-          <p>The interview will be conducted by ${employer.companyName}.</p>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #2563eb;">🏢 Interview Details</h3>
+            <p><strong>Company:</strong> ${employer.companyName}</p>
+            <p><strong>Position:</strong> ${job.title}</p>
+            <p><strong>Date:</strong> ${formattedDate}</p>
+            <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
+          </div>
+
+          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #2563eb;">👤 Candidate Information</h3>
+            <p><strong>Name:</strong> ${booking.candidateName}</p>
+            <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+            <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
+          </div>
+
+          <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+            <h3 style="margin-top: 0; color: #2563eb;">🎥 Meeting Link</h3>
+            <p><strong>Video Call:</strong> <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
+          </div>
+
+          <p>The interview will be conducted by ${employer.companyName} via video call.</p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="font-size: 12px; color: #666;">
+            This notification was sent from the BOD Platform.
+          </p>
         `,
         attachments: calendarAttachment ? [calendarAttachment] : undefined,
       });
@@ -717,7 +862,11 @@ const sendInterviewConfirmationEmails = async (booking) => {
   }
 };
 
-const sendInterviewInvitationEmail = async (candidate, job, invitationToken) => {
+const sendInterviewInvitationEmail = async (
+  candidate,
+  job,
+  invitationToken
+) => {
   const invitationLink = `${process.env.FRONTEND_URL}/interview/schedule/${invitationToken}`;
 
   await sendEmail({
@@ -749,7 +898,9 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
   // Email to candidate
   await sendEmail({
     to: booking.candidateEmail,
-    subject: `Interview ${status.charAt(0).toUpperCase() + status.slice(1)} - BOD Platform`,
+    subject: `Interview ${
+      status.charAt(0).toUpperCase() + status.slice(1)
+    } - BOD Platform`,
     html: `
       <h2>Interview ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
       <p>Dear ${booking.candidateName},</p>
@@ -760,10 +911,14 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
   // Email to employer
   await sendEmail({
     to: booking.employer.email,
-    subject: `Interview ${status.charAt(0).toUpperCase() + status.slice(1)} - BOD Platform`,
+    subject: `Interview ${
+      status.charAt(0).toUpperCase() + status.slice(1)
+    } - BOD Platform`,
     html: `
       <h2>Interview ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
-      <p>The interview with ${booking.candidateName} for ${booking.job.title} ${message}.</p>
+      <p>The interview with ${booking.candidateName} for ${
+      booking.job.title
+    } ${message}.</p>
     `,
   });
 };

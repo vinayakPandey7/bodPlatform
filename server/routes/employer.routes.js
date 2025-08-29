@@ -79,4 +79,44 @@ router.delete(
   employerController.deleteApplicationNote
 );
 
+// Interview scheduling routes
+router.post(
+  "/availability",
+  auth,
+  authorizeRoles("employer"),
+  employerController.setAvailability
+);
+router.get(
+  "/availability",
+  auth,
+  authorizeRoles("employer"),
+  employerController.getAvailability
+);
+router.get(
+  "/interviews/calendar",
+  auth,
+  authorizeRoles("employer"),
+  employerController.getInterviewCalendar
+);
+router.put(
+  "/interviews/:bookingId/status",
+  auth,
+  authorizeRoles("employer"),
+  employerController.updateInterviewStatus
+);
+router.post(
+  "/interviews/send-invitation",
+  auth,
+  authorizeRoles("employer"),
+  employerController.sendInterviewInvitation
+);
+
+// Test email route (for debugging)
+router.post(
+  "/test-email",
+  auth,
+  authorizeRoles("employer"),
+  employerController.testEmail
+);
+
 module.exports = router;
