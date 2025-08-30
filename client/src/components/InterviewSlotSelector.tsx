@@ -620,7 +620,10 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
       {/* Success Modal */}
       <InterviewSuccessModal
         open={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={() => {
+          setShowSuccessModal(false);
+          setShowDetailsModal(false);
+        }}
         booking={bookingData}
       />
     </Fragment>
