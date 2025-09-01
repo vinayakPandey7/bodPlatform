@@ -33,12 +33,12 @@ const setEmployerAvailability = async (req, res) => {
     const employerId = employerDoc._id;
 
     // Delete existing slots for each specific date
-    const uniqueDates = [...new Set(slots.map(slot => slot.date))];
-    
+    const uniqueDates = [...new Set(slots.map((slot) => slot.date))];
+
     for (const dateStr of uniqueDates) {
-      const startOfDay = new Date(dateStr + 'T00:00:00.000Z');
-      const endOfDay = new Date(dateStr + 'T23:59:59.999Z');
-      
+      const startOfDay = new Date(dateStr + "T00:00:00.000Z");
+      const endOfDay = new Date(dateStr + "T23:59:59.999Z");
+
       await InterviewSlot.deleteMany({
         employer: employerId,
         date: {
@@ -110,7 +110,7 @@ const generateDefaultSlots = (employerId, date, employer) => {
 const isTimeSlotConflicting = (slot1Start, slot1End, slot2Start, slot2End) => {
   // Convert time strings to minutes for easier comparison
   const timeToMinutes = (timeStr) => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
+    const [hours, minutes] = timeStr.split(":").map(Number);
     return hours * 60 + minutes;
   };
 
@@ -202,8 +202,7 @@ const getAvailableSlots = async (req, res) => {
 
       // Get available slots that employer has explicitly set
       const availableSlots = existingSlotsForDate.filter(
-        (slot) =>
-          slot.isAvailable && slot.currentBookings < slot.maxCandidates
+        (slot) => slot.isAvailable && slot.currentBookings < slot.maxCandidates
       );
 
       // Get unavailable time ranges
@@ -283,14 +282,14 @@ const scheduleInterview = async (req, res) => {
       const parts = slotId.split("-");
       const employerId = parts[1];
       const date = `${parts[2]}-${parts[3]}-${parts[4]}`; // Reconstruct YYYY-MM-DD
-      const startTime = `${parts[5]}:${parts[6] || '00'}`; // Reconstruct HH:MM with fallback for minutes
+      const startTime = `${parts[5]}:${parts[6] || "00"}`; // Reconstruct HH:MM with fallback for minutes
 
       // Check if employer has explicitly set unavailable slots for this time
       const existingSlot = await InterviewSlot.findOne({
         employer: employerId,
         date: new Date(date + "T00:00:00.000Z"),
         startTime: startTime,
-        isAvailable: false
+        isAvailable: false,
       });
 
       if (existingSlot) {
@@ -302,11 +301,13 @@ const scheduleInterview = async (req, res) => {
 
       // Calculate end time as 1 hour after start time
       const calculateEndTime = (startTime) => {
-        const [hours, minutes] = startTime.split(':').map(Number);
+        const [hours, minutes] = startTime.split(":").map(Number);
         const endHour = hours + 1;
-        return `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        return `${endHour.toString().padStart(2, "0")}:${minutes
+          .toString()
+          .padStart(2, "0")}`;
       };
-      
+
       const endTime = calculateEndTime(startTime);
 
       slot = await InterviewSlot.create({
@@ -339,15 +340,18 @@ const scheduleInterview = async (req, res) => {
 
     // Find or create a User record for the candidate
     const User = require("../models/user.model");
-    let candidate = await User.findOne({ email: candidateEmail, role: "candidate" });
+    let candidate = await User.findOne({
+      email: candidateEmail,
+      role: "candidate",
+    });
 
     if (!candidate) {
       // Create a minimal User record for the candidate
       candidate = await User.create({
-        firstName: candidateName.split(' ')[0] || candidateName,
-        lastName: candidateName.split(' ').slice(1).join(' ') || '',
+        firstName: candidateName.split(" ")[0] || candidateName,
+        lastName: candidateName.split(" ").slice(1).join(" ") || "",
         email: candidateEmail,
-        phoneNumber: candidatePhone || '',
+        phoneNumber: candidatePhone || "",
         role: "candidate",
         password: "temp_password_" + Date.now(), // Temporary password
         isVerified: false, // They can verify later if they want to create a full account
@@ -358,7 +362,10 @@ const scheduleInterview = async (req, res) => {
     const bookingToken = uuidv4();
 
     // Generate meeting link (placeholder for now)
-    const meetingLink = `https://meet.google.com/interview-${bookingToken.substring(0, 8)}`;
+    const meetingLink = `https://meet.google.com/interview-${bookingToken.substring(
+      0,
+      8
+    )}`;
 
     // Create interview booking
     const booking = await InterviewBooking.create({
@@ -694,18 +701,30 @@ const getAvailableSlotsForEmployer = async (employerId) => {
 const sendInterviewConfirmationEmails = async (booking) => {
   try {
     const slot = await InterviewSlot.findById(booking.slot);
-    console.log('DEBUG - Slot object:', JSON.stringify(slot, null, 2));
-    console.log('DEBUG - Slot startTime:', slot.startTime, typeof slot.startTime);
-    console.log('DEBUG - Slot endTime:', slot.endTime, typeof slot.endTime);
-    console.log('DEBUG - Slot timezone:', slot.timezone, typeof slot.timezone);
-    
+    console.log("DEBUG - Slot object:", JSON.stringify(slot, null, 2));
+    console.log(
+      "DEBUG - Slot startTime:",
+      slot.startTime,
+      typeof slot.startTime
+    );
+    console.log("DEBUG - Slot endTime:", slot.endTime, typeof slot.endTime);
+    console.log("DEBUG - Slot timezone:", slot.timezone, typeof slot.timezone);
+
     // Clean the time values to ensure they're strings and remove any ':undefined' suffix
-    const cleanStartTime = String(slot.startTime || '').replace(':undefined', '').trim();
-    const cleanEndTime = String(slot.endTime || '').replace(':undefined', '').trim();
-    const cleanTimezone = String(slot.timezone || 'America/New_York').trim();
-    
-    console.log('DEBUG - Clean times:', { cleanStartTime, cleanEndTime, cleanTimezone });
-    
+    const cleanStartTime = String(slot.startTime || "")
+      .replace(":undefined", "")
+      .trim();
+    const cleanEndTime = String(slot.endTime || "")
+      .replace(":undefined", "")
+      .trim();
+    const cleanTimezone = String(slot.timezone || "America/New_York").trim();
+
+    console.log("DEBUG - Clean times:", {
+      cleanStartTime,
+      cleanEndTime,
+      cleanTimezone,
+    });
+
     const employer = await require("../models/employer.model").findById(
       booking.employer
     );
@@ -721,21 +740,24 @@ const sendInterviewConfirmationEmails = async (booking) => {
     }
 
     // Generate calendar attachment for candidate
-    console.log('Generating calendar attachment with data:', {
+    console.log("Generating calendar attachment with data:", {
       bookingId: booking._id,
       slotDate: slot.date,
       jobTitle: job.title,
-      employerName: employer.companyName
+      employerName: employer.companyName,
     });
-    
+
     const calendarAttachment = await generateCalendarAttachment(
       booking,
       slot,
       job,
       employer
     );
-    
-    console.log('Calendar attachment result:', calendarAttachment ? 'Generated successfully' : 'Failed to generate');
+
+    console.log(
+      "Calendar attachment result:",
+      calendarAttachment ? "Generated successfully" : "Failed to generate"
+    );
 
     const formattedDate = new Date(slot.date).toLocaleDateString("en-US", {
       weekday: "long",
@@ -789,7 +811,9 @@ const sendInterviewConfirmationEmails = async (booking) => {
         </p>
       `,
       icalEvent: calendarAttachment?.icalEvent,
-      attachments: calendarAttachment?.attachment ? [calendarAttachment.attachment] : undefined,
+      attachments: calendarAttachment?.attachment
+        ? [calendarAttachment.attachment]
+        : undefined,
     });
 
     // Email to employer
@@ -831,7 +855,9 @@ const sendInterviewConfirmationEmails = async (booking) => {
         </p>
       `,
       icalEvent: calendarAttachment?.icalEvent,
-      attachments: calendarAttachment?.attachment ? [calendarAttachment.attachment] : undefined,
+      attachments: calendarAttachment?.attachment
+        ? [calendarAttachment.attachment]
+        : undefined,
     });
 
     // Email to recruitment partner if exists
@@ -871,8 +897,10 @@ const sendInterviewConfirmationEmails = async (booking) => {
           This notification was sent from the BOD Platform.
         </p>
       `,
-      icalEvent: calendarAttachment?.icalEvent,
-      alternatives: calendarAttachment ? [calendarAttachment.alternatives] : undefined,
+        icalEvent: calendarAttachment?.icalEvent,
+        alternatives: calendarAttachment
+          ? [calendarAttachment.alternatives]
+          : undefined,
       });
     }
   } catch (error) {

@@ -9,15 +9,20 @@ const { generateGoogleMeetLink } = require("./googleCalendar");
  * @param {Object} employer - Employer details
  * @returns {Promise<string>} Google Meet URL
  */
-async function generateGoogleMeetLinkWrapper(booking, slot = null, job = null, employer = null) {
+async function generateGoogleMeetLinkWrapper(
+  booking,
+  slot = null,
+  job = null,
+  employer = null
+) {
   try {
     // Generate Google Meet link with proper format
     return generateValidGoogleMeetLink(booking);
   } catch (error) {
-    console.error('Error generating Google Meet link:', error);
+    console.error("Error generating Google Meet link:", error);
     // Fallback to Jitsi if Google Meet fails
     const meetingId = `bod-interview-${booking._id || booking.bookingToken}`;
-    const cleanMeetingId = meetingId.replace(/[^a-zA-Z0-9]/g, '');
+    const cleanMeetingId = meetingId.replace(/[^a-zA-Z0-9]/g, "");
     return `https://meet.jit.si/${cleanMeetingId}`;
   }
 }
@@ -31,21 +36,24 @@ function generateValidGoogleMeetLink(booking) {
   // Generate a unique meeting code in Google Meet format (xxx-xxxx-xxx)
   const timestamp = Date.now().toString();
   const bookingId = booking._id || booking.bookingToken || timestamp;
-  
+
   // Create a unique identifier from booking data
   const uniqueString = `${bookingId}${timestamp}`;
-  const hash = uniqueString.split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0);
+  const hash = uniqueString.split("").reduce((a, b) => {
+    a = (a << 5) - a + b.charCodeAt(0);
     return a & a;
   }, 0);
-  
+
   // Convert to positive number and format as Google Meet code
   const positiveHash = Math.abs(hash);
-  const meetCode = positiveHash.toString().padStart(10, '0');
-  
+  const meetCode = positiveHash.toString().padStart(10, "0");
+
   // Format as xxx-xxxx-xxx
-  const formattedCode = `${meetCode.substring(0, 3)}-${meetCode.substring(3, 7)}-${meetCode.substring(7, 10)}`;
-  
+  const formattedCode = `${meetCode.substring(0, 3)}-${meetCode.substring(
+    3,
+    7
+  )}-${meetCode.substring(7, 10)}`;
+
   return `https://meet.google.com/${formattedCode}`;
 }
 
@@ -59,12 +67,16 @@ function generateValidGoogleMeetLink(booking) {
  * @returns {string} ICS file content
  */
 function generateInterviewICS(booking, slot, job, employer, meetLink) {
-  console.log('Generating ICS with data:', { booking: booking._id, slot: slot.date, job: job.title });
-  
+  console.log("Generating ICS with data:", {
+    booking: booking._id,
+    slot: slot.date,
+    job: job.title,
+  });
+
   const slotDate = new Date(slot.date);
   const startTimeParts = slot.startTime?.split(":") || ["09", "00"];
   const endTimeParts = slot.endTime?.split(":") || ["10", "00"];
-  
+
   const event = {
     start: [
       slotDate.getFullYear(),
@@ -143,15 +155,26 @@ Job Description: ${job.description || "No description provided"}`,
  */
 async function generateCalendarAttachment(booking, slot, job, employer) {
   try {
-    console.log('Starting calendar attachment generation...');
-    const meetLink = await generateGoogleMeetLinkWrapper(booking, slot, job, employer);
-    console.log('Generated meet link:', meetLink);
-    
-    const icsContent = await generateInterviewICS(booking, slot, job, employer, meetLink);
-    console.log('Generated ICS content length:', icsContent?.length);
+    console.log("Starting calendar attachment generation...");
+    const meetLink = await generateGoogleMeetLinkWrapper(
+      booking,
+      slot,
+      job,
+      employer
+    );
+    console.log("Generated meet link:", meetLink);
+
+    const icsContent = await generateInterviewICS(
+      booking,
+      slot,
+      job,
+      employer,
+      meetLink
+    );
+    console.log("Generated ICS content length:", icsContent?.length);
 
     if (!icsContent) {
-      console.error('ICS content is null or empty');
+      console.error("ICS content is null or empty");
       return null;
     }
 
@@ -179,8 +202,8 @@ async function generateCalendarAttachment(booking, slot, job, employer) {
     //   meetLink: meetLink,
     //   icsContent: icsContent
     // };
-     // ✅ Return both icalEvent and regular attachment for better compatibility
-     const calendarData = {
+    // ✅ Return both icalEvent and regular attachment for better compatibility
+    const calendarData = {
       icalEvent: {
         filename: `interview-${booking._id}.ics`,
         method: "REQUEST",
@@ -193,8 +216,8 @@ async function generateCalendarAttachment(booking, slot, job, employer) {
       },
       meetLink,
     };
-    
-    console.log('Calendar data created successfully');
+
+    console.log("Calendar data created successfully");
     return calendarData;
   } catch (error) {
     console.error("Error generating calendar file:", error);
