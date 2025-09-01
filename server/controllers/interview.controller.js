@@ -718,6 +718,7 @@ const sendInterviewConfirmationEmails = async (booking) => {
     // Generate calendar attachment for candidate
     const calendarAttachment = await generateCalendarAttachment(
       booking,
+      slot,
       job,
       employer
     );
@@ -756,14 +757,20 @@ const sendInterviewConfirmationEmails = async (booking) => {
           </p>
         </div>
 
-        <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
-          <h4 style="margin-top: 0;">📎 Calendar Invitation</h4>
-          <p>A calendar invitation is attached to this email. You can add it to:</p>
-          <ul style="margin: 10px 0;">
-            <li><strong>Gmail/Google Calendar:</strong> Open the .ics file</li>
-            <li><strong>Outlook:</strong> Double-click the .ics file</li>
-            <li><strong>Apple Calendar:</strong> Double-click to import</li>
+        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+          <h3 style="margin-top: 0; color: #10b981;">📅 Add to Your Calendar</h3>
+          <p style="font-size: 16px; margin-bottom: 15px;"><strong>Calendar invitation attached!</strong> This will automatically:</p>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>📱 <strong>Add to your calendar</strong> (Google, Outlook, Apple, etc.)</li>
+            <li>🔔 <strong>Set reminders</strong> (1 hour & 15 minutes before)</li>
+            <li>🎥 <strong>Include meeting link</strong> for easy access</li>
+            <li>📧 <strong>Send notifications</strong> to keep you on track</li>
           </ul>
+          <div style="background: #ecfdf5; padding: 15px; border-radius: 6px; margin-top: 15px;">
+            <p style="margin: 0; font-size: 14px; color: #065f46;">
+              💡 <strong>How to use:</strong> Simply click on the attached <code>interview-${booking._id}.ics</code> file to automatically add this interview to your calendar app.
+            </p>
+          </div>
         </div>
 
         <p style="margin-top: 30px;">Good luck with your interview! 🍀</p>
@@ -807,7 +814,17 @@ const sendInterviewConfirmationEmails = async (booking) => {
           </p>
         </div>
 
-        <p>Please be prepared for the interview at the scheduled time. The calendar invitation is attached to this email.</p>
+        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+          <h3 style="margin-top: 0; color: #10b981;">📅 Calendar Invitation Attached</h3>
+          <p>A calendar file (<code>interview-${booking._id}.ics</code>) is attached to this email. Click it to:</p>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>📱 Add to your calendar automatically</li>
+            <li>🔔 Get reminders 1 hour and 15 minutes before</li>
+            <li>🎥 Access the meeting link directly from your calendar</li>
+          </ul>
+        </div>
+
+        <p>Please be prepared for the interview at the scheduled time.</p>
         
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
         <p style="font-size: 12px; color: #666;">
@@ -847,7 +864,10 @@ const sendInterviewConfirmationEmails = async (booking) => {
             <p><strong>Video Call:</strong> <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
           </div>
 
-          <p>The interview will be conducted by ${employer.companyName} via video call.</p>
+          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+            <h3 style="margin-top: 0; color: #10b981;">📅 Calendar Invitation</h3>
+            <p>A calendar file is attached to this email for your reference. The interview will be conducted by ${employer.companyName} via video call.</p>
+          </div>
           
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
           <p style="font-size: 12px; color: #666;">

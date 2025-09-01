@@ -44,35 +44,46 @@ function generateFallbackMeetLink(booking) {
 /**
  * Generate ICS calendar file content for interview booking
  * @param {Object} booking - Interview booking data
+ * @param {Object} slot - Interview slot data
  * @param {Object} job - Job details
  * @param {Object} employer - Employer details
  * @param {string} meetLink - Google Meet link
  * @returns {string} ICS file content
  */
-function generateInterviewICS(booking, job, employer, meetLink) {
+function generateInterviewICS(booking, slot, job, employer, meetLink) {
+  // Create start and end date-time objects
+  const startDate = new Date(slot.date);
+  const endDate = new Date(slot.date);
+  
+  // Parse start time (e.g., "09:00" -> [9, 0])
+  const [startHour, startMinute] = slot.startTime.split(':').map(Number);
+  const [endHour, endMinute] = slot.endTime.split(':').map(Number);
+  
+  // Set the time on the date objects
+  startDate.setUTCHours(startHour, startMinute, 0, 0);
+  endDate.setUTCHours(endHour, endMinute, 0, 0);
+
   const event = {
     start: [
-      new Date(booking.slotDate).getFullYear(),
-      new Date(booking.slotDate).getMonth() + 1,
-      new Date(booking.slotDate).getDate(),
-      parseInt(booking.slotStartTime?.split(":")[0]),
-      parseInt(booking.slotStartTime?.split(":")[1]),
+      startDate.getFullYear(),
+      startDate.getMonth() + 1,
+      startDate.getDate(),
+      startDate.getHours(),
+      startDate.getMinutes(),
     ],
     end: [
-      new Date(booking.slotDate).getFullYear(),
-      new Date(booking.slotDate).getMonth() + 1,
-      new Date(booking.slotDate).getDate(),
-      parseInt(booking.slotEndTime?.split(":")[0]),
-      parseInt(booking.slotEndTime?.split(":")[1]),
+      endDate.getFullYear(),
+      endDate.getMonth() + 1,
+      endDate.getDate(),
+      endDate.getHours(),
+      endDate.getMinutes(),
     ],
     title: `Interview - ${job.title} at ${employer.companyName}`,
-    description: `Interview for ${job.title} position at ${
-      employer.companyName
-    }.
+    description: `Interview for ${job.title} position at ${employer.companyName}.
 
 Candidate: ${booking.candidateName}
 Email: ${booking.candidateEmail}
-Phone: ${booking.candidatePhone}
+Phone: ${booking.candidatePhone || 'Not provided'}
 
 🎥 Join Video Call: ${meetLink}
 
@@ -90,26 +101,34 @@ Job Description: ${job.description || "No description provided"}`,
       {
         name: booking.candidateName,
         email: booking.candidateEmail,
+        rsvp: true,
+        partstat: 'NEEDS-ACTION',
+        role: 'REQ-PARTICIPANT'
       },
     ],
     categories: ["Interview", "Job Application"],
     alarms: [
       {
-        action: "DISPLAY",
-        description: "Interview Reminder",
-        trigger: { hours: 1 }, // 1 hour before
+        action: "display",
+        description: "Interview starting in 1 hour",
+        trigger: { hours: 1, before: true },
       },
       {
-        action: "DISPLAY",
-        description: "Interview Reminder",
-        trigger: { minutes: 15 }, // 15 minutes before
+        action: "display", 
+        description: "Interview starting in 15 minutes",
+        trigger: { minutes: 15, before: true },
       },
     ],
+    productId: "BOD Platform//Interview Scheduler//EN",
+    uid: `interview-${booking._id}@bodplatform.com`,
+    sequence: 0,
+    method: 'REQUEST'
   };
 
   return new Promise((resolve, reject) => {
     ics.createEvent(event, (error, value) => {
       if (error) {
+        console.error('ICS generation error:', error);
         reject(error);
       } else {
         resolve(value);
@@ -121,17 +140,18 @@ Job Description: ${job.description || "No description provided"}`,
 /**
  * Generate calendar file attachment for email
  * @param {Object} booking - Interview booking data
+ * @param {Object} slot - Interview slot data
  * @param {Object} job - Job details
  * @param {Object} employer - Employer details
  * @returns {Object} Email attachment object
  */
-async function generateCalendarAttachment(booking, job, employer) {
+async function generateCalendarAttachment(booking, slot, job, employer) {
   try {
     const meetLink = await generateGoogleMeetLink(booking);
-    const icsContent = await generateInterviewICS(booking, job, employer, meetLink);
+    const icsContent = await generateInterviewICS(booking, slot, job, employer, meetLink);
 
     return {
-      filename: `interview-${booking._id}.ics`,
+      filename: `interview-${booking._id || booking.bookingToken}.ics`,
       content: icsContent,
       contentType: "text/calendar; method=REQUEST",
       meetLink: meetLink, // Return the meet link for use in emails
