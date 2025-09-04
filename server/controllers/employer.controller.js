@@ -365,10 +365,11 @@ exports.updateCandidateStatus = async (req, res) => {
       previousStatus,
       isInterviewStatus: interviewStatuses.includes(status),
       isStatusChanged: status !== previousStatus,
-      shouldSendEmail: interviewStatuses.includes(status) && status !== previousStatus
+      shouldSendEmail: interviewStatuses.includes(status)
     });
 
-    if (interviewStatuses.includes(status) && status !== previousStatus) {
+    // Send email for any interview status (even if status hasn't changed, to allow re-sending invitations)
+    if (interviewStatuses.includes(status)) {
       console.log("📧 DEBUG: Triggering interview invitation email...");
       try {
         const result = await sendInterviewInvitationForApplication(user, employer, application, status, candidateId);

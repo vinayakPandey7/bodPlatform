@@ -738,27 +738,31 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                           alignItems="center"
                           mb={2}
                         >
-                          <Chip
-                            label={interview.status
-                              .replace("_", " ")
-                              .toUpperCase()}
-                            color={
-                              getInterviewStatusColor(interview.status) as any
-                            }
-                            icon={getInterviewStatusIcon(interview.status)}
-                          />
-                          <Chip
-                            label={interview.interviewType
-                              .replace("_", " ")
-                              .toUpperCase()}
-                            variant="outlined"
-                          />
+                          {interview?.status && (
+                            <Chip
+                              label={interview.status
+                                .replace("_", " ")
+                                .toUpperCase()}
+                              color={
+                                getInterviewStatusColor(interview.status) as any
+                              }
+                              icon={getInterviewStatusIcon(interview.status)}
+                            />
+                          )}
+                          {interview?.interviewType && (
+                            <Chip
+                              label={interview.interviewType
+                                .replace("_", " ")
+                                .toUpperCase()}
+                              variant="outlined"
+                            />
+                          )}
                         </Box>
                         <Typography variant="body2" gutterBottom>
                           <Calendar size={16} style={{ marginRight: 8 }} />
-                          {formatDate(interview.slot.date)} at{" "}
-                          {formatTime(interview.slot.startTime)} -{" "}
-                          {formatTime(interview.slot.endTime)}
+                          {formatDate(interview?.slot?.date)} at{" "}
+                          {formatTime(interview?.slot?.startTime)} -{" "}
+                          {formatTime(interview?.slot?.endTime)}
                         </Typography>
                         {interview.meetingLink && (
                           <Button

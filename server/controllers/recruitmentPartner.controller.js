@@ -2,6 +2,7 @@ const RecruitmentPartner = require("../models/recruitmentPartner.model");
 const User = require("../models/user.model");
 const Job = require("../models/job.model");
 const Candidate = require("../models/candidate.model");
+const Client = require("../models/client.model");
 const mongoose = require("mongoose");
 
 // Add new candidate
@@ -388,7 +389,7 @@ exports.getDashboardStats = async (req, res) => {
       const revenueAgg = await Client.aggregate([
         {
           $match: {
-            recruitmentPartnerId: mongoose.Types.ObjectId(req.user.id),
+            recruitmentPartnerId: new mongoose.Types.ObjectId(req.user.id),
           },
         },
         { $group: { _id: null, total: { $sum: "$contractValue" } } },

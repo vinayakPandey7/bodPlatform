@@ -33,12 +33,12 @@ const setEmployerAvailability = async (req, res) => {
     const employerId = employerDoc._id;
 
     // Delete existing slots for each specific date
-    const uniqueDates = [...new Set(slots.map(slot => slot.date))];
-    
+    const uniqueDates = [...new Set(slots.map((slot) => slot.date))];
+
     for (const dateStr of uniqueDates) {
-      const startOfDay = new Date(dateStr + 'T00:00:00.000Z');
-      const endOfDay = new Date(dateStr + 'T23:59:59.999Z');
-      
+      const startOfDay = new Date(dateStr + "T00:00:00.000Z");
+      const endOfDay = new Date(dateStr + "T23:59:59.999Z");
+
       await InterviewSlot.deleteMany({
         employer: employerId,
         date: {
@@ -110,7 +110,7 @@ const generateDefaultSlots = (employerId, date, employer) => {
 const isTimeSlotConflicting = (slot1Start, slot1End, slot2Start, slot2End) => {
   // Convert time strings to minutes for easier comparison
   const timeToMinutes = (timeStr) => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
+    const [hours, minutes] = timeStr.split(":").map(Number);
     return hours * 60 + minutes;
   };
 
@@ -202,8 +202,7 @@ const getAvailableSlots = async (req, res) => {
 
       // Get available slots that employer has explicitly set
       const availableSlots = existingSlotsForDate.filter(
-        (slot) =>
-          slot.isAvailable && slot.currentBookings < slot.maxCandidates
+        (slot) => slot.isAvailable && slot.currentBookings < slot.maxCandidates
       );
 
       // Get unavailable time ranges
@@ -283,14 +282,14 @@ const scheduleInterview = async (req, res) => {
       const parts = slotId.split("-");
       const employerId = parts[1];
       const date = `${parts[2]}-${parts[3]}-${parts[4]}`; // Reconstruct YYYY-MM-DD
-      const startTime = `${parts[5]}:${parts[6]}`; // Reconstruct HH:MM
+      const startTime = `${parts[5]}:${parts[6] || "00"}`; // Reconstruct HH:MM with fallback for minutes
 
       // Check if employer has explicitly set unavailable slots for this time
       const existingSlot = await InterviewSlot.findOne({
         employer: employerId,
         date: new Date(date + "T00:00:00.000Z"),
         startTime: startTime,
-        isAvailable: false
+        isAvailable: false,
       });
 
       if (existingSlot) {
@@ -300,21 +299,16 @@ const scheduleInterview = async (req, res) => {
         });
       }
 
-      // Create the slot in database first
-      const endTime =
-        startTime === "09:00"
-          ? "10:00"
-          : startTime === "10:00"
-          ? "11:00"
-          : startTime === "11:00"
-          ? "12:00"
-          : startTime === "14:00"
-          ? "15:00"
-          : startTime === "15:00"
-          ? "16:00"
-          : startTime === "16:00"
-          ? "17:00"
-          : "18:00";
+      // Calculate end time as 1 hour after start time
+      const calculateEndTime = (startTime) => {
+        const [hours, minutes] = startTime.split(":").map(Number);
+        const endHour = hours + 1;
+        return `${endHour.toString().padStart(2, "0")}:${minutes
+          .toString()
+          .padStart(2, "0")}`;
+      };
+
+      const endTime = calculateEndTime(startTime);
 
       slot = await InterviewSlot.create({
         employer: employerId,
@@ -346,15 +340,18 @@ const scheduleInterview = async (req, res) => {
 
     // Find or create a User record for the candidate
     const User = require("../models/user.model");
-    let candidate = await User.findOne({ email: candidateEmail, role: "candidate" });
+    let candidate = await User.findOne({
+      email: candidateEmail,
+      role: "candidate",
+    });
 
     if (!candidate) {
       // Create a minimal User record for the candidate
       candidate = await User.create({
-        firstName: candidateName.split(' ')[0] || candidateName,
-        lastName: candidateName.split(' ').slice(1).join(' ') || '',
+        firstName: candidateName.split(" ")[0] || candidateName,
+        lastName: candidateName.split(" ").slice(1).join(" ") || "",
         email: candidateEmail,
-        phoneNumber: candidatePhone || '',
+        phoneNumber: candidatePhone || "",
         role: "candidate",
         password: "temp_password_" + Date.now(), // Temporary password
         isVerified: false, // They can verify later if they want to create a full account
@@ -365,7 +362,10 @@ const scheduleInterview = async (req, res) => {
     const bookingToken = uuidv4();
 
     // Generate meeting link (placeholder for now)
-    const meetingLink = `https://meet.google.com/interview-${bookingToken.substring(0, 8)}`;
+    const meetingLink = `https://meet.google.com/interview-${bookingToken.substring(
+      0,
+      8
+    )}`;
 
     // Create interview booking
     const booking = await InterviewBooking.create({
@@ -701,6 +701,30 @@ const getAvailableSlotsForEmployer = async (employerId) => {
 const sendInterviewConfirmationEmails = async (booking) => {
   try {
     const slot = await InterviewSlot.findById(booking.slot);
+    console.log("DEBUG - Slot object:", JSON.stringify(slot, null, 2));
+    console.log(
+      "DEBUG - Slot startTime:",
+      slot.startTime,
+      typeof slot.startTime
+    );
+    console.log("DEBUG - Slot endTime:", slot.endTime, typeof slot.endTime);
+    console.log("DEBUG - Slot timezone:", slot.timezone, typeof slot.timezone);
+
+    // Clean the time values to ensure they're strings and remove any ':undefined' suffix
+    const cleanStartTime = String(slot.startTime || "")
+      .replace(":undefined", "")
+      .trim();
+    const cleanEndTime = String(slot.endTime || "")
+      .replace(":undefined", "")
+      .trim();
+    const cleanTimezone = String(slot.timezone || "America/New_York").trim();
+
+    console.log("DEBUG - Clean times:", {
+      cleanStartTime,
+      cleanEndTime,
+      cleanTimezone,
+    });
+
     const employer = await require("../models/employer.model").findById(
       booking.employer
     );
@@ -716,11 +740,23 @@ const sendInterviewConfirmationEmails = async (booking) => {
     }
 
     // Generate calendar attachment for candidate
+    console.log("Generating calendar attachment with data:", {
+      bookingId: booking._id,
+      slotDate: slot.date,
+      jobTitle: job.title,
+      employerName: employer.companyName,
+    });
+
     const calendarAttachment = await generateCalendarAttachment(
       booking,
       slot,
       job,
       employer
+    );
+
+    console.log(
+      "Calendar attachment result:",
+      calendarAttachment ? "Generated successfully" : "Failed to generate"
     );
 
     const formattedDate = new Date(slot.date).toLocaleDateString("en-US", {
@@ -745,7 +781,7 @@ const sendInterviewConfirmationEmails = async (booking) => {
           <p><strong>Company:</strong> ${employer.companyName}</p>
           <p><strong>Position:</strong> ${job.title}</p>
           <p><strong>Date:</strong> ${formattedDate}</p>
-          <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
+          <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
         </div>
 
         <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
@@ -757,14 +793,13 @@ const sendInterviewConfirmationEmails = async (booking) => {
           </p>
         </div>
 
-        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-          <h3 style="margin-top: 0; color: #10b981;">📅 Add to Your Calendar</h3>
-          <p style="font-size: 16px; margin-bottom: 15px;"><strong>Calendar invitation attached!</strong> This will automatically:</p>
-          <ul style="margin: 10px 0; padding-left: 20px;">
-            <li>📱 <strong>Add to your calendar</strong> (Google, Outlook, Apple, etc.)</li>
-            <li>🔔 <strong>Set reminders</strong> (1 hour & 15 minutes before)</li>
-            <li>🎥 <strong>Include meeting link</strong> for easy access</li>
-            <li>📧 <strong>Send notifications</strong> to keep you on track</li>
+        <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <h4 style="margin-top: 0;">📎 Calendar Invitation</h4>
+          <p>A calendar invitation is included with this email. You can add it to:</p>
+          <ul style="margin: 10px 0;">
+            <li><strong>Gmail/Google Calendar:</strong> Click "Add to Calendar"</li>
+            <li><strong>Outlook:</strong> Click "Accept" to add to calendar</li>
+            <li><strong>Apple Calendar:</strong> Click to import the event</li>
           </ul>
           <div style="background: #ecfdf5; padding: 15px; border-radius: 6px; margin-top: 15px;">
             <p style="margin: 0; font-size: 14px; color: #065f46;">
@@ -780,7 +815,10 @@ const sendInterviewConfirmationEmails = async (booking) => {
           If you have any questions, please contact ${employer.companyName} directly.
         </p>
       `,
-      attachments: calendarAttachment ? [calendarAttachment] : undefined,
+      icalEvent: calendarAttachment?.icalEvent,
+      attachments: calendarAttachment?.attachment
+        ? [calendarAttachment.attachment]
+        : undefined,
     });
 
     // Email to employer
@@ -802,7 +840,7 @@ const sendInterviewConfirmationEmails = async (booking) => {
         <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0; color: #2563eb;">📅 Interview Details</h3>
           <p><strong>Date:</strong> ${formattedDate}</p>
-          <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
+          <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
         </div>
 
         <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
@@ -814,24 +852,17 @@ const sendInterviewConfirmationEmails = async (booking) => {
           </p>
         </div>
 
-        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-          <h3 style="margin-top: 0; color: #10b981;">📅 Calendar Invitation Attached</h3>
-          <p>A calendar file (<code>interview-${booking._id}.ics</code>) is attached to this email. Click it to:</p>
-          <ul style="margin: 10px 0; padding-left: 20px;">
-            <li>📱 Add to your calendar automatically</li>
-            <li>🔔 Get reminders 1 hour and 15 minutes before</li>
-            <li>🎥 Access the meeting link directly from your calendar</li>
-          </ul>
-        </div>
-
-        <p>Please be prepared for the interview at the scheduled time.</p>
+        <p>Please be prepared for the interview at the scheduled time. The calendar invitation is included with this email.</p>
         
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
         <p style="font-size: 12px; color: #666;">
           This interview was scheduled through the BOD Platform.
         </p>
       `,
-      attachments: calendarAttachment ? [calendarAttachment] : undefined,
+      icalEvent: calendarAttachment?.icalEvent,
+      attachments: calendarAttachment?.attachment
+        ? [calendarAttachment.attachment]
+        : undefined,
     });
 
     // Email to recruitment partner if exists
@@ -849,7 +880,7 @@ const sendInterviewConfirmationEmails = async (booking) => {
             <p><strong>Company:</strong> ${employer.companyName}</p>
             <p><strong>Position:</strong> ${job.title}</p>
             <p><strong>Date:</strong> ${formattedDate}</p>
-            <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime} (${slot.timezone})</p>
+            <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
           </div>
 
           <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -864,17 +895,17 @@ const sendInterviewConfirmationEmails = async (booking) => {
             <p><strong>Video Call:</strong> <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
           </div>
 
-          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-            <h3 style="margin-top: 0; color: #10b981;">📅 Calendar Invitation</h3>
-            <p>A calendar file is attached to this email for your reference. The interview will be conducted by ${employer.companyName} via video call.</p>
-          </div>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-          <p style="font-size: 12px; color: #666;">
-            This notification was sent from the BOD Platform.
-          </p>
-        `,
-        attachments: calendarAttachment ? [calendarAttachment] : undefined,
+          <p>The interview will be conducted by ${employer.companyName} via video call.</p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="font-size: 12px; color: #666;">
+          This notification was sent from the BOD Platform.
+        </p>
+      `,
+        icalEvent: calendarAttachment?.icalEvent,
+        alternatives: calendarAttachment
+          ? [calendarAttachment.alternatives]
+          : undefined,
       });
     }
   } catch (error) {
