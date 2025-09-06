@@ -27,15 +27,21 @@ router.post(
   interviewController.sendInterviewInvitation
 );
 
+// 5. Add participant to interview
+router.post(
+  "/employer/interview/:bookingId/participant",
+  interviewController.addInterviewParticipant
+);
+
 // Public routes (no authentication required)
 
-// 5. Get available slots for candidate selection
+// 6. Get available slots for candidate selection
 router.get("/slots", interviewController.getAvailableSlots);
 
-// 6. Schedule interview (called when candidate selects slot)
+// 7. Schedule interview (called when candidate selects slot)
 router.post("/schedule", interviewController.scheduleInterview);
 
-// 7. Get interview invitation details (for candidate selection page)
+// 8. Get interview invitation details (for candidate selection page)
 router.get("/invitation/:token", interviewController.getInterviewInvitation);
 
 module.exports = router;

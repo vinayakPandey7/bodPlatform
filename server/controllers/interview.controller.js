@@ -974,6 +974,137 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
   });
 };
 
+// Add participant to interview
+const addInterviewParticipant = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { email } = req.body;
+    const { id: userId, role } = req.user;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+    }
+
+    // Find the booking and populate necessary fields
+    const booking = await InterviewBooking.findById(bookingId)
+      .populate("employer", "companyName email firstName lastName")
+      .populate("job", "title location")
+      .populate("slot", "date startTime endTime timezone");
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview booking not found",
+      });
+    }
+
+    // Check if user has permission to add participants
+    if (role === "employer") {
+      const employer = await Employer.findOne({ user: userId });
+      if (!employer || booking.employer._id.toString() !== employer._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "You don't have permission to add participants to this interview",
+        });
+      }
+    }
+
+    // Generate calendar attachment
+    const calendarAttachment = generateCalendarAttachment({
+      title: `Interview: ${booking.job.title}`,
+      description: `Interview with ${booking.candidateName} for ${booking.job.title} position at ${booking.employer.companyName}`,
+      startTime: new Date(`${booking.slot.date}T${booking.slot.startTime}:00`),
+      endTime: new Date(`${booking.slot.date}T${booking.slot.endTime}:00`),
+      location: booking.job.location,
+      meetingLink: booking.meetingLink,
+      attendees: [email, booking.candidateEmail, booking.employer.email],
+    });
+
+    // Send invitation email to the participant
+    await sendEmail({
+      to: email,
+      subject: `Interview Invitation - ${booking.job.title} at ${booking.employer.companyName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">You're Invited to Join an Interview</h2>
+          
+          <p>Hello,</p>
+          
+          <p>You have been invited to participate in an interview for the <strong>${booking.job.title}</strong> position at <strong>${booking.employer.companyName}</strong>.</p>
+          
+          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1e40af;">Interview Details</h3>
+            <p><strong>Position:</strong> ${booking.job.title}</p>
+            <p><strong>Company:</strong> ${booking.employer.companyName}</p>
+            <p><strong>Candidate:</strong> ${booking.candidateName}</p>
+            <p><strong>Date:</strong> ${new Date(booking.slot.date).toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}</p>
+            <p><strong>Time:</strong> ${booking.slot.startTime} - ${booking.slot.endTime} (${booking.slot.timezone || 'UTC'})</p>
+            <p><strong>Location:</strong> ${booking.job.location}</p>
+            ${booking.meetingLink ? `<p><strong>Meeting Link:</strong> <a href="${booking.meetingLink}" style="color: #2563eb;">${booking.meetingLink}</a></p>` : ''}
+          </div>
+          
+          ${booking.meetingLink ? `
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${booking.meetingLink}" 
+               style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+              Join Interview Call
+            </a>
+          </div>
+          ` : ''}
+          
+          <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <h4 style="margin-top: 0; color: #92400e;">📅 Add to Your Calendar</h4>
+            <p style="margin-bottom: 0; color: #92400e;">A calendar file (.ics) is attached to this email. Click on it to automatically add this interview to your calendar app (Google Calendar, Outlook, Apple Calendar, etc.).</p>
+          </div>
+          
+          <p>If you have any questions about this interview, please contact the employer directly.</p>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          <p style="color: #6b7280; font-size: 14px;">
+            This invitation was sent through the BOD Platform.<br>
+            If you believe you received this email in error, please ignore it.
+          </p>
+        </div>
+      `,
+      attachments: [calendarAttachment],
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Participant invitation sent successfully",
+      data: {
+        email,
+        bookingId,
+        sentAt: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error("Error adding interview participant:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add participant to interview",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   setEmployerAvailability,
   getAvailableSlots,
@@ -982,4 +1113,5 @@ module.exports = {
   getInterviewInvitation,
   getEmployerCalendar,
   updateInterviewStatus,
+  addInterviewParticipant,
 };
