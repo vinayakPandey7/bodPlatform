@@ -654,7 +654,7 @@ const updateInterviewStatus = async (req, res) => {
     // If interview is cancelled, free up the slot for other candidates
     if (status === "cancelled" && booking.slot) {
       await InterviewSlot.findByIdAndUpdate(booking.slot, {
-        $inc: { currentBookings: -1 }
+        $inc: { currentBookings: -1 },
       });
     }
 
@@ -950,7 +950,7 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
     // Get slot details for the email
     const slot = await InterviewSlot.findById(booking.slot);
     if (!slot) {
-      console.error('Slot not found for booking:', booking._id);
+      console.error("Slot not found for booking:", booking._id);
       return;
     }
 
@@ -973,7 +973,7 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
 
     const formattedTime = `${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})`;
 
-    if (status === 'cancelled') {
+    if (status === "cancelled") {
       // Enhanced cancellation email to candidate
       await sendEmail({
         to: booking.candidateEmail,
@@ -991,12 +991,18 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
               <p><strong>Position:</strong> ${booking.job.title}</p>
               <p><strong>Originally Scheduled:</strong> ${formattedDate}</p>
               <p><strong>Time:</strong> ${formattedTime}</p>
-              ${booking.notes ? `<p><strong>Reason:</strong> ${booking.notes}</p>` : ''}
+              ${
+                booking.notes
+                  ? `<p><strong>Reason:</strong> ${booking.notes}</p>`
+                  : ""
+              }
             </div>
 
             <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #2563eb;">💡 What's Next?</h3>
-              <p>If you're interested in rescheduling or have any questions about this cancellation, please contact ${booking.employer.companyName} directly.</p>
+              <p>If you're interested in rescheduling or have any questions about this cancellation, please contact ${
+                booking.employer.companyName
+              } directly.</p>
               <p>We encourage you to continue exploring other opportunities on the BOD Platform.</p>
             </div>
 
@@ -1004,7 +1010,9 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
             
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
             <p style="font-size: 12px; color: #666;">
-              If you have any questions, please contact ${booking.employer.companyName} directly.<br>
+              If you have any questions, please contact ${
+                booking.employer.companyName
+              } directly.<br>
               This notification was sent from the BOD Platform.
             </p>
           </div>
@@ -1018,17 +1026,25 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #dc2626;">❌ Interview Cancelled</h2>
-            <p>The interview with ${booking.candidateName} has been cancelled.</p>
+            <p>The interview with ${
+              booking.candidateName
+            } has been cancelled.</p>
             
             <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
               <h3 style="margin-top: 0; color: #dc2626;">👤 Cancelled Interview Details</h3>
               <p><strong>Candidate:</strong> ${booking.candidateName}</p>
               <p><strong>Email:</strong> ${booking.candidateEmail}</p>
-              <p><strong>Phone:</strong> ${booking.candidatePhone || 'Not provided'}</p>
+              <p><strong>Phone:</strong> ${
+                booking.candidatePhone || "Not provided"
+              }</p>
               <p><strong>Position:</strong> ${booking.job.title}</p>
               <p><strong>Originally Scheduled:</strong> ${formattedDate}</p>
               <p><strong>Time:</strong> ${formattedTime}</p>
-              ${booking.notes ? `<p><strong>Cancellation Notes:</strong> ${booking.notes}</p>` : ''}
+              ${
+                booking.notes
+                  ? `<p><strong>Cancellation Notes:</strong> ${booking.notes}</p>`
+                  : ""
+              }
             </div>
 
             <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -1054,31 +1070,47 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
       };
 
       const message = statusMessages[status] || "status has been updated";
-      const statusColor = status === 'completed' ? '#16a34a' : '#dc2626';
-      const statusIcon = status === 'completed' ? '✅' : '⚠️';
+      const statusColor = status === "completed" ? "#16a34a" : "#dc2626";
+      const statusIcon = status === "completed" ? "✅" : "⚠️";
 
       // Email to candidate
       await sendEmail({
         to: booking.candidateEmail,
-        subject: `Interview ${status.charAt(0).toUpperCase() + status.slice(1)} - BOD Platform`,
+        subject: `Interview ${
+          status.charAt(0).toUpperCase() + status.slice(1)
+        } - BOD Platform`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: ${statusColor};">${statusIcon} Interview ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
+            <h2 style="color: ${statusColor};">${statusIcon} Interview ${
+          status.charAt(0).toUpperCase() + status.slice(1)
+        }</h2>
             <p>Dear ${booking.candidateName},</p>
-            <p>Your interview for <strong>${booking.job.title}</strong> at <strong>${booking.employer.companyName}</strong> ${message}.</p>
+            <p>Your interview for <strong>${
+              booking.job.title
+            }</strong> at <strong>${
+          booking.employer.companyName
+        }</strong> ${message}.</p>
             
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: ${statusColor};">📅 Interview Details</h3>
               <p><strong>Date:</strong> ${formattedDate}</p>
               <p><strong>Time:</strong> ${formattedTime}</p>
-              ${booking.notes ? `<p><strong>Notes:</strong> ${booking.notes}</p>` : ''}
+              ${
+                booking.notes
+                  ? `<p><strong>Notes:</strong> ${booking.notes}</p>`
+                  : ""
+              }
             </div>
 
-            ${status === 'completed' ? `
+            ${
+              status === "completed"
+                ? `
             <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <p style="color: #16a34a; margin: 0;">Thank you for participating in the interview. The employer will be in touch regarding next steps.</p>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
             <p style="font-size: 12px; color: #666;">
@@ -1091,11 +1123,17 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
       // Email to employer
       await sendEmail({
         to: booking.employer.email,
-        subject: `Interview ${status.charAt(0).toUpperCase() + status.slice(1)} - BOD Platform`,
+        subject: `Interview ${
+          status.charAt(0).toUpperCase() + status.slice(1)
+        } - BOD Platform`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: ${statusColor};">${statusIcon} Interview ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
-            <p>The interview with <strong>${booking.candidateName}</strong> for <strong>${booking.job.title}</strong> ${message}.</p>
+            <h2 style="color: ${statusColor};">${statusIcon} Interview ${
+          status.charAt(0).toUpperCase() + status.slice(1)
+        }</h2>
+            <p>The interview with <strong>${
+              booking.candidateName
+            }</strong> for <strong>${booking.job.title}</strong> ${message}.</p>
             
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: ${statusColor};">👤 Interview Details</h3>
@@ -1103,7 +1141,11 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
               <p><strong>Email:</strong> ${booking.candidateEmail}</p>
               <p><strong>Date:</strong> ${formattedDate}</p>
               <p><strong>Time:</strong> ${formattedTime}</p>
-              ${booking.notes ? `<p><strong>Notes:</strong> ${booking.notes}</p>` : ''}
+              ${
+                booking.notes
+                  ? `<p><strong>Notes:</strong> ${booking.notes}</p>`
+                  : ""
+              }
             </div>
             
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
@@ -1115,7 +1157,7 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
       });
     }
   } catch (error) {
-    console.error('Error sending interview status update email:', error);
+    console.error("Error sending interview status update email:", error);
   }
 };
 
@@ -1158,10 +1200,14 @@ const addInterviewParticipant = async (req, res) => {
     // Check if user has permission to add participants
     if (role === "employer") {
       const employer = await Employer.findOne({ user: userId });
-      if (!employer || booking.employer._id.toString() !== employer._id.toString()) {
+      if (
+        !employer ||
+        booking.employer._id.toString() !== employer._id.toString()
+      ) {
         return res.status(403).json({
           success: false,
-          message: "You don't have permission to add participants to this interview",
+          message:
+            "You don't have permission to add participants to this interview",
         });
       }
     }
@@ -1177,6 +1223,17 @@ const addInterviewParticipant = async (req, res) => {
       attendees: [email, booking.candidateEmail, booking.employer.email],
     });
 
+    // Clean the time values to ensure they're strings and remove any ':undefined' suffix
+    const cleanStartTime = String(slot.startTime || "")
+      .replace(":undefined", "")
+      .trim();
+    const cleanEndTime = String(slot.endTime || "")
+      .replace(":undefined", "")
+      .trim();
+    const cleanTimezone = String(slot.timezone || "UTC").trim();
+
+    const formattedTime = `${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})`;
+
     // Send invitation email to the participant
     await sendEmail({
       to: email,
@@ -1187,32 +1244,46 @@ const addInterviewParticipant = async (req, res) => {
           
           <p>Hello,</p>
           
-          <p>You have been invited to participate in an interview for the <strong>${booking.job.title}</strong> position at <strong>${booking.employer.companyName}</strong>.</p>
+          <p>You have been invited to participate in an interview for the <strong>${
+            booking.job.title
+          }</strong> position at <strong>${
+        booking.employer.companyName
+      }</strong>.</p>
           
           <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #1e40af;">Interview Details</h3>
             <p><strong>Position:</strong> ${booking.job.title}</p>
             <p><strong>Company:</strong> ${booking.employer.companyName}</p>
             <p><strong>Candidate:</strong> ${booking.candidateName}</p>
-            <p><strong>Date:</strong> ${new Date(booking.slot.date).toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            <p><strong>Date:</strong> ${new Date(
+              booking.slot.date
+            ).toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}</p>
-            <p><strong>Time:</strong> ${booking.slot.startTime} - ${booking.slot.endTime} (${booking.slot.timezone || 'UTC'})</p>
+             <p><strong>Time:</strong> ${formattedTime}</p>
             <p><strong>Location:</strong> ${booking.job.location}</p>
-            ${booking.meetingLink ? `<p><strong>Meeting Link:</strong> <a href="${booking.meetingLink}" style="color: #2563eb;">${booking.meetingLink}</a></p>` : ''}
+            ${
+              booking.meetingLink
+                ? `<p><strong>Meeting Link:</strong> <a href="${booking.meetingLink}" style="color: #2563eb;">${booking.meetingLink}</a></p>`
+                : ""
+            }
           </div>
           
-          ${booking.meetingLink ? `
+          ${
+            booking.meetingLink
+              ? `
           <div style="text-align: center; margin: 30px 0;">
             <a href="${booking.meetingLink}" 
                style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
               Join Interview Call
             </a>
           </div>
-          ` : ''}
+          `
+              : ""
+          }
           
           <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0;">
             <h4 style="margin-top: 0; color: #92400e;">📅 Add to Your Calendar</h4>
