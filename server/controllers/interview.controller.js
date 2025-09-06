@@ -639,6 +639,7 @@ const updateInterviewStatus = async (req, res) => {
         status,
         notes,
         ...(status === "completed" && { completedAt: new Date() }),
+        ...(status === "cancelled" && { cancelledAt: new Date() }),
       },
       { new: true }
     ).populate(["candidate", "employer", "job"]);
@@ -647,6 +648,13 @@ const updateInterviewStatus = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Interview booking not found",
+      });
+    }
+
+    // If interview is cancelled, free up the slot for other candidates
+    if (status === "cancelled" && booking.slot) {
+      await InterviewSlot.findByIdAndUpdate(booking.slot, {
+        $inc: { currentBookings: -1 }
       });
     }
 
@@ -938,40 +946,168 @@ const sendInterviewInvitationEmail = async (
 };
 
 const sendInterviewStatusUpdateEmail = async (booking, status) => {
-  const statusMessages = {
-    completed: "has been completed",
-    cancelled: "has been cancelled",
-    no_show: "was marked as no-show",
-  };
+  try {
+    // Get slot details for the email
+    const slot = await InterviewSlot.findById(booking.slot);
+    if (!slot) {
+      console.error('Slot not found for booking:', booking._id);
+      return;
+    }
 
-  const message = statusMessages[status] || "status has been updated";
+    const formattedDate = new Date(slot.date).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    });
 
-  // Email to candidate
-  await sendEmail({
-    to: booking.candidateEmail,
-    subject: `Interview ${
-      status.charAt(0).toUpperCase() + status.slice(1)
-    } - BOD Platform`,
-    html: `
-      <h2>Interview ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
-      <p>Dear ${booking.candidateName},</p>
-      <p>Your interview for ${booking.job.title} ${message}.</p>
-    `,
-  });
+    const formattedTime = `${slot.startTime} - ${slot.endTime} (${slot.timezone || 'UTC'})`;
 
-  // Email to employer
-  await sendEmail({
-    to: booking.employer.email,
-    subject: `Interview ${
-      status.charAt(0).toUpperCase() + status.slice(1)
-    } - BOD Platform`,
-    html: `
-      <h2>Interview ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
-      <p>The interview with ${booking.candidateName} for ${
-      booking.job.title
-    } ${message}.</p>
-    `,
-  });
+    if (status === 'cancelled') {
+      // Enhanced cancellation email to candidate
+      await sendEmail({
+        to: booking.candidateEmail,
+        subject: "Interview Cancelled - BOD Platform",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #dc2626;">❌ Interview Cancelled</h2>
+            <p>Dear ${booking.candidateName},</p>
+            
+            <p>We regret to inform you that your scheduled interview has been cancelled.</p>
+            
+            <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+              <h3 style="margin-top: 0; color: #dc2626;">📅 Cancelled Interview Details</h3>
+              <p><strong>Company:</strong> ${booking.employer.companyName}</p>
+              <p><strong>Position:</strong> ${booking.job.title}</p>
+              <p><strong>Originally Scheduled:</strong> ${formattedDate}</p>
+              <p><strong>Time:</strong> ${formattedTime}</p>
+              ${booking.notes ? `<p><strong>Reason:</strong> ${booking.notes}</p>` : ''}
+            </div>
+
+            <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #2563eb;">💡 What's Next?</h3>
+              <p>If you're interested in rescheduling or have any questions about this cancellation, please contact ${booking.employer.companyName} directly.</p>
+              <p>We encourage you to continue exploring other opportunities on the BOD Platform.</p>
+            </div>
+
+            <p>We apologize for any inconvenience this may cause.</p>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+            <p style="font-size: 12px; color: #666;">
+              If you have any questions, please contact ${booking.employer.companyName} directly.<br>
+              This notification was sent from the BOD Platform.
+            </p>
+          </div>
+        `,
+      });
+
+      // Enhanced cancellation email to employer
+      await sendEmail({
+        to: booking.employer.email,
+        subject: "Interview Cancelled - BOD Platform",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #dc2626;">❌ Interview Cancelled</h2>
+            <p>The interview with ${booking.candidateName} has been cancelled.</p>
+            
+            <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+              <h3 style="margin-top: 0; color: #dc2626;">👤 Cancelled Interview Details</h3>
+              <p><strong>Candidate:</strong> ${booking.candidateName}</p>
+              <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+              <p><strong>Phone:</strong> ${booking.candidatePhone || 'Not provided'}</p>
+              <p><strong>Position:</strong> ${booking.job.title}</p>
+              <p><strong>Originally Scheduled:</strong> ${formattedDate}</p>
+              <p><strong>Time:</strong> ${formattedTime}</p>
+              ${booking.notes ? `<p><strong>Cancellation Notes:</strong> ${booking.notes}</p>` : ''}
+            </div>
+
+            <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #2563eb;">📅 Time Slot Status</h3>
+              <p>The time slot is now available for other candidates to book.</p>
+              <p>You can view your calendar and manage availability through your employer dashboard.</p>
+            </div>
+
+            <p>The candidate has been notified of this cancellation.</p>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+            <p style="font-size: 12px; color: #666;">
+              This notification was sent from the BOD Platform.
+            </p>
+          </div>
+        `,
+      });
+    } else {
+      // For other status updates (completed, no_show, etc.)
+      const statusMessages = {
+        completed: "has been completed",
+        no_show: "was marked as no-show",
+      };
+
+      const message = statusMessages[status] || "status has been updated";
+      const statusColor = status === 'completed' ? '#16a34a' : '#dc2626';
+      const statusIcon = status === 'completed' ? '✅' : '⚠️';
+
+      // Email to candidate
+      await sendEmail({
+        to: booking.candidateEmail,
+        subject: `Interview ${status.charAt(0).toUpperCase() + status.slice(1)} - BOD Platform`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: ${statusColor};">${statusIcon} Interview ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
+            <p>Dear ${booking.candidateName},</p>
+            <p>Your interview for <strong>${booking.job.title}</strong> at <strong>${booking.employer.companyName}</strong> ${message}.</p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: ${statusColor};">📅 Interview Details</h3>
+              <p><strong>Date:</strong> ${formattedDate}</p>
+              <p><strong>Time:</strong> ${formattedTime}</p>
+              ${booking.notes ? `<p><strong>Notes:</strong> ${booking.notes}</p>` : ''}
+            </div>
+
+            ${status === 'completed' ? `
+            <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p style="color: #16a34a; margin: 0;">Thank you for participating in the interview. The employer will be in touch regarding next steps.</p>
+            </div>
+            ` : ''}
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+            <p style="font-size: 12px; color: #666;">
+              This notification was sent from the BOD Platform.
+            </p>
+          </div>
+        `,
+      });
+
+      // Email to employer
+      await sendEmail({
+        to: booking.employer.email,
+        subject: `Interview ${status.charAt(0).toUpperCase() + status.slice(1)} - BOD Platform`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: ${statusColor};">${statusIcon} Interview ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
+            <p>The interview with <strong>${booking.candidateName}</strong> for <strong>${booking.job.title}</strong> ${message}.</p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: ${statusColor};">👤 Interview Details</h3>
+              <p><strong>Candidate:</strong> ${booking.candidateName}</p>
+              <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+              <p><strong>Date:</strong> ${formattedDate}</p>
+              <p><strong>Time:</strong> ${formattedTime}</p>
+              ${booking.notes ? `<p><strong>Notes:</strong> ${booking.notes}</p>` : ''}
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+            <p style="font-size: 12px; color: #666;">
+              This notification was sent from the BOD Platform.
+            </p>
+          </div>
+        `,
+      });
+    }
+  } catch (error) {
+    console.error('Error sending interview status update email:', error);
+  }
 };
 
 // Add participant to interview
