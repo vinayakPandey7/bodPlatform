@@ -52,7 +52,7 @@ const getInstance = ({ headers: _headers = {} }: { headers?: any }) => {
 
   const Instance = axios.create({
     baseURL: BASE_URL,
-    timeout: 5000,
+    timeout: 30000, // Increased timeout to 30 seconds for email operations
     headers: headers,
   });
 

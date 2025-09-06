@@ -962,7 +962,16 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
       timeZone: "UTC",
     });
 
-    const formattedTime = `${slot.startTime} - ${slot.endTime} (${slot.timezone || 'UTC'})`;
+    // Clean the time values to ensure they're strings and remove any ':undefined' suffix
+    const cleanStartTime = String(slot.startTime || "")
+      .replace(":undefined", "")
+      .trim();
+    const cleanEndTime = String(slot.endTime || "")
+      .replace(":undefined", "")
+      .trim();
+    const cleanTimezone = String(slot.timezone || "UTC").trim();
+
+    const formattedTime = `${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})`;
 
     if (status === 'cancelled') {
       // Enhanced cancellation email to candidate

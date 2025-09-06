@@ -47,7 +47,7 @@ import {
   useEmployerCalendar,
   useUpdateInterviewStatus,
 } from "@/lib/hooks/interview.hooks";
-import axios from "axios";
+import Client from "@/lib/api";
 
 interface InterviewStatusModalProps {
   open: boolean;
@@ -113,7 +113,9 @@ export default function EmployerCalendarPage() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [currentView, setCurrentView] = useState<"calendar" | "list">("calendar");
+  const [currentView, setCurrentView] = useState<"calendar" | "list">(
+    "calendar"
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -138,8 +140,8 @@ export default function EmployerCalendarPage() {
   const handleInviteParticipant = async (bookingId: string, email: string) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `/api/interview/employer/interview/${bookingId}/participant`,
+      const response = await Client.post(
+        `interviews/employer/interview/${bookingId}/participant`,
         { email },
         {
           headers: {
@@ -147,7 +149,6 @@ export default function EmployerCalendarPage() {
           },
         }
       );
-      
       if (response.data.success) {
         return response.data;
       } else {
@@ -155,9 +156,9 @@ export default function EmployerCalendarPage() {
       }
     } catch (error: any) {
       throw new Error(
-        error.response?.data?.message || 
-        error.message || 
-        "Failed to send invitation"
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to send invitation"
       );
     }
   };
@@ -323,7 +324,16 @@ export default function EmployerCalendarPage() {
           </div>
 
           {/* Statistics */}
-          <Box display="grid" gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" }} gap={3} className="mb-6">
+          <Box
+            display="grid"
+            gridTemplateColumns={{
+              xs: "1fr",
+              sm: "1fr 1fr",
+              md: "1fr 1fr 1fr 1fr",
+            }}
+            gap={3}
+            className="mb-6"
+          >
             <Card>
               <CardContent>
                 <Box display="flex" alignItems="center" gap={2}>
@@ -392,10 +402,15 @@ export default function EmployerCalendarPage() {
           {/* View Toggle and Filters */}
           <Card className="mb-6">
             <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <CalendarViewToggle 
-                  view={currentView} 
-                  onViewChange={setCurrentView} 
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={3}
+              >
+                <CalendarViewToggle
+                  view={currentView}
+                  onViewChange={setCurrentView}
                 />
                 <Box display="flex" gap={2}>
                   <Chip
@@ -415,8 +430,13 @@ export default function EmployerCalendarPage() {
                   />
                 </Box>
               </Box>
-              
-              <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3} alignItems="center">
+
+              <Box
+                display="grid"
+                gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }}
+                gap={3}
+                alignItems="center"
+              >
                 <TextField
                   fullWidth
                   placeholder="Search candidates or jobs..."
@@ -448,7 +468,7 @@ export default function EmployerCalendarPage() {
 
           {/* Calendar/List View Content */}
           {currentView === "calendar" ? (
-            <GoogleCalendarView 
+            <GoogleCalendarView
               bookings={filteredBookings}
               onBookingClick={handleBookingClick}
               onStatusUpdate={handleStatusUpdateClick}
@@ -456,7 +476,7 @@ export default function EmployerCalendarPage() {
               isLoading={isLoading}
             />
           ) : (
-            <InterviewListView 
+            <InterviewListView
               bookings={filteredBookings}
               onBookingClick={handleStatusUpdateClick}
               isLoading={isLoading}
