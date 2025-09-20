@@ -13,11 +13,11 @@ async function testAdminAPI() {
     console.log("Connected to MongoDB");
 
     // Create or find admin user
-    let adminUser = await User.findOne({ email: "admin@bodplatform.com" });
+    let adminUser = await User.findOne({ email: "admin@theciero.com" });
     
     if (!adminUser) {
       adminUser = new User({
-        email: "admin@bodplatform.com",
+        email: "admin@theciero.com",
         password: "admin123",
         role: "admin",
         firstName: "Admin",

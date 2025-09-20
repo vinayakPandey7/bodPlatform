@@ -1,3 +1,43 @@
 # Debugging and test files
 server/check-sales-user.js
 server/test-clients.js
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Google Calendar credentials (use environment variables instead)
+server/config/credentials.json
+server/config/noreply-credentials.json
+server/config/token.json
+server/config/noreply-token.json
+
+# Backup directories
+server/config_backup/
+
+# Node modules
+node_modules/
+*/node_modules/
+
+# Build files
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+.npm
+.pnpm-store/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

@@ -3,13 +3,18 @@ const {
   InterviewBooking,
   InterviewInvitation,
 } = require("../models/interview.model");
+const Employer = require("../models/employer.model");
+const User = require("../models/user.model");
 const { sendEmail } = require("../utils/email");
 const { generateCalendarAttachment } = require("../utils/calendarUtils");
+const {
+  createInterviewCalendarEvent,
+  deleteCalendarEvent,
+} = require("../utils/googleCalendar");
 const { v4: uuidv4 } = require("uuid");
 const mongoose = require("mongoose");
 
 // 1. Employer Calendar Management - Set unavailable slots
-const Employer = require("../models/employer.model");
 const setEmployerAvailability = async (req, res) => {
   try {
     const { id, role } = req.user;
@@ -339,7 +344,6 @@ const scheduleInterview = async (req, res) => {
     }
 
     // Find or create a User record for the candidate
-    const User = require("../models/user.model");
     let candidate = await User.findOne({
       email: candidateEmail,
       role: "candidate",
@@ -361,13 +365,45 @@ const scheduleInterview = async (req, res) => {
     // Generate unique booking token
     const bookingToken = uuidv4();
 
-    // Generate meeting link (placeholder for now)
-    const meetingLink = `https://meet.google.com/interview-${bookingToken.substring(
-      0,
-      8
-    )}`;
+    // Create Google Calendar event with Google Meet link
+    let calendarResult;
+    let meetingLink;
+    let googleCalendarEventId = null;
+    let googleCalendarSynced = false;
 
-    // Create interview booking
+    try {
+      calendarResult = await createInterviewCalendarEvent({
+        booking: {
+          _id: null, // Will be set after booking creation
+          candidateName,
+          candidateEmail,
+          candidatePhone,
+          bookingToken,
+        },
+        slot,
+        job: await mongoose.model("Job").findById(jobId),
+        employer: await Employer.findById(slot.employer),
+        accountType: "admin", // Use admin account for calendar events
+      });
+
+      meetingLink = calendarResult.meetLink;
+      googleCalendarEventId = calendarResult.eventId;
+      googleCalendarSynced = !calendarResult.fallback;
+    } catch (error) {
+      console.error("❌ Failed to create Google Calendar event:", error);
+      // Return error - we need proper Google Calendar integration
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to create calendar event with Google Meet link. Please try again.",
+        error: error.message,
+      });
+    }
+
+    // Store the meeting link in the booking to ensure consistency
+    const persistentMeetLink = meetingLink;
+
+    // Create interview booking with Google Meet details
     const booking = await InterviewBooking.create({
       slot: slot._id,
       employer: slot.employer,
@@ -377,8 +413,19 @@ const scheduleInterview = async (req, res) => {
       candidateEmail,
       candidatePhone,
       bookingToken,
-      meetingLink,
+      googleMeetLink: meetingLink,
+      meetingLink: meetingLink,
+      persistentMeetLink: persistentMeetLink,
+      googleCalendarEventId,
+      googleCalendarSynced,
+      googleMeetDetails: {
+        meetLink: calendarResult?.meetLink,
+        meetId: calendarResult?.eventId,
+        htmlLink: calendarResult?.htmlLink,
+        eventData: calendarResult?.event,
+      },
       status: "scheduled",
+      createdAt: new Date(),
     });
 
     // Update slot booking count
@@ -400,7 +447,6 @@ const scheduleInterview = async (req, res) => {
 
     // Get job and employer details for response
     const Job = require("../models/job.model");
-    const Employer = require("../models/employer.model");
 
     const job = await Job.findById(jobId).select("title description location");
     const employer = await Employer.findById(slot.employer).select(
@@ -408,19 +454,37 @@ const scheduleInterview = async (req, res) => {
     );
 
     // Send confirmation emails
-    await sendInterviewConfirmationEmails(booking, invitationToken);
+    // await sendInterviewConfirmationEmails(booking, invitationToken);
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: "Interview scheduled successfully",
-      data: {
-        bookingId: booking._id,
-        invitationToken,
-        scheduledDate: slot.date,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        job,
-        employer,
+      booking: {
+        id: booking._id,
+        bookingToken,
+        slot: {
+          date: slot.date,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          timezone: slot.timezone,
+        },
+        candidate: {
+          name: candidateName,
+          email: candidateEmail,
+          phone: candidatePhone,
+        },
+        job: {
+          title: job.title,
+          company: employer.companyName,
+        },
+        meetingDetails: {
+          meetLink: meetingLink,
+          googleCalendarEventId: googleCalendarEventId,
+          googleMeetDetails: booking.googleMeetDetails,
+          htmlLink: calendarResult?.htmlLink,
+        },
+        status: booking.status,
+        createdAt: booking.createdAt,
       },
     });
   } catch (error) {
@@ -581,14 +645,14 @@ const getEmployerCalendar = async (req, res) => {
       .sort({ date: 1, startTime: 1 });
 
     // Get bookings for these slots
-    const slotIds = slots.map((slot) => slot._id);
+    // Find bookings for these slots and group by slot
     const bookings = await InterviewBooking.find({
-      slot: { $in: slotIds },
-      status: { $in: ["scheduled", "completed", "cancelled", "no_show"] },
-    }).populate([
-      { path: "candidate", select: "firstName lastName email" },
-      { path: "job", select: "title description" },
-    ]);
+      slot: { $in: slots.map((slot) => slot._id) },
+      status: { $in: ["scheduled", "confirmed"] },
+    })
+      .populate("job", "title location")
+      .populate("candidate", "firstName lastName email")
+      .sort({ createdAt: -1 });
 
     // Group bookings by slot
     const bookingsBySlot = bookings.reduce((acc, booking) => {
@@ -610,7 +674,23 @@ const getEmployerCalendar = async (req, res) => {
         maxCandidates: slot.maxCandidates,
         currentBookings: slot.currentBookings,
       },
-      bookings: bookingsBySlot[slot._id] || [],
+      bookings: (bookingsBySlot[slot._id] || []).map((booking) => {
+        return {
+          id: booking._id,
+          candidateName: booking.candidateName,
+          candidateEmail: booking.candidateEmail,
+          candidatePhone: booking.candidatePhone,
+          status: booking.status,
+          meetingLink: booking.meetingLink,
+          googleMeetDetails: booking.googleMeetDetails,
+          googleCalendarEventId: booking.googleCalendarEventId,
+          participants: booking.participants || [],
+          job: booking.job,
+          candidate: booking.candidate,
+          createdAt: booking.createdAt,
+          scheduledAt: booking.scheduledAt,
+        };
+      }),
     }));
 
     res.status(200).json({
@@ -709,14 +789,6 @@ const getAvailableSlotsForEmployer = async (employerId) => {
 const sendInterviewConfirmationEmails = async (booking) => {
   try {
     const slot = await InterviewSlot.findById(booking.slot);
-    console.log("DEBUG - Slot object:", JSON.stringify(slot, null, 2));
-    console.log(
-      "DEBUG - Slot startTime:",
-      slot.startTime,
-      typeof slot.startTime
-    );
-    console.log("DEBUG - Slot endTime:", slot.endTime, typeof slot.endTime);
-    console.log("DEBUG - Slot timezone:", slot.timezone, typeof slot.timezone);
 
     // Clean the time values to ensure they're strings and remove any ':undefined' suffix
     const cleanStartTime = String(slot.startTime || "")
@@ -726,12 +798,6 @@ const sendInterviewConfirmationEmails = async (booking) => {
       .replace(":undefined", "")
       .trim();
     const cleanTimezone = String(slot.timezone || "America/New_York").trim();
-
-    console.log("DEBUG - Clean times:", {
-      cleanStartTime,
-      cleanEndTime,
-      cleanTimezone,
-    });
 
     const employer = await require("../models/employer.model").findById(
       booking.employer
@@ -747,24 +813,11 @@ const sendInterviewConfirmationEmails = async (booking) => {
         );
     }
 
-    // Generate calendar attachment for candidate
-    console.log("Generating calendar attachment with data:", {
-      bookingId: booking._id,
-      slotDate: slot.date,
-      jobTitle: job.title,
-      employerName: employer.companyName,
-    });
-
     const calendarAttachment = await generateCalendarAttachment(
       booking,
       slot,
       job,
       employer
-    );
-
-    console.log(
-      "Calendar attachment result:",
-      calendarAttachment ? "Generated successfully" : "Failed to generate"
     );
 
     const formattedDate = new Date(slot.date).toLocaleDateString("en-US", {
@@ -775,147 +828,152 @@ const sendInterviewConfirmationEmails = async (booking) => {
       timeZone: "UTC",
     });
 
+    // send email functionality is disabled for now since multiple email is getting sent
+
     // Email to candidate
-    await sendEmail({
-      to: booking.candidateEmail,
-      subject: "Interview Confirmation - BOD Platform",
-      html: `
-        <h2>🎉 Interview Confirmation</h2>
-        <p>Dear ${booking.candidateName},</p>
-        <p>Your interview has been scheduled successfully!</p>
-        
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0; color: #2563eb;">📅 Interview Details</h3>
-          <p><strong>Company:</strong> ${employer.companyName}</p>
-          <p><strong>Position:</strong> ${job.title}</p>
-          <p><strong>Date:</strong> ${formattedDate}</p>
-          <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
-        </div>
+    // await sendEmail({
+    //   to: booking.candidateEmail,
+    //   subject: "Interview Confirmation - BOD Platform",
+    //   html: `
+    //     <h2>🎉 Interview Confirmation</h2>
+    //     <p>Dear ${booking.candidateName},</p>
+    //     <p>Your interview has been scheduled successfully!</p>
 
-        <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
-          <h3 style="margin-top: 0; color: #2563eb;">🎥 Join Video Interview</h3>
-          <p><strong>Meeting Link:</strong></p>
-          <p><a href="${booking.meetingLink}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Join Meeting</a></p>
-          <p style="margin-top: 15px; font-size: 14px; color: #666;">
-            💡 <strong>Tip:</strong> Join the meeting 5 minutes early to test your audio and video setup.
-          </p>
-        </div>
+    //     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    //       <h3 style="margin-top: 0; color: #2563eb;">📅 Interview Details</h3>
+    //       <p><strong>Company:</strong> ${employer.companyName}</p>
+    //       <p><strong>Position:</strong> ${job.title}</p>
+    //       <p><strong>Date:</strong> ${formattedDate}</p>
+    //       <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
+    //     </div>
 
-        <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
-          <h4 style="margin-top: 0;">📎 Calendar Invitation</h4>
-          <p>A calendar invitation is included with this email. You can add it to:</p>
-          <ul style="margin: 10px 0;">
-            <li><strong>Gmail/Google Calendar:</strong> Click "Add to Calendar"</li>
-            <li><strong>Outlook:</strong> Click "Accept" to add to calendar</li>
-            <li><strong>Apple Calendar:</strong> Click to import the event</li>
-          </ul>
-          <div style="background: #ecfdf5; padding: 15px; border-radius: 6px; margin-top: 15px;">
-            <p style="margin: 0; font-size: 14px; color: #065f46;">
-              💡 <strong>How to use:</strong> Simply click on the attached <code>interview-${booking._id}.ics</code> file to automatically add this interview to your calendar app.
-            </p>
-          </div>
-        </div>
+    //     <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+    //       <h3 style="margin-top: 0; color: #2563eb;">🎥 Join Video Interview</h3>
+    //       <p><strong>Meeting Link:</strong></p>
+    //       <p><a href="${booking.meetingLink}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Join Meeting</a></p>
+    //       <p style="margin-top: 15px; font-size: 14px; color: #666;">
+    //         💡 <strong>Tip:</strong> Join the meeting 5 minutes early to test your audio and video setup.
+    //       </p>
+    //     </div>
 
-        <p style="margin-top: 30px;">Good luck with your interview! 🍀</p>
-        
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-        <p style="font-size: 12px; color: #666;">
-          If you have any questions, please contact ${employer.companyName} directly.
-        </p>
-      `,
-      icalEvent: calendarAttachment?.icalEvent,
-      attachments: calendarAttachment?.attachment
-        ? [calendarAttachment.attachment]
-        : undefined,
-    });
+    //     <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+    //       <h4 style="margin-top: 0;">📎 Calendar Invitation</h4>
+    //       <p>A calendar invitation is included with this email. You can add it to:</p>
+    //       <ul style="margin: 10px 0;">
+    //         <li><strong>Gmail/Google Calendar:</strong> Click "Add to Calendar"</li>
+    //         <li><strong>Outlook:</strong> Click "Accept" to add to calendar</li>
+    //         <li><strong>Apple Calendar:</strong> Click to import the event</li>
+    //       </ul>
+    //       <div style="background: #ecfdf5; padding: 15px; border-radius: 6px; margin-top: 15px;">
+    //         <p style="margin: 0; font-size: 14px; color: #065f46;">
+    //           💡 <strong>How to use:</strong> Simply click on the attached <code>interview-${booking._id}.ics</code> file to automatically add this interview to your calendar app.
+    //         </p>
+    //       </div>
+    //     </div>
+
+    //     <p style="margin-top: 30px;">Good luck with your interview! 🍀</p>
+
+    //     <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+    //     <p style="font-size: 12px; color: #666;">
+    //       If you have any questions, please contact ${employer.companyName} directly.
+    //     </p>
+    //   `,
+    //   icalEvent: calendarAttachment?.icalEvent,
+    //   attachments: calendarAttachment?.attachment
+    //     ? [calendarAttachment.attachment]
+    //     : undefined,
+    // });
 
     // Email to employer
-    await sendEmail({
-      to: employer.email,
-      subject: "New Interview Scheduled - BOD Platform",
-      html: `
-        <h2>📅 New Interview Scheduled</h2>
-        <p>A new interview has been scheduled with a candidate.</p>
-        
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0; color: #2563eb;">👤 Candidate Information</h3>
-          <p><strong>Name:</strong> ${booking.candidateName}</p>
-          <p><strong>Email:</strong> ${booking.candidateEmail}</p>
-          <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
-          <p><strong>Position:</strong> ${job.title}</p>
-        </div>
+    // await sendEmail({
+    //   to: employer.email,
+    //   subject: "New Interview Scheduled - BOD Platform",
+    //   html: `
+    //     <h2>📅 New Interview Scheduled</h2>
+    //     <p>A new interview has been scheduled with a candidate.</p>
 
-        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0; color: #2563eb;">📅 Interview Details</h3>
-          <p><strong>Date:</strong> ${formattedDate}</p>
-          <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
-        </div>
+    //     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    //       <h3 style="margin-top: 0; color: #2563eb;">👤 Candidate Information</h3>
+    //       <p><strong>Name:</strong> ${booking.candidateName}</p>
+    //       <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+    //       <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
+    //       <p><strong>Position:</strong> ${job.title}</p>
+    //     </div>
 
-        <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
-          <h3 style="margin-top: 0; color: #2563eb;">🎥 Video Interview Link</h3>
-          <p><strong>Meeting Link:</strong></p>
-          <p><a href="${booking.meetingLink}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Join Meeting</a></p>
-          <p style="margin-top: 15px; font-size: 14px; color: #666;">
-            The candidate has also received this meeting link in their confirmation email.
-          </p>
-        </div>
+    //     <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    //       <h3 style="margin-top: 0; color: #2563eb;">📅 Interview Details</h3>
+    //       <p><strong>Date:</strong> ${formattedDate}</p>
+    //       <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
+    //     </div>
 
-        <p>Please be prepared for the interview at the scheduled time. The calendar invitation is included with this email.</p>
-        
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-        <p style="font-size: 12px; color: #666;">
-          This interview was scheduled through the BOD Platform.
-        </p>
-      `,
-      icalEvent: calendarAttachment?.icalEvent,
-      attachments: calendarAttachment?.attachment
-        ? [calendarAttachment.attachment]
-        : undefined,
-    });
+    //     <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+    //       <h3 style="margin-top: 0; color: #2563eb;">🎥 Video Interview Link</h3>
+    //       <p><strong>Meeting Link:</strong></p>
+    //       <p><a href="${booking.meetingLink}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Join Meeting</a></p>
+    //       <p style="margin-top: 15px; font-size: 14px; color: #666;">
+    //         The candidate has also received this meeting link in their confirmation email.
+    //       </p>
+    //     </div>
 
-    // Email to recruitment partner if exists
-    if (recruitmentPartner) {
-      await sendEmail({
-        to: recruitmentPartner.email,
-        subject: "Interview Scheduled for Your Job Posting - BOD Platform",
-        html: `
-          <h2>📅 Interview Scheduled</h2>
-          <p>Dear ${recruitmentPartner.ownerName},</p>
-          <p>An interview has been scheduled for one of your job postings.</p>
-          
-          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #2563eb;">🏢 Interview Details</h3>
-            <p><strong>Company:</strong> ${employer.companyName}</p>
-            <p><strong>Position:</strong> ${job.title}</p>
-            <p><strong>Date:</strong> ${formattedDate}</p>
-            <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
-          </div>
+    //     <p>Please be prepared for the interview at the scheduled time. The calendar invitation is included with this email.</p>
 
-          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #2563eb;">👤 Candidate Information</h3>
-            <p><strong>Name:</strong> ${booking.candidateName}</p>
-            <p><strong>Email:</strong> ${booking.candidateEmail}</p>
-            <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
-          </div>
+    //     <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+    //     <p style="font-size: 12px; color: #666;">
+    //       This interview was scheduled through the BOD Platform.
+    //     </p>
+    //   `,
+    //   icalEvent: calendarAttachment?.icalEvent,
+    //   attachments: calendarAttachment?.attachment
+    //     ? [calendarAttachment.attachment]
+    //     : undefined,
+    // });
 
-          <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
-            <h3 style="margin-top: 0; color: #2563eb;">🎥 Meeting Link</h3>
-            <p><strong>Video Call:</strong> <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
-          </div>
+    // Email to recruitment partner if exists (but avoid sending to admin email to prevent duplicates)
+    // if (
+    //   recruitmentPartner &&
+    //   recruitmentPartner.email !== "admin@theciero.com"
+    // ) {
+    //   await sendEmail({
+    //     to: recruitmentPartner.email,
+    //     subject: "Interview Scheduled for Your Job Posting - BOD Platform",
+    //     html: `
+    //       <h2>📅 Interview Scheduled</h2>
+    //       <p>Dear ${recruitmentPartner.ownerName},</p>
+    //       <p>An interview has been scheduled for one of your job postings.</p>
 
-          <p>The interview will be conducted by ${employer.companyName} via video call.</p>
-        
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-        <p style="font-size: 12px; color: #666;">
-          This notification was sent from the BOD Platform.
-        </p>
-      `,
-        icalEvent: calendarAttachment?.icalEvent,
-        alternatives: calendarAttachment
-          ? [calendarAttachment.alternatives]
-          : undefined,
-      });
-    }
+    //       <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    //         <h3 style="margin-top: 0; color: #2563eb;">🏢 Interview Details</h3>
+    //         <p><strong>Company:</strong> ${employer.companyName}</p>
+    //         <p><strong>Position:</strong> ${job.title}</p>
+    //         <p><strong>Date:</strong> ${formattedDate}</p>
+    //         <p><strong>Time:</strong> ${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})</p>
+    //       </div>
+
+    //       <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    //         <h3 style="margin-top: 0; color: #2563eb;">👤 Candidate Information</h3>
+    //         <p><strong>Name:</strong> ${booking.candidateName}</p>
+    //         <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+    //         <p><strong>Phone:</strong> ${booking.candidatePhone}</p>
+    //       </div>
+
+    //       <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+    //         <h3 style="margin-top: 0; color: #2563eb;">🎥 Meeting Link</h3>
+    //         <p><strong>Video Call:</strong> <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
+    //       </div>
+
+    //       <p>The interview will be conducted by ${employer.companyName} via video call.</p>
+
+    //     <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+    //     <p style="font-size: 12px; color: #666;">
+    //       This notification was sent from the BOD Platform.
+    //     </p>
+    //   `,
+    //     icalEvent: calendarAttachment?.icalEvent,
+    //     alternatives: calendarAttachment
+    //       ? [calendarAttachment.alternatives]
+    //       : undefined,
+    //   });
+    // }
   } catch (error) {
     console.error("Error sending confirmation emails:", error);
   }
@@ -1155,6 +1213,103 @@ const sendInterviewStatusUpdateEmail = async (booking, status) => {
           </div>
         `,
       });
+
+      // Email to participants if any exist
+      if (booking.participants && booking.participants.length > 0) {
+        for (const participantEmail of booking.participants) {
+          await sendEmail({
+            to: participantEmail,
+            subject: `Interview ${
+              status.charAt(0).toUpperCase() + status.slice(1)
+            } - BOD Platform`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: ${statusColor};">${statusIcon} Interview ${
+              status.charAt(0).toUpperCase() + status.slice(1)
+            }</h2>
+                <p>Dear Participant,</p>
+                <p>The interview for <strong>${
+                  booking.job.title
+                }</strong> at <strong>${
+              booking.employer.companyName
+            }</strong> with candidate <strong>${
+              booking.candidateName
+            }</strong> ${message}.</p>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: ${statusColor};">📅 Interview Details</h3>
+                  <p><strong>Candidate:</strong> ${booking.candidateName}</p>
+                  <p><strong>Date:</strong> ${formattedDate}</p>
+                  <p><strong>Time:</strong> ${formattedTime}</p>
+                  ${
+                    booking.notes
+                      ? `<p><strong>Notes:</strong> ${booking.notes}</p>`
+                      : ""
+                  }
+                </div>
+
+                ${
+                  status === "completed"
+                    ? `
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <p style="color: #16a34a; margin: 0;">The interview has been completed successfully.</p>
+                </div>
+                `
+                    : ""
+                }
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                <p style="font-size: 12px; color: #666;">
+                  This notification was sent from the BOD Platform.
+                </p>
+              </div>
+            `,
+          });
+        }
+      }
+    }
+
+    // Email to participants for cancellation as well
+    if (
+      status === "cancelled" &&
+      booking.participants &&
+      booking.participants.length > 0
+    ) {
+      for (const participantEmail of booking.participants) {
+        await sendEmail({
+          to: participantEmail,
+          subject: "Interview Cancelled - BOD Platform",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #dc2626;">❌ Interview Cancelled</h2>
+              <p>Dear Participant,</p>
+              
+              <p>The interview you were invited to participate in has been cancelled.</p>
+              
+              <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+                <h3 style="margin-top: 0; color: #dc2626;">📅 Cancelled Interview Details</h3>
+                <p><strong>Company:</strong> ${booking.employer.companyName}</p>
+                <p><strong>Position:</strong> ${booking.job.title}</p>
+                <p><strong>Candidate:</strong> ${booking.candidateName}</p>
+                <p><strong>Originally Scheduled:</strong> ${formattedDate}</p>
+                <p><strong>Time:</strong> ${formattedTime}</p>
+                ${
+                  booking.notes
+                    ? `<p><strong>Reason:</strong> ${booking.notes}</p>`
+                    : ""
+                }
+              </div>
+
+              <p>We apologize for any inconvenience this may cause.</p>
+              
+              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+              <p style="font-size: 12px; color: #666;">
+                This notification was sent from the BOD Platform.
+              </p>
+            </div>
+          `,
+        });
+      }
     }
   } catch (error) {
     console.error("Error sending interview status update email:", error);
@@ -1224,15 +1379,24 @@ const addInterviewParticipant = async (req, res) => {
     });
 
     // Clean the time values to ensure they're strings and remove any ':undefined' suffix
-    const cleanStartTime = String(slot.startTime || "")
+    const cleanStartTime = String(booking.slot.startTime || "")
       .replace(":undefined", "")
       .trim();
-    const cleanEndTime = String(slot.endTime || "")
+    const cleanEndTime = String(booking.slot.endTime || "")
       .replace(":undefined", "")
       .trim();
-    const cleanTimezone = String(slot.timezone || "UTC").trim();
+    const cleanTimezone = String(booking.slot.timezone || "UTC").trim();
 
     const formattedTime = `${cleanStartTime} - ${cleanEndTime} (${cleanTimezone})`;
+
+    // Add participant to the booking's participants array
+    if (!booking.participants) {
+      booking.participants = [];
+    }
+    if (!booking.participants.includes(email)) {
+      booking.participants.push(email);
+      const savedBooking = await booking.save();
+    }
 
     // Send invitation email to the participant
     await sendEmail({
@@ -1321,6 +1485,181 @@ const addInterviewParticipant = async (req, res) => {
   }
 };
 
+// Remove participant from interview
+const removeInterviewParticipant = async (req, res) => {
+  try {
+    const { bookingId, email } = req.params;
+    const { id: userId, role } = req.user;
+
+    // Find the booking
+    const booking = await InterviewBooking.findById(bookingId).populate(
+      "employer",
+      "companyName email firstName lastName"
+    );
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview booking not found",
+      });
+    }
+
+    // Check if user has permission
+    if (role === "employer") {
+      const employer = await Employer.findOne({ user: userId });
+      if (
+        !employer ||
+        booking.employer._id.toString() !== employer._id.toString()
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You don't have permission to remove participants from this interview",
+        });
+      }
+    }
+
+    // Remove participant from the array
+    if (booking.participants && booking.participants.includes(email)) {
+      booking.participants = booking.participants.filter((p) => p !== email);
+      await booking.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Participant removed successfully",
+      data: {
+        email,
+        bookingId,
+        removedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error("Error removing interview participant:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to remove participant from interview",
+      error: error.message,
+    });
+  }
+};
+
+// Cancel interview booking and cleanup Google Calendar event
+const cancelInterviewBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { reason } = req.body;
+
+    // Find the booking
+    const booking = await InterviewBooking.findById(bookingId)
+      .populate("slot")
+      .populate("employer")
+      .populate("job");
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview booking not found",
+      });
+    }
+
+    // Delete Google Calendar event if it exists
+    if (booking.googleCalendarEventId && booking.googleCalendarSynced) {
+      try {
+        await deleteCalendarEvent(
+          booking.googleCalendarEventId,
+          booking.googleCalendarAccountType || "noreply"
+        );
+      } catch (error) {
+        console.error("❌ Failed to delete Google Calendar event:", error);
+        // Continue with cancellation even if calendar deletion fails
+      }
+    }
+
+    // Update booking status
+    await InterviewBooking.findByIdAndUpdate(bookingId, {
+      status: "cancelled",
+      notes: reason ? `Cancelled: ${reason}` : "Cancelled",
+      completedAt: new Date(),
+    });
+
+    // Update slot booking count
+    await InterviewSlot.findByIdAndUpdate(booking.slot._id, {
+      $inc: { currentBookings: -1 },
+    });
+
+    // Send cancellation emails
+    try {
+      // Email to candidate
+      await sendEmail({
+        to: booking.candidateEmail,
+        subject: "Interview Cancelled - BOD Platform",
+        html: `
+          <h2>📅 Interview Cancelled</h2>
+          <p>Dear ${booking.candidateName},</p>
+          <p>We regret to inform you that your interview for the <strong>${
+            booking.job.title
+          }</strong> position at <strong>${
+          booking.employer.companyName
+        }</strong> has been cancelled.</p>
+          
+          ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ""}
+          
+          <p>We apologize for any inconvenience this may cause. Please feel free to apply for other positions that match your qualifications.</p>
+          
+          <p>Best regards,<br>BOD Platform Team</p>
+        `,
+      });
+
+      // Email to employer
+      await sendEmail({
+        to: booking.employer.email,
+        subject: "Interview Cancelled - BOD Platform",
+        html: `
+          <h2>📅 Interview Cancelled</h2>
+          <p>The interview with <strong>${
+            booking.candidateName
+          }</strong> for the <strong>${
+          booking.job.title
+        }</strong> position has been cancelled.</p>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3>Candidate Details:</h3>
+            <p><strong>Name:</strong> ${booking.candidateName}</p>
+            <p><strong>Email:</strong> ${booking.candidateEmail}</p>
+            <p><strong>Phone:</strong> ${
+              booking.candidatePhone || "Not provided"
+            }</p>
+          </div>
+          
+          ${
+            reason
+              ? `<p><strong>Cancellation Reason:</strong> ${reason}</p>`
+              : ""
+          }
+          
+          <p>The time slot is now available for other candidates.</p>
+        `,
+      });
+    } catch (emailError) {
+      console.error("❌ Failed to send cancellation emails:", emailError);
+    }
+
+    res.json({
+      success: true,
+      message: "Interview booking cancelled successfully",
+      data: { bookingId, status: "cancelled" },
+    });
+  } catch (error) {
+    console.error("Error cancelling interview booking:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel interview booking",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   setEmployerAvailability,
   getAvailableSlots,
@@ -1330,4 +1669,6 @@ module.exports = {
   getEmployerCalendar,
   updateInterviewStatus,
   addInterviewParticipant,
+  removeInterviewParticipant,
+  cancelInterviewBooking,
 };

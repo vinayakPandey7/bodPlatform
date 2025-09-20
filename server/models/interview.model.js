@@ -19,6 +19,14 @@ const interviewSlotSchema = new mongoose.Schema({
     type: String, // Format: "HH:MM" (24-hour)
     required: true,
   },
+  googleMeetLink: {
+    type: String,
+    default: null
+  },
+  persistentMeetLink: {
+    type: String,
+    default: null
+  },
   timezone: {
     type: String,
     default: "America/New_York",
@@ -85,7 +93,7 @@ const interviewBookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["scheduled", "completed", "cancelled", "no_show"],
+    enum: ["scheduled", "confirmed", "completed", "cancelled", "no_show"],
     default: "scheduled",
   },
   interviewType: {
@@ -96,9 +104,45 @@ const interviewBookingSchema = new mongoose.Schema({
   meetingLink: {
     type: String,
   },
+  googleCalendarEventId: {
+    type: String,
+    index: true,
+  },
+  googleCalendarSynced: {
+    type: Boolean,
+    default: false,
+  },
+  googleMeetDetails: {
+    meetLink: {
+      type: String,
+    },
+    meetId: {
+      type: String,
+    },
+    htmlLink: {
+      type: String,
+    },
+    eventData: {
+      type: Object,
+    }
+  },
+  googleCalendarAccountType: {
+    type: String,
+    enum: ["admin", "noreply"],
+    default: "noreply",
+  },
   notes: {
     type: String,
   },
+  participants: [{
+    type: String,
+    validate: {
+      validator: function(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      },
+      message: 'Invalid email format for participant'
+    }
+  }],
   scheduledAt: {
     type: Date,
     default: Date.now,
@@ -152,6 +196,8 @@ interviewSlotSchema.index({ date: 1, isAvailable: 1 });
 interviewBookingSchema.index({ slot: 1, status: 1 });
 interviewBookingSchema.index({ candidate: 1, status: 1 });
 interviewBookingSchema.index({ employer: 1, status: 1 });
+interviewBookingSchema.index({ googleCalendarEventId: 1 });
+interviewBookingSchema.index({ googleCalendarSynced: 1 });
 interviewInvitationSchema.index({ invitationToken: 1 });
 interviewInvitationSchema.index({ candidateEmail: 1, status: 1 });
 

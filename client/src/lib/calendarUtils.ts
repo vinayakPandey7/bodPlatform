@@ -30,7 +30,7 @@ export function generateICSFile(interviewData: {
     'CALSCALE:GREGORIAN',
     'METHOD:REQUEST',
     'BEGIN:VEVENT',
-    `UID:${Date.now()}@bodplatform.com`,
+    `UID:${Date.now()}@theciero.com`,
     `DTSTAMP:${formatDate(new Date())}`,
     `DTSTART:${formatDate(startDate)}`,
     `DTEND:${formatDate(endDate)}`,

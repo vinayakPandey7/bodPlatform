@@ -33,6 +33,12 @@ router.post(
   interviewController.addInterviewParticipant
 );
 
+// 6. Remove participant from interview
+router.delete(
+  "/employer/interview/:bookingId/participant/:email",
+  interviewController.removeInterviewParticipant
+);
+
 // Public routes (no authentication required)
 
 // 6. Get available slots for candidate selection

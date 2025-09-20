@@ -136,7 +136,7 @@ Job Description: ${job.description || "No description provided"}`,
       },
     ],
     productId: "BOD Platform//Interview Scheduler//EN",
-    uid: `interview-${booking._id}@bodplatform.com`,
+    uid: `interview-${booking._id}@theciero.com`,
     sequence: 0,
     method: "REQUEST",
   };
@@ -164,13 +164,14 @@ Job Description: ${job.description || "No description provided"}`,
 async function generateCalendarAttachment(booking, slot, job, employer) {
   try {
     console.log("Starting calendar attachment generation...");
-    const meetLink = await generateGoogleMeetLinkWrapper(
+    // Use the meeting link from the booking if it exists (from Google Calendar integration)
+    const meetLink = booking.meetingLink || await generateGoogleMeetLinkWrapper(
       booking,
       slot,
       job,
       employer
     );
-    console.log("Generated meet link:", meetLink);
+    console.log("Using meet link:", meetLink);
 
     const icsContent = await generateInterviewICS(
       booking,

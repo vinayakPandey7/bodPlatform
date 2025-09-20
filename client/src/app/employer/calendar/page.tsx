@@ -66,7 +66,7 @@ const InterviewStatusModal: React.FC<InterviewStatusModalProps> = ({
   const [notes, setNotes] = useState(booking?.notes || "");
 
   const handleUpdate = () => {
-    onStatusUpdate(booking._id, status, notes);
+    onStatusUpdate(booking.id || booking._id, status, notes);
     onClose();
   };
 
@@ -120,6 +120,11 @@ export default function EmployerCalendarPage() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: calendarData, isLoading, refetch } = useEmployerCalendar();
+
+  // Add manual refresh functionality
+  const handleRefresh = () => {
+    refetch();
+  };
   const { mutate: updateStatus, isPending } = useUpdateInterviewStatus();
 
   const handleStatusUpdate = (
@@ -217,7 +222,7 @@ export default function EmployerCalendarPage() {
     let allBookings: any[] = [];
 
     calendarData.data.forEach((day: any) => {
-      if (day.bookings) {
+      if (day.bookings && day.bookings.length > 0) {
         day.bookings.forEach((booking: any) => {
           allBookings.push({
             ...booking,
@@ -229,12 +234,17 @@ export default function EmployerCalendarPage() {
       }
     });
 
-    // Apply status filter
+    console.log('All bookings before filtering:', allBookings);
+    console.log('Current status filter:', statusFilter);
+
+    // Apply status filter - include both "scheduled" and "confirmed" for active interviews
     if (statusFilter !== "all") {
       allBookings = allBookings.filter(
         (booking) => booking.status === statusFilter
       );
     }
+
+    console.log('All bookings after status filtering:', allBookings);
 
     // Apply search filter
     if (searchTerm) {
@@ -250,9 +260,12 @@ export default function EmployerCalendarPage() {
       );
     }
 
-    return allBookings.sort(
+    const sortedBookings = allBookings.sort(
       (a, b) => new Date(a.slotDate).getTime() - new Date(b.slotDate).getTime()
     );
+    
+    console.log('Final filtered bookings:', sortedBookings);
+    return sortedBookings;
   }, [calendarData, statusFilter, searchTerm]);
 
   const handleBookingClick = (booking: any) => {
@@ -313,14 +326,24 @@ export default function EmployerCalendarPage() {
                 Manage your interview schedule and candidate bookings
               </p>
             </div>
-            <Button
-              variant="contained"
-              startIcon={<Plus />}
-              onClick={() => setShowCalendar(true)}
-              sx={{ bgcolor: "primary.main" }}
-            >
-              Set Availability
-            </Button>
+            <Box display="flex" gap={2}>
+              <Button
+                variant="outlined"
+                startIcon={<Calendar />}
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                {isLoading ? "Refreshing..." : "Refresh"}
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<Plus />}
+                onClick={() => setShowCalendar(true)}
+                sx={{ bgcolor: "primary.main" }}
+              >
+                Set Availability
+              </Button>
+            </Box>
           </div>
 
           {/* Statistics */}

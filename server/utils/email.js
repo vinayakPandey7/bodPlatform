@@ -1,14 +1,71 @@
 const nodemailer = require("nodemailer");
+const { google } = require('googleapis');
+const fs = require('fs');
+const path = require('path');
+
+// Create OAuth2 transporter for Gmail
+const createOAuthTransporter = async () => {
+  try {
+    const credentialsPath = path.join(__dirname, '../config/credentials.json');
+    const tokenPath = path.join(__dirname, '../config/token.json');
+    
+    if (!fs.existsSync(credentialsPath) || !fs.existsSync(tokenPath)) {
+      console.log('OAuth credentials or token not found');
+      return null;
+    }
+
+    const credentials = JSON.parse(fs.readFileSync(credentialsPath));
+    const token = JSON.parse(fs.readFileSync(tokenPath));
+
+    const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+    
+    oAuth2Client.setCredentials(token);
+
+    const emailUser = process.env.ADMIN_EMAIL_USER || "admin@theciero.com";
+
+    // Refresh the access token if needed
+    try {
+      await oAuth2Client.getAccessToken();
+    } catch (refreshError) {
+      console.error('Error refreshing access token:', refreshError);
+      return null;
+    }
+
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: emailUser,
+        clientId: client_id,
+        clientSecret: client_secret,
+        refreshToken: token.refresh_token,
+        // Let nodemailer handle the access token refresh
+      },
+    });
+  } catch (error) {
+    console.error('Error creating OAuth transporter:', error);
+    return null;
+  }
+};
 
 // Create transporter for sending emails
-const createTransporter = () => {
-  // For development, we'll use Gmail SMTP
-  // In production, you might want to use services like SendGrid, Mailgun, etc.
+const createTransporter = async (accountType = "admin") => {
+  console.log("Using app password for email authentication");
+  
+  // Use app password directly for reliability
+  return createAppPasswordTransporter(accountType);
+};
+
+const createAppPasswordTransporter = async (accountType = "admin") => {
+  const emailUser = process.env.ADMIN_EMAIL_USER || "admin@theciero.com";
+  const emailPass = process.env.ADMIN_EMAIL_PASS;
+
   return nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS, // This should be an app password for Gmail
+      user: emailUser,
+      pass: emailPass, // This should be an app password for Gmail
     },
   });
 };
@@ -16,10 +73,10 @@ const createTransporter = () => {
 // Send password reset email
 const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
   try {
-    const transporter = createTransporter();
+    const transporter = await createTransporter("admin"); // Use admin account for password resets
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: process.env.ADMIN_EMAIL_USER || "admin@theciero.com",
       to: email,
       subject: "Password Reset Request - CIERO",
       html: `
@@ -107,14 +164,14 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = "User") => {
 };
 
 // Test email configuration
-const testEmailConfig = async () => {
+const testEmailConfig = async (accountType = "admin") => {
   try {
-    const transporter = createTransporter();
+    const transporter = await createTransporter(accountType);
     await transporter.verify();
-    console.log("Email configuration is valid");
+    console.log(`Email configuration is valid for ${accountType} account`);
     return true;
   } catch (error) {
-    console.error("Email configuration error:", error);
+    console.error(`Email configuration error for ${accountType}:`, error);
     return false;
   }
 };
@@ -122,10 +179,13 @@ const testEmailConfig = async () => {
 // General email sending function
 const sendEmail = async (options) => {
   try {
-    const transporter = createTransporter();
-    
+    const accountType = "admin"; // Always use admin account
+    const transporter = await createTransporter(accountType);
+
+    const fromEmail = process.env.ADMIN_EMAIL_USER || "admin@theciero.com";
+
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: options.from || fromEmail,
       to: options.to,
       subject: options.subject,
       html: options.html,

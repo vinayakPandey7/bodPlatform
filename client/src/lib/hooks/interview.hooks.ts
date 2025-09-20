@@ -60,7 +60,9 @@ export const useEmployerCalendar = (params?: { startDate?: string; endDate?: str
   return useQuery({
     queryKey: QUERY_KEYS.INTERVIEWS.CALENDAR(params),
     queryFn: () => interviewFetchers.getEmployerCalendar(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30, // 30 seconds - more frequent updates
+    refetchInterval: 1000 * 60, // Refetch every minute
+    refetchIntervalInBackground: true, // Continue refetching when tab is not active
   });
 };
 

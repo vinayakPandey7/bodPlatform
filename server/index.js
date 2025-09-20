@@ -62,7 +62,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/bodplatform", {
+  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/theciero", {
     serverSelectionTimeoutMS: 30000, // 30 seconds
     socketTimeoutMS: 45000, // 45 seconds
     maxPoolSize: 10, // Maintain up to 10 socket connections
