@@ -10,6 +10,15 @@ const nextConfig = {
     // your project has TypeScript errors.
     ignoreBuildErrors: true,
   },
+  // Remove static export to support API routes
+  // output: "export",
+  // trailingSlash: true,
+  // skipTrailingSlashRedirect: true,
+  
+  // Configure images for Amplify deployment
+  images: {
+    domains: ["localhost", "res.cloudinary.com"], // Add cloudinary for your uploaded images
+  },
   env: {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL ||
@@ -21,9 +30,6 @@ const nextConfig = {
       (process.env.NODE_ENV === "development"
         ? "http://localhost:5000/api"
         : "https://bodplatform.onrender.com/api"),
-  },
-  images: {
-    domains: ["localhost"],
   },
 };
 
