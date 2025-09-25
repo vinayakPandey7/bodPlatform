@@ -230,79 +230,82 @@ export default function EmployerInterviewsPage() {
           </div>
 
           {/* Statistics */}
-          <Grid container spacing={3} className="mb-6">
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Calendar className="h-8 w-8 text-blue-500" />
-                    <Box>
-                      <Typography variant="h4" fontWeight="bold">
-                        {stats.total}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Interviews
-                      </Typography>
-                    </Box>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+                md: 'repeat(4, 1fr)'
+              },
+              gap: 3,
+              mb: 3
+            }}
+          >
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Calendar className="h-8 w-8 text-blue-500" />
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold">
+                      {stats.total}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Interviews
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Box>
+              </CardContent>
+            </Card>
 
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Clock className="h-8 w-8 text-blue-500" />
-                    <Box>
-                      <Typography variant="h4" fontWeight="bold">
-                        {stats.scheduled}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Scheduled
-                      </Typography>
-                    </Box>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Clock className="h-8 w-8 text-blue-500" />
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold">
+                      {stats.scheduled}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Scheduled
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Box>
+              </CardContent>
+            </Card>
 
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <CheckCircle className="h-8 w-8 text-green-500" />
-                    <Box>
-                      <Typography variant="h4" fontWeight="bold">
-                        {stats.completed}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Completed
-                      </Typography>
-                    </Box>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold">
+                      {stats.completed}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Completed
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Box>
+              </CardContent>
+            </Card>
 
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <AlertCircle className="h-8 w-8 text-orange-500" />
-                    <Box>
-                      <Typography variant="h4" fontWeight="bold">
-                        {stats.cancelled + stats.noShow}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Cancelled/No Show
-                      </Typography>
-                    </Box>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <AlertCircle className="h-8 w-8 text-orange-500" />
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold">
+                      {stats.cancelled + stats.noShow}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Cancelled/No Show
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
 
           {/* Interview Calendar */}
           <Card>
@@ -330,9 +333,16 @@ export default function EmployerInterviewsPage() {
                         {formatTime(day.slot.endTime)}
                       </Typography>
 
-                      <Grid container spacing={2}>
+                      <Box
+                        display="grid"
+                        gridTemplateColumns={{
+                          xs: "1fr",
+                          md: "repeat(2, 1fr)"
+                        }}
+                        gap={2}
+                      >
                         {day.bookings.map((booking: any) => (
-                          <Grid item xs={12} md={6} key={booking._id}>
+                          <Box key={booking._id}>
                             <Card variant="outlined">
                               <CardContent>
                                 <Box
@@ -408,9 +418,9 @@ export default function EmployerInterviewsPage() {
                                 </Box>
                               </CardContent>
                             </Card>
-                          </Grid>
+                          </Box>
                         ))}
-                      </Grid>
+                      </Box>
                     </Box>
                   ))}
                 </Box>
