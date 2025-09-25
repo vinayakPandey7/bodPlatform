@@ -106,7 +106,7 @@ const InterviewCalendar: React.FC<InterviewCalendarProps> = ({ open, onClose }) 
         </Box>
       </DialogTitle>
       <DialogContent>
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: 'repeat(12, 1fr)' }}>
           {/* Date Selection */}
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
@@ -120,7 +120,7 @@ const InterviewCalendar: React.FC<InterviewCalendarProps> = ({ open, onClose }) 
               InputLabelProps={{ shrink: true }}
               inputProps={{ min: new Date().toISOString().split("T")[0] }}
             />
-          </Grid>
+          </Box>
 
           {/* Time Slots */}
           <Grid item xs={12}>
@@ -230,7 +230,7 @@ const InterviewCalendar: React.FC<InterviewCalendarProps> = ({ open, onClose }) 
                 </Box>
               ))}
             </Box>
-          </Grid>
+          </Box>
 
           {/* Calendar Preview */}
           {calendarData && (
@@ -254,9 +254,9 @@ const InterviewCalendar: React.FC<InterviewCalendarProps> = ({ open, onClose }) 
                   </Box>
                 ))}
               </Box>
-            </Grid>
+            </Box>
           )}
-        </Grid>
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>

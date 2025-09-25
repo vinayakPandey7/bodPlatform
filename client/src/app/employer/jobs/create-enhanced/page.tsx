@@ -9,7 +9,6 @@ import {
   Typography,
   TextField,
   Button,
-  Grid,
   FormControl,
   InputLabel,
   Select,
@@ -518,9 +517,15 @@ export default function CreateJobPageEnhanced() {
           create your own from scratch.
         </Typography>
 
-        <Grid container spacing={2}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gap: 2,
+          }}
+        >
           {JOB_TEMPLATES.map((template, index) => (
-            <Grid size={{ xs: 12, md: 4 }} key={index}>
+            <Box key={index}>
               <Card
                 sx={{
                   cursor: "pointer",
@@ -565,9 +570,9 @@ export default function CreateJobPageEnhanced() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         <Divider sx={{ my: 3, bgcolor: "rgba(255,255,255,0.2)" }} />
 
@@ -618,8 +623,8 @@ export default function CreateJobPageEnhanced() {
           Job Basics
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: 'repeat(12, 1fr)' }}>
+          <Box sx={{ gridColumn: 'span 12' }}>
             <TextField
               fullWidth
               label="Job Title *"
@@ -639,9 +644,9 @@ export default function CreateJobPageEnhanced() {
                 ),
               }}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 12' }}>
             <TextField
               fullWidth
               label="Job Description *"
@@ -652,13 +657,13 @@ export default function CreateJobPageEnhanced() {
                 errors.description ||
                 "Describe the role, responsibilities, and what makes this opportunity great. Be detailed but concise."
               }
+              placeholder="e.g. We are seeking a licensed insurance agent to join our growing team..."
               multiline
-              rows={6}
-              placeholder="Describe the role, responsibilities, company culture, and what makes this opportunity great..."
+              rows={4}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
             <FormControl fullWidth error={!!errors.jobType}>
               <InputLabel>Job Type *</InputLabel>
               <Select
@@ -676,9 +681,9 @@ export default function CreateJobPageEnhanced() {
                 <FormHelperText>{errors.jobType}</FormHelperText>
               )}
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
             <FormControl fullWidth error={!!errors.workMode}>
               <InputLabel>Work Mode *</InputLabel>
               <Select
@@ -694,9 +699,9 @@ export default function CreateJobPageEnhanced() {
                 <FormHelperText>{errors.workMode}</FormHelperText>
               )}
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
             <FormControl fullWidth>
               <InputLabel>Experience Level</InputLabel>
               <Select
@@ -715,9 +720,9 @@ export default function CreateJobPageEnhanced() {
                 <MenuItem value="12+">Executive (12+ years)</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
             <TextField
               fullWidth
               label="Department"
@@ -726,9 +731,9 @@ export default function CreateJobPageEnhanced() {
               placeholder="e.g. Sales, Customer Service, Claims"
               helperText="Which department will this role be part of?"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
             <TextField
               fullWidth
               label="Number of Positions"
@@ -740,9 +745,9 @@ export default function CreateJobPageEnhanced() {
               inputProps={{ min: 1 }}
               helperText="How many people are you looking to hire for this role?"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
             <FormControl fullWidth>
               <InputLabel>Urgency Level</InputLabel>
               <Select
@@ -758,8 +763,8 @@ export default function CreateJobPageEnhanced() {
                 How quickly do you need to fill this position?
               </FormHelperText>
             </FormControl>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -775,8 +780,14 @@ export default function CreateJobPageEnhanced() {
           Location & Compensation
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+            gap: 3,
+          }}
+        >
+          <Box sx={{ gridColumn: 'span 2' }}>
             <TextField
               fullWidth
               label="Full Address *"
@@ -796,9 +807,9 @@ export default function CreateJobPageEnhanced() {
                 ),
               }}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={4}>
+          <Box>
             <TextField
               fullWidth
               label="City *"
@@ -808,9 +819,9 @@ export default function CreateJobPageEnhanced() {
               helperText={errors.city}
               placeholder="e.g. Chicago"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={4}>
+          <Box>
             <TextField
               fullWidth
               label="State *"
@@ -820,9 +831,9 @@ export default function CreateJobPageEnhanced() {
               helperText={errors.state}
               placeholder="e.g. Illinois"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={4}>
+          <Box>
             <TextField
               fullWidth
               label="Zip Code *"
@@ -832,9 +843,9 @@ export default function CreateJobPageEnhanced() {
               helperText={errors.zipCode}
               placeholder="e.g. 60601"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <PhoneNumberInput
               label="Contact Phone Number *"
               value={formData.contactNumber}
@@ -846,9 +857,9 @@ export default function CreateJobPageEnhanced() {
               }
               required
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <Typography
               variant="h6"
               sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
@@ -856,9 +867,9 @@ export default function CreateJobPageEnhanced() {
               <MoneyIcon color="primary" />
               Compensation
             </Typography>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Minimum Salary"
@@ -872,9 +883,9 @@ export default function CreateJobPageEnhanced() {
               }}
               helperText="Annual salary minimum"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Maximum Salary"
@@ -889,9 +900,9 @@ export default function CreateJobPageEnhanced() {
                 ),
               }}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Pay Structure</InputLabel>
               <Select
@@ -909,9 +920,9 @@ export default function CreateJobPageEnhanced() {
                 </MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Currency</InputLabel>
               <Select
@@ -925,8 +936,8 @@ export default function CreateJobPageEnhanced() {
                 <MenuItem value="CAD">CAD</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -942,8 +953,14 @@ export default function CreateJobPageEnhanced() {
           Requirements & Qualifications
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+            gap: 3,
+          }}
+        >
+          <Box sx={{ gridColumn: 'span 2' }}>
             <FormControl fullWidth>
               <InputLabel>License Requirement</InputLabel>
               <Select
@@ -963,10 +980,10 @@ export default function CreateJobPageEnhanced() {
                 <MenuItem value="Other">Other License</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
           {formData.licenseRequirement === "Other" && (
-            <Grid item xs={12}>
+            <Box sx={{ gridColumn: 'span 2' }}>
               <TextField
                 fullWidth
                 label="Other License Requirement"
@@ -976,10 +993,10 @@ export default function CreateJobPageEnhanced() {
                 }
                 placeholder="Specify the required license"
               />
-            </Grid>
+            </Box>
           )}
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <Autocomplete
               multiple
               options={SKILLS_OPTIONS}
@@ -1005,9 +1022,9 @@ export default function CreateJobPageEnhanced() {
                 />
               )}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <Autocomplete
               multiple
               options={QUALIFICATIONS_OPTIONS}
@@ -1033,9 +1050,9 @@ export default function CreateJobPageEnhanced() {
                 />
               )}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <Box>
               <Typography variant="subtitle1" sx={{ mb: 2 }}>
                 Job Requirements
@@ -1077,8 +1094,8 @@ export default function CreateJobPageEnhanced() {
                 </Box>
               )}
             </Box>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -1094,8 +1111,14 @@ export default function CreateJobPageEnhanced() {
           Schedule & Benefits
         </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+            gap: 3,
+          }}
+        >
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Work Schedule</InputLabel>
               <Select
@@ -1109,9 +1132,9 @@ export default function CreateJobPageEnhanced() {
                 <MenuItem value="part_time">Part Time</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <FormControl fullWidth>
               <InputLabel>Role Focus</InputLabel>
               <Select
@@ -1124,9 +1147,9 @@ export default function CreateJobPageEnhanced() {
                 <MenuItem value="mixed">Service & Sales</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Start Date"
@@ -1136,9 +1159,9 @@ export default function CreateJobPageEnhanced() {
               InputLabelProps={{ shrink: true }}
               helperText="When would you like the candidate to start?"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <TextField
               fullWidth
               label="Application Deadline"
@@ -1148,9 +1171,9 @@ export default function CreateJobPageEnhanced() {
               InputLabelProps={{ shrink: true }}
               helperText="When do applications close?"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <Autocomplete
               multiple
               options={EMPLOYEE_BENEFITS_OPTIONS}
@@ -1176,9 +1199,9 @@ export default function CreateJobPageEnhanced() {
                 />
               )}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <Autocomplete
               multiple
               options={LANGUAGE_OPTIONS}
@@ -1204,9 +1227,9 @@ export default function CreateJobPageEnhanced() {
                 />
               )}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <TextField
               fullWidth
               label="Additional Information"
@@ -1219,8 +1242,8 @@ export default function CreateJobPageEnhanced() {
               placeholder="Any additional information about the role, company culture, or application process..."
               helperText="Share any other relevant details about this opportunity"
             />
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -1252,8 +1275,14 @@ export default function CreateJobPageEnhanced() {
           </Button>
         </Box>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+            gap: 3,
+          }}
+        >
+          <Box>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 2, color: "primary.main" }}>
@@ -1279,9 +1308,9 @@ export default function CreateJobPageEnhanced() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 2, color: "primary.main" }}>
@@ -1309,9 +1338,9 @@ export default function CreateJobPageEnhanced() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 2, color: "primary.main" }}>
@@ -1335,8 +1364,8 @@ export default function CreateJobPageEnhanced() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );

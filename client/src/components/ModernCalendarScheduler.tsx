@@ -381,7 +381,7 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                 <Settings size={16} />
                 <Typography variant="body2">Troubleshoot</Typography>
               </Box>
-            </Grid>
+            </Box>
 
             {/* Right Panel - Calendar */}
             <Grid item xs={12} md={8} sx={{ p: 3 }}>
@@ -394,7 +394,7 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                 Select a Date & Time
               </Typography>
 
-              <Grid container spacing={4}>
+              <Box sx={{ display: 'grid', gap: 4, gridTemplateColumns: 'repeat(12, 1fr)' }}>
                 {/* Calendar */}
                 <Grid item xs={12} md={7}>
                   <Box>
@@ -439,9 +439,9 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                           >
                             {day}
                           </Typography>
-                        </Grid>
+                        </Box>
                       ))}
-                    </Grid>
+                    </Box>
 
                     {/* Calendar Days */}
                     <Grid container>
@@ -502,10 +502,10 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                                 {date.getDate()}
                               </Typography>
                             </Box>
-                          </Grid>
+                          </Box>
                         );
                       })}
-                    </Grid>
+                    </Box>
 
                     {/* Timezone */}
                     <Box mt={3} display="flex" alignItems="center" gap={1}>
@@ -515,7 +515,7 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                       </Typography>
                     </Box>
                   </Box>
-                </Grid>
+                </Box>
 
                 {/* Time Slots */}
                 <Grid item xs={12} md={5}>
@@ -599,10 +599,10 @@ const ModernCalendarScheduler: React.FC<ModernCalendarSchedulerProps> = ({
                       )}
                     </Box>
                   )}
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
         </DialogContent>
       </Dialog>
 

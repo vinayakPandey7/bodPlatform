@@ -175,7 +175,7 @@ Please arrive 10 minutes early.`,
               Interview Details
             </Typography>
 
-            {booking &&<Grid container spacing={2}>
+            {booking &&<Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(12, 1fr)' }}>
               <Grid item xs={12} sm={6}>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <Building className="h-4 w-4 text-gray-500" />
@@ -183,7 +183,7 @@ Please arrive 10 minutes early.`,
                     <strong>Company:</strong> {booking?.employer?.companyName}
                   </Typography>
                 </Box>
-              </Grid>
+              </Box>
 
               <Grid item xs={12} sm={6}>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -192,7 +192,7 @@ Please arrive 10 minutes early.`,
                     <strong>Position:</strong> {booking?.job?.title}
                   </Typography>
                 </Box>
-              </Grid>
+              </Box>
 
               <Grid item xs={12} sm={6}>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -201,7 +201,7 @@ Please arrive 10 minutes early.`,
                     <strong>Date:</strong> {formatDate(booking?.slotDate)}
                   </Typography>
                 </Box>
-              </Grid>
+              </Box>
 
               <Grid item xs={12} sm={6}>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -210,7 +210,7 @@ Please arrive 10 minutes early.`,
                     <strong>Time:</strong> {formatTime(booking.slotStartTime)} - {formatTime(booking.slotEndTime)}
                   </Typography>
                 </Box>
-              </Grid>
+              </Box>
 
               <Grid item xs={12}>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -219,8 +219,8 @@ Please arrive 10 minutes early.`,
                     <strong>Location:</strong> {booking.job.location}
                   </Typography>
                 </Box>
-              </Grid>
-            </Grid>}
+              </Box>
+            </Box>}
 
             <Box mt={2}>
               <Chip
@@ -244,7 +244,7 @@ Please arrive 10 minutes early.`,
               Add this interview to your calendar to receive reminders and keep track of your schedule.
             </Typography>
 
-            <Grid container spacing={2}>
+            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(12, 1fr)' }}>
               <Grid item xs={12} sm={4}>
                 <Button
                   variant="outlined"
@@ -258,7 +258,7 @@ Please arrive 10 minutes early.`,
                 <Typography variant="caption" color="text.secondary">
                   Works with any calendar app
                 </Typography>
-              </Grid>
+              </Box>
 
               <Grid item xs={12} sm={4}>
                 <Button
@@ -273,7 +273,7 @@ Please arrive 10 minutes early.`,
                 <Typography variant="caption" color="text.secondary">
                   Opens Google Calendar
                 </Typography>
-              </Grid>
+              </Box>
 
               <Grid item xs={12} sm={4}>
                 <Button
@@ -288,8 +288,8 @@ Please arrive 10 minutes early.`,
                 <Typography variant="caption" color="text.secondary">
                   Opens Outlook Calendar
                 </Typography>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             <Divider sx={{ my: 2 }} />
 

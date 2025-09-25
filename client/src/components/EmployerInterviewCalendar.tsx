@@ -345,7 +345,7 @@ const EmployerInterviewCalendar: React.FC<EmployerInterviewCalendarProps> = ({
                     {selectedBooking.job.title}
                   </Typography>
                   
-                  <Grid container spacing={2}>
+                  <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(12, 1fr)' }}>
                     <Grid item xs={12} sm={6}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
                         <Calendar size={16} />
@@ -353,7 +353,7 @@ const EmployerInterviewCalendar: React.FC<EmployerInterviewCalendarProps> = ({
                           {new Date(selectedBooking.slot.date).toLocaleDateString()}
                         </Typography>
                       </Box>
-                    </Grid>
+                    </Box>
                     
                     <Grid item xs={12} sm={6}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -362,7 +362,7 @@ const EmployerInterviewCalendar: React.FC<EmployerInterviewCalendarProps> = ({
                           {formatTime(selectedBooking.slot.startTime)} - {formatTime(selectedBooking.slot.endTime)}
                         </Typography>
                       </Box>
-                    </Grid>
+                    </Box>
                     
                     <Grid item xs={12}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -371,8 +371,8 @@ const EmployerInterviewCalendar: React.FC<EmployerInterviewCalendarProps> = ({
                           {selectedBooking.job.location}
                         </Typography>
                       </Box>
-                    </Grid>
-                  </Grid>
+                    </Box>
+                  </Box>
 
                   <Box mt={2}>
                     <Chip 

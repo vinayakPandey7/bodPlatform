@@ -175,7 +175,7 @@ const InterviewInvitationPage = () => {
           </Box>
           
           <CardContent sx={{ p: 3 }}>
-            <Grid container spacing={3}>
+            <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: 'repeat(12, 1fr)' }}>
               <Grid item xs={12} sm={6}>
                 <Box 
                   display="flex" 
@@ -210,7 +210,7 @@ const InterviewInvitationPage = () => {
                     </Typography>
                   </Box>
                 </Box>
-              </Grid>
+              </Box>
               
               <Grid item xs={12} sm={6}>
                 <Box 
@@ -246,8 +246,8 @@ const InterviewInvitationPage = () => {
                     </Typography>
                   </Box>
                 </Box>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             {job.description && (
               <Box mt={2}>

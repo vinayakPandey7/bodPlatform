@@ -5,7 +5,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
   Chip,
   Button,
   Dialog,
@@ -270,8 +269,8 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
     <Box>
       {/* Summary Cards */}
       {summary && (
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3, mb: 4 }}>
+          <Box sx={{ gridColumn: 'span 12', '@media (min-width: 600px)': { gridColumn: 'span 6' }, '@media (min-width: 900px)': { gridColumn: 'span 3' } }}>
             <Card>
               <CardContent>
                 <Typography variant="h4" color="primary" gutterBottom>
@@ -282,8 +281,8 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box sx={{ gridColumn: 'span 12', '@media (min-width: 600px)': { gridColumn: 'span 6' }, '@media (min-width: 900px)': { gridColumn: 'span 3' } }}>
             <Card>
               <CardContent>
                 <Typography variant="h4" color="success.main" gutterBottom>
@@ -294,8 +293,8 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box sx={{ gridColumn: 'span 12', '@media (min-width: 600px)': { gridColumn: 'span 6' }, '@media (min-width: 900px)': { gridColumn: 'span 3' } }}>
             <Card>
               <CardContent>
                 <Typography variant="h4" color="warning.main" gutterBottom>
@@ -306,8 +305,8 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box sx={{ gridColumn: 'span 12', '@media (min-width: 600px)': { gridColumn: 'span 6' }, '@media (min-width: 900px)': { gridColumn: 'span 3' } }}>
             <Card>
               <CardContent>
                 <Typography variant="h4" color="success.main" gutterBottom>
@@ -318,15 +317,15 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       )}
 
       {/* Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ gridColumn: 'span 12', '@media (min-width: 900px)': { gridColumn: 'span 4' } }}>
               <TextField
                 fullWidth
                 size="small"
@@ -341,8 +340,8 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                   ),
                 }}
               />
-            </Grid>
-            <Grid item xs={12} md={3}>
+            </Box>
+            <Box sx={{ gridColumn: 'span 12', '@media (min-width: 900px)': { gridColumn: 'span 3' } }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Application Status</InputLabel>
                 <Select
@@ -361,8 +360,8 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                   <MenuItem value="rejected">Rejected</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid item xs={12} md={3}>
+            </Box>
+            <Box sx={{ gridColumn: 'span 12', '@media (min-width: 900px)': { gridColumn: 'span 3' } }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Interview Status</InputLabel>
                 <Select
@@ -378,8 +377,8 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                   <MenuItem value="no_interviews">No Interviews</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
@@ -518,12 +517,13 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                                   Interview Schedule
                                 </Typography>
                                 {
-                                  <Grid container spacing={2}>
+                                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
                                     {candidate.interviews.map((interview) => (
-                                      <Grid
-                                        item
-                                        xs={12}
-                                        md={6}
+                                      <Box
+                                        sx={{
+                                          gridColumn: 'span 12',
+                                          '@media (min-width: 900px)': { gridColumn: 'span 6' }
+                                        }}
                                         key={interview._id}
                                       >
                                         {interview && (
@@ -595,9 +595,9 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                                             )}
                                           </Card>
                                         )}
-                                      </Grid>
+                                      </Box>
                                     ))}
-                                  </Grid>
+                                  </Box>
                                 }
                               </Box>
                             ) : (
@@ -660,24 +660,24 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                     </Box>
                   </Box>
 
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
+                    <Box sx={{ gridColumn: 'span 12', '@media (min-width: 600px)': { gridColumn: 'span 6' } }}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
                         <Mail size={16} />
                         <Typography variant="body2">
                           {selectedCandidate.email}
                         </Typography>
                       </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
+                    </Box>
+                    <Box sx={{ gridColumn: 'span 12', '@media (min-width: 600px)': { gridColumn: 'span 6' } }}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
                         <Phone size={16} />
                         <Typography variant="body2">
                           {selectedCandidate.phone}
                         </Typography>
                       </Box>
-                    </Grid>
-                  </Grid>
+                    </Box>
+                  </Box>
 
                   <Box mt={2}>
                     <Chip

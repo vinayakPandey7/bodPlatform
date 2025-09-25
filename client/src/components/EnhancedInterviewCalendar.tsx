@@ -161,7 +161,7 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
       </DialogTitle>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={4}>
+          <Box sx={{ display: 'grid', gap: 4, gridTemplateColumns: 'repeat(12, 1fr)' }}>
             {/* Date Selection with Calendar */}
             <Grid item xs={12} md={6}>
               <Typography variant="h6" gutterBottom>
@@ -191,7 +191,7 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
                   {errors.date.message}
                 </Alert>
               )}
-            </Grid>
+            </Box>
 
             {/* Time Slots Management */}
             <Grid item xs={12} md={6}>
@@ -221,7 +221,7 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
                         ))}
                       </Select>
                     </FormControl>
-                  </Grid>
+                  </Box>
                   
                   <Grid item xs={6}>
                     <FormControl size="small" fullWidth>
@@ -238,7 +238,7 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
                         ))}
                       </Select>
                     </FormControl>
-                  </Grid>
+                  </Box>
                   
                   <Grid item xs={6}>
                     <TextField
@@ -250,7 +250,7 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
                       fullWidth
                       inputProps={{ min: 1, max: 10 }}
                     />
-                  </Grid>
+                  </Box>
                   
                   <Grid item xs={6}>
                     <FormControlLabel
@@ -262,7 +262,7 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
                       }
                       label="Available"
                     />
-                  </Grid>
+                  </Box>
                   
                   <Grid item xs={12}>
                     <Button
@@ -274,8 +274,8 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
                     >
                       Add Time Slot
                     </Button>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               </Card>
 
               {/* Existing Slots */}
@@ -325,7 +325,7 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
                   {errors.timeSlots.message}
                 </Alert>
               )}
-            </Grid>
+            </Box>
 
             {/* Calendar Preview */}
             {calendarData && calendarData.data && calendarData.data.length > 0 && (
@@ -353,9 +353,9 @@ const EnhancedInterviewCalendar: React.FC<EnhancedInterviewCalendarProps> = ({ o
                     </Box>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Box>
             )}
-          </Grid>
+          </Box>
         </form>
       </DialogContent>
       <DialogActions>

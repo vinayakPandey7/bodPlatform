@@ -445,7 +445,7 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
                     </Typography>
                   </Box>
                 </Box>
-              </Grid>
+              </Box>
 
               {/* Time Slots */}
               <Grid item xs={12} md={4}>
@@ -497,8 +497,8 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
                     </Box>
                   )}
                 </div>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </Box>
         </DialogContent>
       </Dialog>
