@@ -851,7 +851,18 @@ function CandidateJobsPageContent() {
         <LocationModal
           isOpen={showLocationModal}
           onClose={() => setShowLocationModal(false)}
-          onLocationSelected={handleLocationSelected}
+          onLocationChange={(locationInfo) => {
+            if (locationInfo) {
+              handleLocationSelected({
+                zipCode: locationInfo.zipCode,
+                address: locationInfo.fullLocation,
+                city: locationInfo.city,
+                state: locationInfo.state,
+                latitude: locationInfo.coordinates?.lat || 0,
+                longitude: locationInfo.coordinates?.lng || 0,
+              });
+            }
+          }}
         />
       </DashboardLayout>
     </ProtectedRoute>
