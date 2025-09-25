@@ -15,14 +15,9 @@ import {
   EyeOff,
   Save,
   ChevronDown,
-  ChevronUp,
-  Bell,
-  Globe,
-  Phone,
   Users,
   Building2,
   RefreshCw,
-  Settings,
 } from "lucide-react";
 
 interface EmployerProfile {

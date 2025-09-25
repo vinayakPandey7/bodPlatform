@@ -26,14 +26,14 @@ import {
 import {
   Calendar,
   Clock,
-  Users,
+  
   Plus,
   Settings,
-  Eye,
+
   CheckCircle,
   XCircle,
   AlertCircle,
-  User,
+
   Mail,
   Phone,
 } from "lucide-react";

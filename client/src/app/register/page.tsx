@@ -26,14 +26,11 @@ import {
   Building,
   Phone,
   MapPin,
-  Globe,
   Calendar,
-  ChevronRight,
   Users,
   Briefcase,
   Target,
   Check,
-  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import PhoneNumberInput from "@/components/PhoneNumberInput";

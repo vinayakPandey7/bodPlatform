@@ -9,7 +9,6 @@ import {
   Search,
   Plus,
   Filter,
-  SortAsc,
   Eye,
   Edit,
   ToggleLeft,

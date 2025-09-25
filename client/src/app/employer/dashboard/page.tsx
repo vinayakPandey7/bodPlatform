@@ -12,7 +12,6 @@ import {
   Plus,
   Eye,
   Settings,
-  BarChart3,
   Calendar,
   Clock,
 } from "lucide-react";

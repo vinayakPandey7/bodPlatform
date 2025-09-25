@@ -23,11 +23,8 @@ import {
   DollarSign,
   Filter,
   Search,
-  ArrowUpRight,
   Briefcase,
   AlertCircle,
-  TrendingUp,
-  MessageSquare,
   ExternalLink,
   RefreshCw,
 } from "lucide-react";
