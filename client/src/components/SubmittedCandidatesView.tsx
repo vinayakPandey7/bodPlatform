@@ -324,8 +324,8 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
       {/* Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2, alignItems: 'center' }}>
-            <Box sx={{ gridColumn: 'span 12', '@media (min-width: 900px)': { gridColumn: 'span 4' } }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2, alignItems: 'center' }}>
+            <Box>
               <TextField
                 fullWidth
                 size="small"
@@ -341,7 +341,7 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                 }}
               />
             </Box>
-            <Box sx={{ gridColumn: 'span 12', '@media (min-width: 900px)': { gridColumn: 'span 3' } }}>
+            <Box>
               <FormControl fullWidth size="small">
                 <InputLabel>Application Status</InputLabel>
                 <Select
@@ -353,15 +353,12 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                   <MenuItem value="pending">Pending</MenuItem>
                   <MenuItem value="shortlist">Shortlisted</MenuItem>
                   <MenuItem value="phone_interview">Phone Interview</MenuItem>
-                  <MenuItem value="in_person_interview">
-                    In-Person Interview
-                  </MenuItem>
+                  <MenuItem value="in_person_interview">In-Person Interview</MenuItem>
                   <MenuItem value="hired">Hired</MenuItem>
                   <MenuItem value="rejected">Rejected</MenuItem>
                 </Select>
               </FormControl>
-            </Box>
-            <Box sx={{ gridColumn: 'span 12', '@media (min-width: 900px)': { gridColumn: 'span 3' } }}>
+            <Box>
               <FormControl fullWidth size="small">
                 <InputLabel>Interview Status</InputLabel>
                 <Select
@@ -377,6 +374,7 @@ const SubmittedCandidatesView: React.FC<SubmittedCandidatesViewProps> = ({
                   <MenuItem value="no_interviews">No Interviews</MenuItem>
                 </Select>
               </FormControl>
+            </Box>
             </Box>
           </Box>
         </CardContent>

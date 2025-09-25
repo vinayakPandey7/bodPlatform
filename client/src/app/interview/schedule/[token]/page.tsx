@@ -175,8 +175,7 @@ const InterviewInvitationPage = () => {
           </Box>
           
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: 'repeat(12, 1fr)' }}>
-              <Grid item xs={12} sm={6}>
+              <Box sx={{ gridColumn: { xs: 'span 12', sm: 'span 6' } }}>
                 <Box 
                   display="flex" 
                   alignItems="center" 
@@ -210,9 +209,7 @@ const InterviewInvitationPage = () => {
                     </Typography>
                   </Box>
                 </Box>
-              </Box>
-              
-              <Grid item xs={12} sm={6}>
+              <Box sx={{ gridColumn: { xs: 'span 12', sm: 'span 6' } }}>
                 <Box 
                   display="flex" 
                   alignItems="center" 
