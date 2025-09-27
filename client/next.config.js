@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
@@ -11,6 +12,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL ||
       (process.env.NODE_ENV === "development"
@@ -23,8 +25,8 @@ const nextConfig = {
         : "https://bodplatform.onrender.com/api"),
   },
   images: {
-    domains: ["localhost"],
+    domains: ['res.cloudinary.com', 'localhost'], // Add your image domains
   },
-};
+}
 
-export default nextConfig;
+module.exports = nextConfig

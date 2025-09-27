@@ -5,8 +5,11 @@
   "author": "CIERO",
   "scripts": {
     "build": "next build",
+    "build:no-lint": "next build --no-lint",
+    "build:ignore-errors": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "dev": "next dev --turbopack"
   },
   "dependencies": {

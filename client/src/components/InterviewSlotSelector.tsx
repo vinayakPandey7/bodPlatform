@@ -279,9 +279,9 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
               Select a Date & Time
             </Typography>
 
-            <Grid container spacing={3} md={12}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
               {/* Calendar */}
-              <Grid item xs={12} md={8} sx={{ width: "63%" }}>
+              <Box sx={{ gridColumn: 'span 8' }}>
                 <Box>
                   {/* Calendar Header */}
                   <Box
@@ -448,16 +448,18 @@ const InterviewSlotSelector: React.FC<InterviewSlotSelectorProps> = ({
               </Box>
 
               {/* Time Slots */}
-              <Grid item xs={12} md={4}>
+              <Box sx={{ gridColumn: 'span 4' }}>
                 <div className="h-[400px] overflow-y-auto">
                   {selectedDate && (
                     <Box>
                       <Typography variant="h6" fontWeight={600} mb={2}>
-                        {selectedDate.toLocaleDateString("en-US", {
-                          weekday: "long",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
+                          {selectedDate.toLocaleDateString("en-US", {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </Box>
                       </Typography>
 
                       <Box display="flex" flexDirection="column" gap={1}>

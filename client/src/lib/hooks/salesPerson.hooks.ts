@@ -258,7 +258,7 @@ export const useSalesPersonProfile = () => {
   return {
     data: mockSalesPersonProfile,
     isLoading: false,
-    error: null,
+    error: null as Error | null,
     refetch: () => Promise.resolve({ data: mockSalesPersonProfile }),
   };
 

@@ -346,7 +346,7 @@ const EmployerInterviewCalendar: React.FC<EmployerInterviewCalendarProps> = ({
                   </Typography>
                   
                   <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(12, 1fr)' }}>
-                    <Grid item xs={12} sm={6}>
+                    <Box sx={{ gridColumn: 'span 6' }}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
                         <Calendar size={16} />
                         <Typography variant="body2">
@@ -355,7 +355,7 @@ const EmployerInterviewCalendar: React.FC<EmployerInterviewCalendarProps> = ({
                       </Box>
                     </Box>
                     
-                    <Grid item xs={12} sm={6}>
+                    <Box sx={{ gridColumn: 'span 6' }}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
                         <Clock size={16} />
                         <Typography variant="body2">
@@ -364,7 +364,7 @@ const EmployerInterviewCalendar: React.FC<EmployerInterviewCalendarProps> = ({
                       </Box>
                     </Box>
                     
-                    <Grid item xs={12}>
+                    <Box sx={{ gridColumn: 'span 12' }}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
                         <MapPin size={16} />
                         <Typography variant="body2">

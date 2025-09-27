@@ -21,7 +21,6 @@ import {
   Save,
   ChevronDown,
   ChevronUp,
-  Bell,
   Globe,
   Phone,
   Users,
@@ -29,16 +28,9 @@ import {
   RefreshCw,
   Settings,
   MapPin,
-  Briefcase,
-  TrendingUp,
-  Target,
-  Award,
   Calendar,
   Mail,
   IdCard,
-  DollarSign,
-  BarChart3,
-  GraduationCap,
 } from "lucide-react";
 
 interface SalesPersonProfile {
