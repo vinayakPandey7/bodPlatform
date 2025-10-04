@@ -274,3 +274,4 @@ This project is licensed under the MIT License.
 ❌ = Not Started
 
 This is a learning project demonstrating modern full-stack development practices with Node.js, Express, MongoDB, and Next.js.
+# CI/CD with GitHub Actions - SSH key fixed ✅
