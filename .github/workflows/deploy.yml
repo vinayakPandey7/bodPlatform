@@ -1,0 +1,132 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main-calendarly
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+      
+      - name: Create deployment archive
+        run: |
+          tar --exclude='node_modules' \
+              --exclude='.next' \
+              --exclude='.git' \
+              --exclude='client/node_modules' \
+              --exclude='server/node_modules' \
+              -czf deploy.tar.gz .
+      
+      - name: Deploy to AWS
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
+          AWS_HOST: ${{ secrets.AWS_HOST }}
+          AWS_USER: ubuntu
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $AWS_HOST >> ~/.ssh/known_hosts
+          
+          # Upload and extract
+          scp -i ~/.ssh/deploy_key deploy.tar.gz $AWS_USER@$AWS_HOST:/tmp/
+          
+          # Deploy on server
+          ssh -i ~/.ssh/deploy_key $AWS_USER@$AWS_HOST << 'EOF'
+            set -e
+            echo "🚀 Starting deployment..."
+            
+            # Backup environment files
+            echo "📋 Backing up environment files..."
+            cp /var/www/theciero/server/.env /tmp/server.env.backup
+            cp /var/www/theciero/client/.env.production /tmp/client.env.backup 2>/dev/null || true
+            
+            # Extract new code
+            echo "📂 Extracting new code..."
+            cd /var/www/theciero
+            tar -xzf /tmp/deploy.tar.gz
+            
+            # Restore environment files
+            echo "🔄 Restoring environment files..."
+            cp /tmp/server.env.backup server/.env
+            cp /tmp/client.env.backup client/.env.production 2>/dev/null || true
+            
+            # Install backend dependencies
+            echo "📦 Installing BACKEND dependencies..."
+            cd /var/www/theciero/server
+            npm install --production
+            echo "✅ Backend dependencies installed"
+            
+            # Install frontend dependencies
+            echo "📦 Installing FRONTEND dependencies..."
+            cd /var/www/theciero/client
+            npm install --production
+            echo "✅ Frontend dependencies installed"
+            
+            # Build frontend
+            echo "🏗️  Building FRONTEND for production..."
+            rm -rf .next
+            NODE_ENV=production npm run build
+            echo "✅ Frontend build completed"
+            
+            # Restart services (both backend and frontend)
+            echo "🔄 Restarting BACKEND and FRONTEND services..."
+            pm2 restart all
+            pm2 save
+            pm2 status
+            echo "✅ All services restarted"
+            
+            # Cleanup
+            rm /tmp/bodPlatform-deploy.tar.gz 2>/dev/null || true
+            
+            echo ""
+            echo "🎉 Deployment completed successfully!"
+            echo "✅ Backend deployed and running on port 5001"
+            echo "✅ Frontend deployed and running on port 3000"
+            echo "🌐 Website: https://theciero.com"
+          EOF
+      
+      - name: Health Check
+        run: |
+          echo "🏥 Running health checks..."
+          
+          # Wait for services to fully start
+          sleep 5
+          
+          # Check frontend
+          echo "Checking FRONTEND..."
+          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://theciero.com)
+          if [ "$FRONTEND_STATUS" = "200" ]; then
+            echo "✅ Frontend is healthy (HTTP $FRONTEND_STATUS)"
+          else
+            echo "⚠️  Frontend returned HTTP $FRONTEND_STATUS"
+            exit 1
+          fi
+          
+          # Check backend API
+          echo "Checking BACKEND API..."
+          BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://theciero.com/api/auth/login -X POST -H "Content-Type: application/json")
+          if [ "$BACKEND_STATUS" = "200" ] || [ "$BACKEND_STATUS" = "400" ]; then
+            echo "✅ Backend API is healthy (HTTP $BACKEND_STATUS)"
+          else
+            echo "⚠️  Backend API returned HTTP $BACKEND_STATUS"
+            exit 1
+          fi
+          
+          echo ""
+          echo "🎉 All health checks passed!"
+          echo "✅ Frontend: https://theciero.com"
+          echo "✅ Backend API: https://theciero.com/api"
+
