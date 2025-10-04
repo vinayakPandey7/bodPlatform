@@ -42,6 +42,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          
+          # Verify key format
+          if ! ssh-keygen -l -f ~/.ssh/deploy_key >/dev/null 2>&1; then
+            echo "Error: SSH key format is invalid"
+            head -1 ~/.ssh/deploy_key
+            tail -1 ~/.ssh/deploy_key
+            exit 1
+          fi
+          
           ssh-keyscan -H $AWS_HOST >> ~/.ssh/known_hosts
           
           # Upload and extract
