@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Forward request to backend location validation API
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://bodplatform.onrender.com/api";
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://theciero.com/api";
     const response = await fetch(
       `${backendUrl}/location/validate?zipCode=${zipCode}`,
       {

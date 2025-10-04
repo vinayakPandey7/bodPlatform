@@ -6,6 +6,8 @@ server/test-clients.js
 .env
 .env.local
 .env.production
+env.production
+server/env.production
 
 # Google Calendar credentials (use environment variables instead)
 server/config/credentials.json

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = process.env.API_URL || "https://bodplatform.onrender.com/api";
+const API_BASE_URL = process.env.API_URL || "https://theciero.com/api";
 
 export async function POST(request: NextRequest) {
   try {

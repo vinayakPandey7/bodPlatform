@@ -75,7 +75,7 @@ export default function HomePage() {
         const response = await fetch(
           `${
             process.env.NEXT_PUBLIC_API_URL ||
-            "https://bodplatform.onrender.com/api"
+            "https://theciero.com/api"
           }/auth/me`,
           {
             headers: {
