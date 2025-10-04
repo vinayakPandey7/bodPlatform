@@ -26,7 +26,11 @@ jobs:
               --exclude='.git' \
               --exclude='client/node_modules' \
               --exclude='server/node_modules' \
-              -czf deploy.tar.gz .
+              --exclude='.github' \
+              --exclude='*.log' \
+              --exclude='.DS_Store' \
+              --warning=no-file-changed \
+              -czf deploy.tar.gz . || [ $? -eq 1 ]
       
       - name: Deploy to AWS
         env:
