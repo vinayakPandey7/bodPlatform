@@ -32,26 +32,35 @@ jobs:
               --warning=no-file-changed \
               -czf deploy.tar.gz . || [ $? -eq 1 ]
       
-      - name: Deploy to AWS
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
-          AWS_HOST: ${{ secrets.AWS_HOST }}
-          AWS_USER: ubuntu
+      - name: Setup SSH
         run: |
-          # Setup SSH
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.AWS_HOST }} >> ~/.ssh/known_hosts
           
-          # Verify key format
-          if ! ssh-keygen -l -f ~/.ssh/deploy_key >/dev/null 2>&1; then
-            echo "Error: SSH key format is invalid"
+          # Verify key was written correctly
+          if ! head -1 ~/.ssh/deploy_key | grep -q "BEGIN.*PRIVATE KEY"; then
+            echo "ERROR: SSH key doesn't start with BEGIN PRIVATE KEY"
+            echo "First line of key file:"
             head -1 ~/.ssh/deploy_key
+            exit 1
+          fi
+          
+          if ! tail -1 ~/.ssh/deploy_key | grep -q "END.*PRIVATE KEY"; then
+            echo "ERROR: SSH key doesn't end with END PRIVATE KEY"
+            echo "Last line of key file:"
             tail -1 ~/.ssh/deploy_key
             exit 1
           fi
           
-          ssh-keyscan -H $AWS_HOST >> ~/.ssh/known_hosts
+          echo "✅ SSH key format looks correct"
+      
+      - name: Deploy to AWS
+        env:
+          AWS_HOST: ${{ secrets.AWS_HOST }}
+          AWS_USER: ubuntu
+        run: |
           
           # Upload and extract
           scp -i ~/.ssh/deploy_key deploy.tar.gz $AWS_USER@$AWS_HOST:/tmp/
