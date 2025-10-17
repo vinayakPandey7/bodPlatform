@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MapPin, Search, X, Navigation, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,53 +38,7 @@ export default function LocationModal({
   const [error, setError] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Close modal on clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(event.target as Node)
-      ) {
-        handleClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.body.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
-  // Load saved location from localStorage on mount
-  useEffect(() => {
-    if (isOpen) {
-      const savedLocation = localStorage.getItem("userLocation");
-      if (savedLocation) {
-        try {
-          const location = JSON.parse(savedLocation);
-          setCurrentLocation(location);
-          onLocationChange?.(location);
-        } catch (e) {
-          console.error("Error parsing saved location:", e);
-        }
-      }
-    }
-  }, [isOpen, onLocationChange]);
-
-  const handleClose = () => {
-    // If no location is set, fall back to user's default zip code
-    if (!currentLocation) {
-      handleFallbackLocation();
-    }
-    onClose();
-  };
-
-  const handleFallbackLocation = async () => {
+  const handleFallbackLocation = useCallback(async () => {
     if (userDefaultZipCode) {
       try {
         setIsSearching(true);
@@ -129,9 +83,9 @@ export default function LocationModal({
     } else {
       await handleFinalFallback();
     }
-  };
+  }, [userDefaultZipCode, onLocationChange]);
 
-  const handleFinalFallback = async () => {
+  const handleFinalFallback = useCallback(async () => {
     try {
       const response = await fetch(`/api/location/validate?zipCode=10001`, {
         method: "GET",
@@ -161,7 +115,53 @@ export default function LocationModal({
       console.error("Error with final fallback:", error);
       toast.error("Unable to set location. Please try again.");
     }
-  };
+  }, [onLocationChange]);
+
+  const handleClose = useCallback(() => {
+    // If no location is set, fall back to user's default zip code
+    if (!currentLocation) {
+      handleFallbackLocation();
+    }
+    onClose();
+  }, [currentLocation, onClose, handleFallbackLocation]);
+
+  // Close modal on clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, handleClose]);
+
+  // Load saved location from localStorage on mount
+  useEffect(() => {
+    if (isOpen) {
+      const savedLocation = localStorage.getItem("userLocation");
+      if (savedLocation) {
+        try {
+          const location = JSON.parse(savedLocation);
+          setCurrentLocation(location);
+          onLocationChange?.(location);
+        } catch (e) {
+          console.error("Error parsing saved location:", e);
+        }
+      }
+    }
+  }, [isOpen]); // Remove onLocationChange from dependencies
 
   const detectCurrentLocation = async () => {
     setIsDetecting(true);
@@ -275,14 +275,14 @@ export default function LocationModal({
           coordinates: data.coordinates,
         };
 
-                  setCurrentLocation(locationInfo);
-          localStorage.setItem("userLocation", JSON.stringify(locationInfo));
-          onLocationChange?.(locationInfo);
-          // Dispatch custom event for same-tab updates
-          window.dispatchEvent(new Event("locationUpdated"));
-          setZipCodeInput("");
-          toast.success(`Location set: ${data.fullLocation}`);
-          onClose();
+        setCurrentLocation(locationInfo);
+        localStorage.setItem("userLocation", JSON.stringify(locationInfo));
+        onLocationChange?.(locationInfo);
+        // Dispatch custom event for same-tab updates
+        window.dispatchEvent(new Event("locationUpdated"));
+        setZipCodeInput("");
+        toast.success(`Location set: ${data.fullLocation}`);
+        onClose();
       } else {
         setError(data.message || "Invalid zip code");
       }

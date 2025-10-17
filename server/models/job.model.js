@@ -269,7 +269,7 @@ const jobSchema = new mongoose.Schema({
   },
   isApproved: {
     type: Boolean,
-    default: true, // Auto-approve all jobs by default
+    default: false, // Require admin approval for all jobs
   },
   isActive: {
     type: Boolean,

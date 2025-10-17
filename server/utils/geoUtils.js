@@ -1,4 +1,13 @@
 const axios = require("axios");
+// Temporarily handle zipcodes import with fallback
+let zipcodes;
+try {
+  zipcodes = require("zipcodes");
+} catch (error) {
+  console.warn("⚠️ Zipcodes library not available, using fallback methods");
+  zipcodes = null;
+}
+
 const {
   ZIP_CODE_DATABASE,
   GEOCODING_CONFIG,
@@ -34,7 +43,23 @@ async function getCoordinatesFromZipCode(zipCode) {
       throw new Error(`Invalid zip code format: ${zipCode}`);
     }
 
-    // 1. Try Google Geocoding API first (most accurate)
+    // 1. Try comprehensive zipcodes library first (fastest and most reliable)
+    if (zipcodes) {
+      try {
+        const zipInfo = zipcodes.lookup(cleanZip);
+        if (zipInfo && zipInfo.latitude && zipInfo.longitude) {
+          console.log(`✅ Zipcodes Library: Found coordinates for ${cleanZip}`);
+          return [parseFloat(zipInfo.longitude), parseFloat(zipInfo.latitude)];
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️ Zipcodes library failed for ${cleanZip}:`,
+          error.message
+        );
+      }
+    }
+
+    // 2. Try Google Geocoding API (most accurate)
     if (process.env.GOOGLE_MAPS_API_KEY) {
       try {
         const coordinates = await getCoordinatesFromGoogle(cleanZip);
@@ -47,7 +72,7 @@ async function getCoordinatesFromZipCode(zipCode) {
       }
     }
 
-    // 2. Try OpenStreetMap Nominatim (free but rate limited)
+    // 3. Try OpenStreetMap Nominatim (free but rate limited)
     try {
       const coordinates = await getCoordinatesFromOSM(cleanZip);
       if (coordinates) {
@@ -58,12 +83,11 @@ async function getCoordinatesFromZipCode(zipCode) {
       console.warn(`⚠️ OSM failed for ${cleanZip}:`, error.message);
     }
 
-    // 3. Check local database as fallback
+    // 4. Check local database as final fallback
     if (ZIP_CODE_DATABASE[cleanZip]) {
       console.log(`✅ Local DB: Found coordinates for ${cleanZip}`);
       return ZIP_CODE_DATABASE[cleanZip].coordinates;
     }
-    console.log(`❌ No coordinates found for zip code: ${cleanZip}`);
 
     // If all methods fail, throw an error
     console.error(`❌ No coordinates found for zip code: ${cleanZip}`);
@@ -187,23 +211,50 @@ async function getCityFromZipCode(zipCode) {
       throw new Error(`Invalid zip code format: ${zipCode}`);
     }
 
-    // 1. Try Google Geocoding API first (most comprehensive address data)
-    // if (process.env.GOOGLE_MAPS_API_KEY) {
-    //   try {
-    //     const locationInfo = await getCityFromGoogle(cleanZip);
-    //     if (locationInfo) {
-    //       console.log(`✅ Google API: Found location info for ${cleanZip}`);
-    //       return locationInfo;
-    //     }
-    //   } catch (error) {
-    //     console.warn(
-    //       `⚠️ Google API failed for location info ${cleanZip}:`,
-    //       error.message
-    //     );
-    //   }
-    // }
+    // 1. Try comprehensive zipcodes library first (fastest and most reliable)
+    if (zipcodes) {
+      try {
+        const zipInfo = zipcodes.lookup(cleanZip);
+        if (zipInfo) {
+          console.log(
+            `✅ Zipcodes Library: Found location info for ${cleanZip}`
+          );
+          return {
+            city: zipInfo.city,
+            state: zipInfo.state,
+            county: zipInfo.county || `${zipInfo.city} County`,
+            coordinates: [
+              parseFloat(zipInfo.longitude),
+              parseFloat(zipInfo.latitude),
+            ],
+            zipCode: cleanZip,
+          };
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️ Zipcodes library failed for ${cleanZip}:`,
+          error.message
+        );
+      }
+    }
 
-    // 2. Try OpenStreetMap Nominatim
+    // 2. Try Google Geocoding API (most comprehensive address data)
+    if (process.env.GOOGLE_MAPS_API_KEY) {
+      try {
+        const locationInfo = await getCityFromGoogle(cleanZip);
+        if (locationInfo) {
+          console.log(`✅ Google API: Found location info for ${cleanZip}`);
+          return locationInfo;
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️ Google API failed for location info ${cleanZip}:`,
+          error.message
+        );
+      }
+    }
+
+    // 3. Try OpenStreetMap Nominatim
     try {
       const locationInfo = await getCityFromOSM(cleanZip);
       if (locationInfo) {
@@ -217,7 +268,7 @@ async function getCityFromZipCode(zipCode) {
       );
     }
 
-    // 3. Check local database as fallback
+    // 4. Check local database as final fallback
     if (ZIP_CODE_DATABASE[cleanZip]) {
       console.log(`✅ Local DB: Found location info for ${cleanZip}`);
       return {
@@ -360,7 +411,7 @@ async function getCityFromOSM(zipCode) {
 }
 
 /**
- * Validate US zip code format
+ * Validate US zip code format and existence
  * @param {string} zipCode - US zip code
  * @returns {boolean}
  */
@@ -370,8 +421,28 @@ function validateUSZipCode(zipCode) {
   // Clean zip code (remove any extra formatting)
   const cleanZip = zipCode.replace(/[^0-9]/g, "");
 
-  // US zip codes are 5 digits
-  return /^\d{5}$/.test(cleanZip);
+  // First check format: US zip codes are 5 digits
+  if (!/^\d{5}$/.test(cleanZip)) {
+    return false;
+  }
+
+  // Then check if it's an actual existing US zip code using zipcodes library
+  if (zipcodes) {
+    try {
+      const zipInfo = zipcodes.lookup(cleanZip);
+      return zipInfo !== undefined && zipInfo !== null;
+    } catch (error) {
+      // If zipcodes library fails, fall back to format-only validation
+      console.warn(
+        `⚠️ Zipcodes library validation failed for ${cleanZip}:`,
+        error.message
+      );
+      return true; // Allow format-valid zip codes if library fails
+    }
+  } else {
+    // If zipcodes library is not available, use format-only validation
+    return true;
+  }
 }
 
 /**
@@ -428,33 +499,90 @@ function addSampleZipCode(zipCode, locationData) {
 }
 
 /**
+ * Validate and get comprehensive zip code information
+ * @param {string} zipCode - US zip code
+ * @returns {Object|null} - Complete zip code information or null
+ */
+function getZipCodeInfo(zipCode) {
+  try {
+    const cleanZip = zipCode.replace(/[^0-9]/g, "").slice(0, 5);
+
+    if (!validateUSZipCode(cleanZip)) {
+      return null;
+    }
+
+    if (zipcodes) {
+      const zipInfo = zipcodes.lookup(cleanZip);
+      if (zipInfo) {
+        return {
+          zipCode: cleanZip,
+          city: zipInfo.city,
+          state: zipInfo.state,
+          county: zipInfo.county || `${zipInfo.city} County`,
+          coordinates: [
+            parseFloat(zipInfo.longitude),
+            parseFloat(zipInfo.latitude),
+          ],
+          latitude: parseFloat(zipInfo.latitude),
+          longitude: parseFloat(zipInfo.longitude),
+          timezone: zipInfo.timezone || null,
+          fullLocation: `${zipInfo.city}, ${zipInfo.state}`,
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error getting zip code info:", error.message);
+    return null;
+  }
+}
+
+/**
  * Get geocoding service status and configuration
  */
 function getGeocodingConfig() {
   return {
     hasGoogleAPI: !!process.env.GOOGLE_MAPS_API_KEY,
+    hasZipcodesLibrary: !!zipcodes,
     localDatabaseSize: Object.keys(ZIP_CODE_DATABASE).length,
+    zipcodesLibrarySize: zipcodes ? Object.keys(zipcodes.codes).length : 0,
     supportedServices: [
+      {
+        name: "Zipcodes Library",
+        enabled: !!zipcodes,
+        priority: 1,
+        coverage: zipcodes
+          ? "All US zip codes (~44,000 zip codes)"
+          : "Not available",
+        rateLimit: "No limit (local database)",
+        description: zipcodes
+          ? "Comprehensive US zip code library with instant lookup"
+          : "Library not installed",
+      },
       {
         name: "Google Geocoding API",
         enabled: !!process.env.GOOGLE_MAPS_API_KEY,
-        priority: 1,
+        priority: 2,
         coverage: "Comprehensive US + International",
         rateLimit: "Based on API plan",
+        description: "Most accurate geocoding service (requires API key)",
       },
       {
         name: "OpenStreetMap Nominatim",
         enabled: true,
-        priority: 2,
+        priority: 3,
         coverage: "Good US coverage",
         rateLimit: "1 request/second",
+        description: "Free geocoding service with rate limits",
       },
       {
-        name: "Local Database",
+        name: "Local Database (Legacy)",
         enabled: true,
-        priority: 3,
+        priority: 4,
         coverage: `${Object.keys(ZIP_CODE_DATABASE).length} zip codes`,
         rateLimit: "No limit",
+        description: "Legacy fallback database for specific zip codes",
       },
     ],
   };
@@ -468,5 +596,6 @@ module.exports = {
   isWithinUSBounds,
   addSampleZipCode,
   getGeocodingConfig,
+  getZipCodeInfo,
   ZIP_CODE_DATABASE,
 };

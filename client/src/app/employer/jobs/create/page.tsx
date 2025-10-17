@@ -500,10 +500,6 @@ export default function CreateJobPage() {
                       label: "Previous insurance experience, but not with SF**",
                     },
                     {
-                      value: "licensed_basic_training",
-                      label: "Licensed, just completed basic SF training**",
-                    },
-                    {
                       value: "licensed_no_insurance_banking",
                       label:
                         "Licensed, no insurance experience, but previous banking experience**",
@@ -569,7 +565,8 @@ export default function CreateJobPage() {
                     </select>
                   </div>
 
-                  {formData.workSchedule === "part_time" && (
+                  {(formData.workSchedule === "part_time" ||
+                    formData.workSchedule === "full_time") && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         If PT, what days would you want the employee to work? *
@@ -810,7 +807,7 @@ export default function CreateJobPage() {
               </div>
 
               {/* Additional Requirements */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label
                     htmlFor="freeParking"
@@ -1105,7 +1102,7 @@ export default function CreateJobPage() {
             {/* Salary Information */}
             <div className="space-y-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-                Salary Information
+                Pay Information
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1114,7 +1111,7 @@ export default function CreateJobPage() {
                     htmlFor="salaryMin"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Minimum Salary
+                    Minimum
                   </label>
                   <input
                     type="number"
@@ -1132,7 +1129,7 @@ export default function CreateJobPage() {
                     htmlFor="salaryMax"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Maximum Salary
+                    Maximum
                   </label>
                   <input
                     type="number"
@@ -1160,11 +1157,6 @@ export default function CreateJobPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="INR">INR</option>
-                    <option value="CAD">CAD</option>
-                    <option value="AUD">AUD</option>
                   </select>
                 </div>
               </div>
@@ -1197,26 +1189,6 @@ export default function CreateJobPage() {
 
               <div>
                 <label
-                  htmlFor="requirements"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  General Requirements (comma-separated)
-                </label>
-                <textarea
-                  id="requirements"
-                  name="requirements"
-                  value={formData.requirements.join(", ")}
-                  onChange={(e) =>
-                    handleArrayInputChange("requirements", e.target.value)
-                  }
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., Professional communication skills, Customer service experience, Computer proficiency"
-                />
-              </div>
-
-              <div>
-                <label
                   htmlFor="skills"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
@@ -1232,6 +1204,26 @@ export default function CreateJobPage() {
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="e.g., Insurance sales, Policy review, Claims processing, Customer retention"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="requirements"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  General Requirements (comma-separated)
+                </label>
+                <textarea
+                  id="requirements"
+                  name="requirements"
+                  value={formData.requirements.join(", ")}
+                  onChange={(e) =>
+                    handleArrayInputChange("requirements", e.target.value)
+                  }
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="e.g., Professional communication skills, Customer service experience, Computer proficiency"
                 />
               </div>
 

@@ -688,10 +688,6 @@ export default function EditJobPage() {
                           "Previous insurance experience, but not with SF**",
                       },
                       {
-                        value: "licensed_basic_training",
-                        label: "Licensed, just completed basic SF training**",
-                      },
-                      {
                         value: "licensed_no_insurance_banking",
                         label:
                           "Licensed, no insurance experience, but previous banking experience**",

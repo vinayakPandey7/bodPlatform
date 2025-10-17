@@ -129,6 +129,12 @@ router.put(
   authorizeRoles("admin", "sub_admin"),
   adminController.toggleJobActive
 );
+router.put(
+  "/jobs/:id/status",
+  auth,
+  authorizeRoles("admin"),
+  adminController.updateJobStatus
+);
 
 // Candidate Management
 router.get(
@@ -223,30 +229,21 @@ const updateSalesPersonValidation = [
     .withMessage("Please provide a valid phone number"),
 ];
 
-router.get(
-  "/sales-persons",
-  salesPersonController.getAllSalesPersons
-);
+router.get("/sales-persons", salesPersonController.getAllSalesPersons);
 router.post(
   "/sales-persons",
   createSalesPersonValidation,
   validateRequest,
   salesPersonController.createSalesPerson
 );
-router.get(
-  "/sales-persons/:id",
-  salesPersonController.getSalesPersonById
-);
+router.get("/sales-persons/:id", salesPersonController.getSalesPersonById);
 router.put(
   "/sales-persons/:id",
   updateSalesPersonValidation,
   validateRequest,
   salesPersonController.updateSalesPerson
 );
-router.delete(
-  "/sales-persons/:id",
-  salesPersonController.deleteSalesPerson
-);
+router.delete("/sales-persons/:id", salesPersonController.deleteSalesPerson);
 router.post(
   "/sales-persons/:id/assign-agents",
   salesPersonController.assignAgents

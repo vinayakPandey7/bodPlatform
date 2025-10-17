@@ -50,7 +50,7 @@ exports.getEmployers = async (req, res) => {
 exports.createEmployer = async (req, res) => {
   try {
     console.log("Create employer request body:", req.body);
-    
+
     const {
       ownerName,
       companyName,
@@ -213,7 +213,6 @@ exports.approveEmployer = async (req, res) => {
 
 // Approve recruitment partner
 exports.approveRecruitmentPartner = async (req, res) => {
- 
   try {
     const recruitmentPartner = await RecruitmentPartner.findById(req.params.id);
 
@@ -224,7 +223,6 @@ exports.approveRecruitmentPartner = async (req, res) => {
     recruitmentPartner.isApproved = true;
     await recruitmentPartner.save();
 
-     
     // Also activate the user account
     await User.findByIdAndUpdate(recruitmentPartner.user, { isActive: true });
 
@@ -237,11 +235,6 @@ exports.approveRecruitmentPartner = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-    
-
-  
-
-
 
 // Reject employer (same as delete for now)
 exports.rejectEmployer = async (req, res) => {
@@ -333,7 +326,12 @@ exports.createRecruitmentPartner = async (req, res) => {
       zipCode,
       website,
       description,
-      specializations: specializations ? specializations?.join(',').split(',').map(s => s.trim()) : [],
+      specializations: specializations
+        ? specializations
+            ?.join(",")
+            .split(",")
+            .map((s) => s.trim())
+        : [],
       isApproved,
     });
 
@@ -355,7 +353,20 @@ exports.createRecruitmentPartner = async (req, res) => {
 exports.updateRecruitmentPartner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { ownerName, companyName, phoneNumber, address, city, state, country, zipCode, website, description, specializations, isApproved } = req.body;
+    const {
+      ownerName,
+      companyName,
+      phoneNumber,
+      address,
+      city,
+      state,
+      country,
+      zipCode,
+      website,
+      description,
+      specializations,
+      isApproved,
+    } = req.body;
 
     const recruitmentPartner = await RecruitmentPartner.findById(id);
     if (!recruitmentPartner) {
@@ -364,17 +375,22 @@ exports.updateRecruitmentPartner = async (req, res) => {
 
     // Update recruitment partner fields
     recruitmentPartner.ownerName = ownerName || recruitmentPartner.ownerName;
-    recruitmentPartner.companyName = companyName || recruitmentPartner.companyName;
-    recruitmentPartner.phoneNumber = phoneNumber || recruitmentPartner.phoneNumber;
+    recruitmentPartner.companyName =
+      companyName || recruitmentPartner.companyName;
+    recruitmentPartner.phoneNumber =
+      phoneNumber || recruitmentPartner.phoneNumber;
     recruitmentPartner.address = address || recruitmentPartner.address;
     recruitmentPartner.city = city || recruitmentPartner.city;
     recruitmentPartner.state = state || recruitmentPartner.state;
     recruitmentPartner.country = country || recruitmentPartner.country;
     recruitmentPartner.zipCode = zipCode || recruitmentPartner.zipCode;
     recruitmentPartner.website = website || recruitmentPartner.website;
-    recruitmentPartner.description = description || recruitmentPartner.description;
-    recruitmentPartner.specializations = specializations || recruitmentPartner.specializations;
-    recruitmentPartner.isApproved = isApproved !== undefined ? isApproved : recruitmentPartner.isApproved;
+    recruitmentPartner.description =
+      description || recruitmentPartner.description;
+    recruitmentPartner.specializations =
+      specializations || recruitmentPartner.specializations;
+    recruitmentPartner.isApproved =
+      isApproved !== undefined ? isApproved : recruitmentPartner.isApproved;
 
     await recruitmentPartner.save();
 
@@ -399,7 +415,7 @@ exports.deleteRecruitmentPartner = async (req, res) => {
 
     // Delete the associated user account
     await User.findByIdAndDelete(recruitmentPartner.user);
-    
+
     // Delete the recruitment partner
     await RecruitmentPartner.findByIdAndDelete(id);
 
@@ -422,6 +438,14 @@ exports.getAllJobs = async (req, res) => {
           select: "email",
         },
       })
+      .populate({
+        path: "recruitmentPartner",
+        select: "companyName ownerName",
+        populate: {
+          path: "user",
+          select: "email",
+        },
+      })
       .sort({ createdAt: -1 });
 
     res.json({ jobs });
@@ -436,6 +460,15 @@ exports.getJobRequests = async (req, res) => {
     const jobRequests = await Job.find({ isApproved: false })
       .populate({
         path: "employer",
+        select: "companyName ownerName",
+        populate: {
+          path: "user",
+          select: "email",
+        },
+      })
+      .populate({
+        path: "recruitmentPartner",
+        select: "companyName ownerName",
         populate: {
           path: "user",
           select: "email",
@@ -452,18 +485,44 @@ exports.getJobRequests = async (req, res) => {
 
 exports.approveJob = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id);
+    const job = await Job.findById(req.params.id)
+      .populate({
+        path: "employer",
+        select: "companyName ownerName",
+        populate: {
+          path: "user",
+          select: "email",
+        },
+      })
+      .populate({
+        path: "recruitmentPartner",
+        select: "companyName ownerName",
+        populate: {
+          path: "user",
+          select: "email",
+        },
+      });
 
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
     }
 
+    if (job.isApproved) {
+      return res.status(400).json({ message: "Job is already approved" });
+    }
+
     job.isApproved = true;
+    job.updatedAt = new Date();
     await job.save();
 
+    const posterInfo = job.employer
+      ? `employer ${job.employer.companyName}`
+      : `recruitment partner ${job.recruitmentPartner.companyName}`;
+
     res.json({
-      message: "Job approved successfully",
+      message: `Job "${job.title}" approved successfully and is now visible to candidates`,
       job,
+      posterInfo,
     });
   } catch (error) {
     console.error("Approve job error:", error);
@@ -473,13 +532,37 @@ exports.approveJob = async (req, res) => {
 
 exports.rejectJob = async (req, res) => {
   try {
-    const job = await Job.findByIdAndDelete(req.params.id);
+    const job = await Job.findById(req.params.id)
+      .populate({
+        path: "employer",
+        select: "companyName ownerName",
+      })
+      .populate({
+        path: "recruitmentPartner",
+        select: "companyName ownerName",
+      });
 
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
     }
 
-    res.json({ message: "Job rejected and deleted successfully" });
+    if (job.isApproved) {
+      return res.status(400).json({
+        message:
+          "Cannot reject an already approved job. Use toggle active status instead.",
+      });
+    }
+
+    const jobTitle = job.title;
+    const posterInfo = job.employer
+      ? `employer ${job.employer.companyName}`
+      : `recruitment partner ${job.recruitmentPartner.companyName}`;
+
+    await Job.findByIdAndDelete(req.params.id);
+
+    res.json({
+      message: `Job "${jobTitle}" from ${posterInfo} has been rejected and deleted successfully`,
+    });
   } catch (error) {
     console.error("Reject job error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -503,6 +586,101 @@ exports.toggleJobActive = async (req, res) => {
     });
   } catch (error) {
     console.error("Toggle job active error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.updateJobStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!status || !["approved", "rejected", "pending"].includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status. Must be 'approved', 'rejected', or 'pending'",
+      });
+    }
+
+    const job = await Job.findById(req.params.id)
+      .populate({
+        path: "employer",
+        select: "companyName ownerName",
+        populate: {
+          path: "user",
+          select: "email",
+        },
+      })
+      .populate({
+        path: "recruitmentPartner",
+        select: "companyName ownerName",
+        populate: {
+          path: "user",
+          select: "email",
+        },
+      });
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    if (status === "approved") {
+      if (job.isApproved) {
+        return res.status(400).json({ message: "Job is already approved" });
+      }
+
+      job.isApproved = true;
+      job.updatedAt = new Date();
+      await job.save();
+
+      const posterInfo = job.employer
+        ? `employer ${job.employer.companyName}`
+        : `recruitment partner ${job.recruitmentPartner.companyName}`;
+
+      res.json({
+        message: `Job "${job.title}" approved successfully and is now visible to candidates`,
+        job,
+        posterInfo,
+      });
+    } else if (status === "pending") {
+      if (!job.isApproved) {
+        return res
+          .status(400)
+          .json({ message: "Job is already pending approval" });
+      }
+
+      job.isApproved = false;
+      job.updatedAt = new Date();
+      await job.save();
+
+      const posterInfo = job.employer
+        ? `employer ${job.employer.companyName}`
+        : `recruitment partner ${job.recruitmentPartner.companyName}`;
+
+      res.json({
+        message: `Job "${job.title}" moved to pending status and is now hidden from candidates`,
+        job,
+        posterInfo,
+      });
+    } else if (status === "rejected") {
+      if (job.isApproved) {
+        return res.status(400).json({
+          message:
+            "Cannot reject an already approved job. Use pending status first, then reject.",
+        });
+      }
+
+      const jobTitle = job.title;
+      const posterInfo = job.employer
+        ? `employer ${job.employer.companyName}`
+        : `recruitment partner ${job.recruitmentPartner.companyName}`;
+
+      await Job.findByIdAndDelete(req.params.id);
+
+      res.json({
+        message: `Job "${jobTitle}" from ${posterInfo} has been rejected and deleted successfully`,
+      });
+    }
+  } catch (error) {
+    console.error("Update job status error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

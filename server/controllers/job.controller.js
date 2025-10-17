@@ -170,23 +170,19 @@ exports.createJob = async (req, res) => {
       delete jobData.workSchedule; // Let schema default handle it
     }
 
-    // Set approval status - Auto-approve all jobs by default
-    jobData.isApproved = true;
+    // Set approval status - Jobs require admin approval by default
+    jobData.isApproved = false; // All jobs require admin approval
 
-    // TODO: Uncomment below code for future manual approval workflow
-    // Set approval status based on employer's job posting setting
-    // if (employer.jobPosting === "automatic") {
-    //   jobData.isApproved = true;
-    // } else {
-    //   jobData.isApproved = false; // Require manual approval
-    // }
+    // Note: Jobs will only be visible to candidates after admin approves them
 
     const job = new Job(jobData);
     await job.save();
 
     res.status(201).json({
-      message: "Job created successfully",
+      message:
+        "Job created successfully and is pending admin approval. It will be visible to candidates once approved.",
       job,
+      status: "pending_approval",
     });
   } catch (error) {
     console.error("Create job error:", error);
@@ -347,16 +343,31 @@ exports.getJobById = async (req, res) => {
 // Update job
 exports.updateJob = async (req, res) => {
   try {
-    const employer = await Employer.findOne({ user: req.user.id });
+    let poster = null;
+    let query = {};
 
-    if (!employer) {
-      return res.status(404).json({ message: "Employer profile not found" });
+    // Check if user is an employer or recruitment partner
+    if (req.user.role === "employer") {
+      poster = await Employer.findOne({ user: req.user.id });
+      if (!poster) {
+        return res.status(404).json({ message: "Employer profile not found" });
+      }
+      query = { _id: req.params.id, employer: poster._id };
+    } else if (req.user.role === "recruitment_partner") {
+      poster = await RecruitmentPartner.findOne({ user: req.user.id });
+      if (!poster) {
+        return res
+          .status(404)
+          .json({ message: "Recruitment partner profile not found" });
+      }
+      query = { _id: req.params.id, recruitmentPartner: poster._id };
+    } else {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to update job posts" });
     }
 
-    const job = await Job.findOne({
-      _id: req.params.id,
-      employer: employer._id,
-    });
+    const job = await Job.findOne(query);
 
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
@@ -380,16 +391,31 @@ exports.updateJob = async (req, res) => {
 // Delete job
 exports.deleteJob = async (req, res) => {
   try {
-    const employer = await Employer.findOne({ user: req.user.id });
+    let poster = null;
+    let query = {};
 
-    if (!employer) {
-      return res.status(404).json({ message: "Employer profile not found" });
+    // Check if user is an employer or recruitment partner
+    if (req.user.role === "employer") {
+      poster = await Employer.findOne({ user: req.user.id });
+      if (!poster) {
+        return res.status(404).json({ message: "Employer profile not found" });
+      }
+      query = { _id: req.params.id, employer: poster._id };
+    } else if (req.user.role === "recruitment_partner") {
+      poster = await RecruitmentPartner.findOne({ user: req.user.id });
+      if (!poster) {
+        return res
+          .status(404)
+          .json({ message: "Recruitment partner profile not found" });
+      }
+      query = { _id: req.params.id, recruitmentPartner: poster._id };
+    } else {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to delete job posts" });
     }
 
-    const job = await Job.findOneAndDelete({
-      _id: req.params.id,
-      employer: employer._id,
-    });
+    const job = await Job.findOneAndDelete(query);
 
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
@@ -407,16 +433,31 @@ exports.deleteJob = async (req, res) => {
 // Toggle job status (active/inactive)
 exports.toggleJobStatus = async (req, res) => {
   try {
-    const employer = await Employer.findOne({ user: req.user.id });
+    let poster = null;
+    let query = {};
 
-    if (!employer) {
-      return res.status(404).json({ message: "Employer profile not found" });
+    // Check if user is an employer or recruitment partner
+    if (req.user.role === "employer") {
+      poster = await Employer.findOne({ user: req.user.id });
+      if (!poster) {
+        return res.status(404).json({ message: "Employer profile not found" });
+      }
+      query = { _id: req.params.id, employer: poster._id };
+    } else if (req.user.role === "recruitment_partner") {
+      poster = await RecruitmentPartner.findOne({ user: req.user.id });
+      if (!poster) {
+        return res
+          .status(404)
+          .json({ message: "Recruitment partner profile not found" });
+      }
+      query = { _id: req.params.id, recruitmentPartner: poster._id };
+    } else {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to toggle job status" });
     }
 
-    const job = await Job.findOne({
-      _id: req.params.id,
-      employer: employer._id,
-    });
+    const job = await Job.findOne(query);
 
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
