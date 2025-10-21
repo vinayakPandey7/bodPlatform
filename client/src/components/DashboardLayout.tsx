@@ -176,17 +176,21 @@ const Sidebar = memo(
     user,
     navigation,
     profileHref,
+    dashboardUrl,
+    onLogout,
   }: {
     user: any;
     navigation: any[];
     profileHref: string;
+    dashboardUrl: string;
+    onLogout: () => void;
   }) => {
     return (
       <div className="hidden md:flex md:w-64 md:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           {/* Logo Section */}
           <div className="flex items-center flex-shrink-0 px-6 py-4 border-b border-gray-100">
-            <Logo />
+            <Logo href={dashboardUrl} />
           </div>
 
           {/* Navigation Section */}
@@ -218,6 +222,13 @@ const Sidebar = memo(
                 <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
                 <span className="font-medium">Help Desk</span>
               </Link>
+              <button
+                onClick={onLogout}
+                className="group flex items-center w-full px-3 py-3 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-all duration-200"
+              >
+                <LogOut className="mr-3 h-5 w-5 text-red-500 group-hover:text-red-600" />
+                <span className="font-medium">Logout</span>
+              </button>
             </div>
           </div>
         </div>
@@ -236,12 +247,16 @@ const MobileSidebar = memo(
     user,
     navigation,
     profileHref,
+    dashboardUrl,
+    onLogout,
   }: {
     isOpen: boolean;
     onClose: () => void;
     user: any;
     navigation: any[];
     profileHref: string;
+    dashboardUrl: string;
+    onLogout: () => void;
   }) => {
     if (!isOpen) return null;
 
@@ -253,7 +268,7 @@ const MobileSidebar = memo(
         />
         <div className="fixed inset-y-0 left-0 w-64 bg-white">
           <div className="flex items-center justify-between p-4 border-b">
-            <Logo />
+            <Logo href={dashboardUrl} />
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg"
@@ -290,6 +305,16 @@ const MobileSidebar = memo(
                 <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
                 <span className="font-medium">Help Desk</span>
               </Link>
+              <button
+                onClick={() => {
+                  onClose();
+                  onLogout();
+                }}
+                className="group flex items-center w-full px-3 py-3 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-all duration-200"
+              >
+                <LogOut className="mr-3 h-5 w-5 text-red-500 group-hover:text-red-600" />
+                <span className="font-medium">Logout</span>
+              </button>
             </div>
           </div>
         </div>
@@ -434,6 +459,30 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
   }, []);
+
+  // Get dashboard URL based on user role
+  const getDashboardUrl = useCallback((userRole: string) => {
+    switch (userRole) {
+      case "candidate":
+        return "/candidate/dashboard";
+      case "employer":
+        return "/employer/dashboard";
+      case "recruitment_partner":
+        return "/recruitment-partner/dashboard";
+      case "sales_person":
+        return "/sales/dashboard";
+      case "admin":
+      case "sub_admin":
+        return "/admin/dashboard";
+      default:
+        return "/dashboard";
+    }
+  }, []);
+
+  const dashboardUrl = useMemo(
+    () => (user?.role ? getDashboardUrl(user.role) : "/dashboard"),
+    [user?.role, getDashboardUrl]
+  );
 
   // Memoize navigation items to prevent unnecessary recalculations
   const navigation = useMemo(() => {
@@ -744,7 +793,13 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Sidebar user={user} navigation={navigation} profileHref={profileHref} />
+      <Sidebar 
+        user={user} 
+        navigation={navigation} 
+        profileHref={profileHref}
+        dashboardUrl={dashboardUrl}
+        onLogout={handleLogout}
+      />
 
       <MobileSidebar
         isOpen={mobileMenuOpen}
@@ -752,6 +807,8 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
         user={user}
         navigation={navigation}
         profileHref={profileHref}
+        dashboardUrl={dashboardUrl}
+        onLogout={handleLogout}
       />
 
       {/* Main content */}

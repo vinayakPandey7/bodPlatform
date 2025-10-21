@@ -1,15 +1,18 @@
 import React from "react";
+import Link from "next/link";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   showText?: boolean;
+  href?: string;
 }
 
 const Logo: React.FC<LogoProps> = ({
   size = "md",
   className = "",
   showText = true,
+  href,
 }) => {
   const sizeClasses = {
     sm: "w-8 h-8",
@@ -23,7 +26,7 @@ const Logo: React.FC<LogoProps> = ({
     lg: "text-2xl",
   };
 
-  return (
+  const content = (
     <div className={`flex items-center space-x-3 ${className}`}>
       {/* CIERO Logo */}
       <div
@@ -46,6 +49,17 @@ const Logo: React.FC<LogoProps> = ({
       )}
     </div>
   );
+
+  // If href is provided, wrap in Link
+  if (href) {
+    return (
+      <Link href={href} className="cursor-pointer hover:opacity-80 transition-opacity">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 };
 
 export default Logo;

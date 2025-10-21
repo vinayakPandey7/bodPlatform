@@ -78,7 +78,7 @@ export default function EmployerDashboard() {
   };
 
   const handleViewApplications = () => {
-    router.push("/employer/applications");
+    router.push("/employer/saved-candidates");
   };
 
   const handleManageJobs = () => {
@@ -283,22 +283,7 @@ export default function EmployerDashboard() {
                 </div>
               </button>
 
-              {/* View Applications */}
-              <button
-                onClick={handleViewApplications}
-                className="group relative bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-2xl p-8 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="absolute inset-0 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10 text-center">
-                  <div className="p-4 bg-white/20 rounded-xl w-fit mx-auto mb-4">
-                    <Eye className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">View Applications</h3>
-                  <p className="text-green-100">
-                    Review candidate applications
-                  </p>
-                </div>
-              </button>
+           
 
               {/* Manage Jobs */}
               <button
@@ -313,6 +298,24 @@ export default function EmployerDashboard() {
                   <h3 className="text-xl font-bold mb-2">Manage Jobs</h3>
                   <p className="text-orange-100">
                     Edit and manage existing jobs
+                  </p>
+                </div>
+              </button>
+
+
+                 {/* View Applications */}
+                 <button
+                onClick={handleViewApplications}
+                className="group relative bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-2xl p-8 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center">
+                  <div className="p-4 bg-white/20 rounded-xl w-fit mx-auto mb-4">
+                    <Eye className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Saved Candidates</h3>
+                  <p className="text-green-100">
+                    Review candidate applications
                   </p>
                 </div>
               </button>
