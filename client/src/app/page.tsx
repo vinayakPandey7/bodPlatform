@@ -10,6 +10,7 @@ export default function HomePage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [statsCount, setStatsCount] = useState({ jobs: 0, candidates: 0, companies: 0 });
   const [heroTextIndex, setHeroTextIndex] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const heroTexts = [
     "Your Complete Recruitment Ecosystem",
@@ -171,13 +172,15 @@ export default function HomePage() {
       </div>
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex justify-between items-center py-3 sm:py-4">
             <div className="flex items-center">
               <Logo size="md" />
             </div>
-            <div className="flex items-center space-x-6">
+            
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-6">
               <Link
                 href="/employers"
                 className="text-gray-600 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105"
@@ -209,44 +212,118 @@ export default function HomePage() {
                 Get Started
               </Link>
             </div>
+
+            {/* Mobile Navigation */}
+            <div className="lg:hidden flex items-center space-x-2">
+              <Link
+                href="/login"
+                className="text-gray-700 hover:text-blue-600 font-medium text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-300"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+              >
+                Get Started
+              </Link>
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 ml-1"
+                aria-label="Toggle mobile menu"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  {isMobileMenuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
+
+          {/* Mobile Menu Dropdown */}
+          {isMobileMenuOpen && (
+            <div className="lg:hidden border-t border-gray-200 bg-white/95 backdrop-blur-sm py-4 shadow-lg">
+              <div className="flex flex-col space-y-1">
+                <Link
+                  href="/employers"
+                  className="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 py-3 px-4 rounded-lg hover:bg-blue-50"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  For Employers
+                </Link>
+                <Link
+                  href="/register?type=candidate"
+                  className="text-gray-700 hover:text-green-600 font-medium transition-all duration-300 py-3 px-4 rounded-lg hover:bg-green-50"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Find Jobs
+                </Link>
+                <Link
+                  href="/register?type=recruitment-partner"
+                  className="text-gray-700 hover:text-purple-600 font-medium transition-all duration-300 py-3 px-4 rounded-lg hover:bg-purple-50"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Recruiters
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 lg:pt-20 pb-12 sm:pb-16 relative">
         <div className="text-center">
-          <div className="mb-6 h-16 flex items-center justify-center">
-            <h1 className="text-5xl font-bold text-gray-900 transition-all duration-500 transform">
+          <div className="mb-6 sm:mb-6 h-12 sm:h-16 flex items-center justify-center">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 transition-all duration-500 transform px-4">
               {heroTexts[heroTextIndex]}
             </h1>
           </div>
-          <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto animate-fade-in">
+          <p className="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-4xl mx-auto animate-fade-in px-4">
             Whether you're an employer looking to hire, a job seeker finding
             opportunities, a recruitment partner building placements - CIERO
             connects everyone in the hiring process.
           </p>
           
           {/* Animated Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center transform hover:scale-105 transition-all duration-300">
-              <div className="text-3xl font-bold text-blue-600">{statsCount.jobs.toLocaleString()}+</div>
-              <div className="text-gray-600">Jobs Posted</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
+            <div className="text-center transform hover:scale-105 transition-all duration-300 p-4">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600">{statsCount.jobs.toLocaleString()}+</div>
+              <div className="text-sm sm:text-base text-gray-600">Jobs Posted</div>
             </div>
-            <div className="text-center transform hover:scale-105 transition-all duration-300">
-              <div className="text-3xl font-bold text-green-600">{statsCount.candidates.toLocaleString()}+</div>
-              <div className="text-gray-600">Candidates Hired</div>
+            <div className="text-center transform hover:scale-105 transition-all duration-300 p-4">
+              <div className="text-2xl sm:text-3xl font-bold text-green-600">{statsCount.candidates.toLocaleString()}+</div>
+              <div className="text-sm sm:text-base text-gray-600">Candidates Hired</div>
             </div>
-            <div className="text-center transform hover:scale-105 transition-all duration-300">
-              <div className="text-3xl font-bold text-purple-600">{statsCount.companies.toLocaleString()}+</div>
-              <div className="text-gray-600">Partner Companies</div>
+            <div className="text-center transform hover:scale-105 transition-all duration-300 p-4">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600">{statsCount.companies.toLocaleString()}+</div>
+              <div className="text-sm sm:text-base text-gray-600">Partner Companies</div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto px-4">
             <Link
               href="/register?type=employer"
-              className="group bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-xl text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 text-center transform hover:scale-105 hover:shadow-xl"
+              className="group bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 text-center transform hover:scale-105 hover:shadow-xl"
             >
               <span className="group-hover:scale-105 inline-block transition-transform duration-300">
                 I'm an Employer
@@ -254,7 +331,7 @@ export default function HomePage() {
             </Link>
             <Link
               href="/register?type=candidate"
-              className="group bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 rounded-xl text-base font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 text-center transform hover:scale-105 hover:shadow-xl"
+              className="group bg-gradient-to-r from-green-600 to-green-700 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 text-center transform hover:scale-105 hover:shadow-xl"
             >
               <span className="group-hover:scale-105 inline-block transition-transform duration-300">
                 I'm Job Seeking
@@ -262,7 +339,7 @@ export default function HomePage() {
             </Link>
             <Link
               href="/register?type=recruitment-partner"
-              className="group bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4 rounded-xl text-base font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-300 text-center transform hover:scale-105 hover:shadow-xl"
+              className="group bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-300 text-center transform hover:scale-105 hover:shadow-xl sm:col-span-2 lg:col-span-1"
             >
               <span className="group-hover:scale-105 inline-block transition-transform duration-300">
                 I'm a Recruiter
@@ -273,18 +350,18 @@ export default function HomePage() {
       </div>
 
       {/* Rotating Testimonials Section */}
-      <div className="py-16 bg-white/50 backdrop-blur-sm">
+      <div className="py-12 sm:py-16 bg-white/50 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
               Trusted by Professionals Worldwide
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-base sm:text-lg text-gray-600">
               See what our community is saying about their CIERO experience
             </p>
           </div>
           
-          <div className="relative h-64 overflow-hidden">
+          <div className="relative h-48 sm:h-64 overflow-hidden">
             {testimonials.map((testimonial, index) => (
               <div
                 key={index}
@@ -296,18 +373,18 @@ export default function HomePage() {
                       : 'translate-x-full opacity-0'
                 }`}
               >
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
-                  <div className="flex items-center mb-6">
-                    <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${testimonial.gradient} flex items-center justify-center text-white font-bold text-lg mr-4`}>
+                <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xl border border-gray-100 h-full flex flex-col justify-center">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start mb-4 sm:mb-6">
+                    <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r ${testimonial.gradient} flex items-center justify-center text-white font-bold text-sm sm:text-lg mb-3 sm:mb-0 sm:mr-4`}>
                       {testimonial.avatar}
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                      <p className="text-gray-600">{testimonial.role}</p>
-                      <p className="text-sm text-gray-500">{testimonial.company}</p>
+                    <div className="text-center sm:text-left">
+                      <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{testimonial.name}</h4>
+                      <p className="text-gray-600 text-sm">{testimonial.role}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{testimonial.company}</p>
                     </div>
                   </div>
-                  <blockquote className="text-lg text-gray-700 italic">
+                  <blockquote className="text-sm sm:text-base lg:text-lg text-gray-700 italic text-center sm:text-left">
                     "{testimonial.quote}"
                   </blockquote>
                 </div>
@@ -315,7 +392,7 @@ export default function HomePage() {
             ))}
           </div>
           
-          <div className="flex justify-center mt-8 space-x-2">
+          <div className="flex justify-center mt-6 sm:mt-8 space-x-2">
             {testimonials.map((_, index) => (
               <button
                 key={index}
@@ -330,19 +407,19 @@ export default function HomePage() {
       </div>
 
       {/* Trusted Companies */}
-      <div className="py-12 bg-gray-50/50">
+      <div className="py-8 sm:py-12 bg-gray-50/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h3 className="text-center text-gray-500 text-sm font-medium mb-8">
+          <h3 className="text-center text-gray-500 text-xs sm:text-sm font-medium mb-6 sm:mb-8">
             TRUSTED BY LEADING COMPANIES
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6 lg:gap-8 items-center">
             {trustedCompanies.map((company, index) => (
               <div
                 key={index}
                 className="text-center opacity-60 hover:opacity-100 transition-all duration-300 transform hover:scale-105"
               >
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                  <div className="font-semibold text-gray-700 text-sm">{company}</div>
+                <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-100">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">{company}</div>
                 </div>
               </div>
             ))}
@@ -351,20 +428,20 @@ export default function HomePage() {
       </div>
 
       {/* Enhanced User Type Sections */}
-      <div className="py-20 bg-white/80 backdrop-blur-sm">
+      <div className="py-12 sm:py-16 lg:py-20 bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
               Built for Every Role in Recruitment
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-lg sm:text-xl text-gray-600">
               Tailored experiences for all stakeholders in the hiring process
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Employers */}
-            <div className="group text-center p-8 border border-gray-200 rounded-2xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/80 backdrop-blur-sm hover:bg-white">
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+            <div className="group text-center p-6 sm:p-8 border border-gray-200 rounded-2xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/80 backdrop-blur-sm hover:bg-white">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg
                   className="w-10 h-10 text-blue-600"
                   fill="none"
@@ -379,10 +456,10 @@ export default function HomePage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3">
                 For Employers
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Post jobs, manage applications, review candidates, and build
                 your dream team with powerful hiring tools.
               </p>
@@ -525,17 +602,17 @@ export default function HomePage() {
       </div>
 
       {/* Features Section */}
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 py-16">
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
               Why Choose CIERO?
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-base sm:text-lg text-gray-600">
               Comprehensive solutions for the entire recruitment ecosystem
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             <div className="text-center p-8 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="w-20 h-20 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg
@@ -614,20 +691,20 @@ export default function HomePage() {
       </div>
 
       {/* Enhanced Call to Action */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 py-16 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 py-12 sm:py-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-4xl font-bold text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to Transform Your Career or Business?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-lg sm:text-xl text-blue-100 mb-6 sm:mb-8">
             Join thousands of professionals who trust CIERO for their
             recruitment needs.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <Link
               href="/register?type=employer"
-              className="group bg-white text-blue-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="group bg-white text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               <span className="group-hover:scale-105 inline-block transition-transform duration-300">
                 Start Hiring
@@ -635,7 +712,7 @@ export default function HomePage() {
             </Link>
             <Link
               href="/register?type=candidate"
-              className="group bg-blue-700/50 backdrop-blur-sm text-white border-2 border-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-800/50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="group bg-blue-700/50 backdrop-blur-sm text-white border-2 border-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-blue-800/50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               <span className="group-hover:scale-105 inline-block transition-transform duration-300">
                 Find Jobs
