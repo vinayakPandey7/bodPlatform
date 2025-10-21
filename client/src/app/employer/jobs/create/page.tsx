@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -126,7 +126,124 @@ export default function CreateJobPage() {
   const [error, setError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedGeneralRequirements, setSelectedGeneralRequirements] = useState<string[]>([]);
   const router = useRouter();
+
+  // Skills data for bubble selection
+  const availableSkills = [
+    'Problem Solving',
+    'Attention to Detail',
+    'Logic & Reasoning',
+    'Ethical',
+    'Authentic',
+    'Assertiveness',
+    'Conscientiousness',
+    'Emotional Intelligence',
+    'Emotional Stability',
+    'Optimism',
+    'Persistence',
+    'Sales Potential',
+    'Service Orientation',
+    'Teamwork'
+  ];
+
+  const generalRequirements = [
+    'Problem Solving',
+    'Attention to Detail',
+    'Logic & Reasoning',
+    'Ethical',
+    'Authentic',
+    'Assertiveness',
+    'Conscientiousness',
+    'Emotional Intelligence',
+    'Emotional Stability',
+    'Optimism',
+    'Persistence',
+    'Sales Potential',
+    'Service Orientation',
+    'Teamwork'
+  ];
+
+  // Bubble selector component for skills
+  const BubbleSelector = ({ 
+    options, 
+    selected, 
+    onChange, 
+    placeholder = "Select items" 
+  }: {
+    options: string[];
+    selected: string[];
+    onChange: (selected: string[]) => void;
+    placeholder?: string;
+  }) => {
+    const toggleSelection = (item: string) => {
+      if (selected.includes(item)) {
+        onChange(selected.filter(skill => skill !== item));
+      } else {
+        onChange([...selected, item]);
+      }
+    };
+
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          {options.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => toggleSelection(item)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                selected.includes(item)
+                  ? 'bg-blue-600 text-white border-2 border-blue-600'
+                  : 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+              }`}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        {selected.length > 0 && (
+          <div className="mt-2">
+            <p className="text-sm text-gray-600 mb-1">Selected:</p>
+            <div className="flex flex-wrap gap-1">
+              {selected.map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {item}
+                  <button
+                    type="button"
+                    onClick={() => toggleSelection(item)}
+                    className="ml-1 text-blue-600 hover:text-blue-800"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Sync selected skills with form data
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      requiredSkills: selectedSkills.join(', ')
+    }));
+  }, [selectedSkills]);
+
+  // Sync selected general requirements with form data
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      additionalRequirements: selectedGeneralRequirements.join(', ')
+    }));
+  }, [selectedGeneralRequirements]);
 
   // Use TanStack Query mutation
   const createJobMutation = useCreateJob();
@@ -1192,18 +1309,13 @@ export default function CreateJobPage() {
                   htmlFor="skills"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Required Skills (comma-separated)
+                  Required Skills
                 </label>
-                <input
-                  type="text"
-                  id="skills"
-                  name="skills"
-                  value={formData.skills.join(", ")}
-                  onChange={(e) =>
-                    handleArrayInputChange("skills", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., Insurance sales, Policy review, Claims processing, Customer retention"
+                <BubbleSelector
+                  options={availableSkills}
+                  selected={selectedSkills}
+                  onChange={setSelectedSkills}
+                  placeholder="Select required skills"
                 />
               </div>
 
@@ -1212,18 +1324,13 @@ export default function CreateJobPage() {
                   htmlFor="requirements"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  General Requirements (comma-separated)
+                  General Requirements
                 </label>
-                <textarea
-                  id="requirements"
-                  name="requirements"
-                  value={formData.requirements.join(", ")}
-                  onChange={(e) =>
-                    handleArrayInputChange("requirements", e.target.value)
-                  }
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., Professional communication skills, Customer service experience, Computer proficiency"
+                <BubbleSelector
+                  options={generalRequirements}
+                  selected={selectedGeneralRequirements}
+                  onChange={setSelectedGeneralRequirements}
+                  placeholder="Select general requirements"
                 />
               </div>
 
