@@ -1,7 +1,8 @@
 import axios from "axios";
 import { v4 as uuid } from "uuid";
 
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://theciero.com/api";
+// Force production API URL to prevent localhost issues
+export const BASE_URL = "https://theciero.com/api";
 
 axios.interceptors.request.use(
   (config) => {
