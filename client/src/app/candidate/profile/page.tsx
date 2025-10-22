@@ -44,6 +44,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ResumePreviewModal from "@/components/ResumePreviewModal";
 import { toast } from "sonner";
+import api from "@/lib/api";
 
 export default function CandidateProfilePage() {
   const router = useRouter();
@@ -881,7 +882,10 @@ export default function CandidateProfilePage() {
 
     try {
       // This would be an API call to change password
-      // await api.post('/auth/change-password', passwordForm);
+      await api.put('/auth/change-password', {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
       alert("Password changed successfully");
       setPasswordForm({
         currentPassword: "",

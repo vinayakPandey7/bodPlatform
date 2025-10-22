@@ -30,5 +30,6 @@ router.put(
   authController.resetPassword
 );
 router.get("/me", auth, authController.getMe);
+router.put("/change-password", auth, authController.changePassword);
 
 module.exports = router;

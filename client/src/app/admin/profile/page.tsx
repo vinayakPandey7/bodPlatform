@@ -278,7 +278,7 @@ export default function AdminProfilePage() {
 
     try {
       // This would be an API call to change password
-      await api.put("/admin/change-password", {
+      await api.put("/auth/change-password", {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });

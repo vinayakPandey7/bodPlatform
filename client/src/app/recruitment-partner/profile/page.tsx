@@ -222,7 +222,10 @@ export default function RecruitmentPartnerProfilePage() {
 
     try {
       // This would be an API call to change password
-      // await api.post('/auth/change-password', passwordForm);
+      await api.put('/auth/change-password', {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
       alert("Password changed successfully");
       setPasswordForm({
         currentPassword: "",
