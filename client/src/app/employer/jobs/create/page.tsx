@@ -843,7 +843,7 @@ export default function CreateJobPage() {
                     >
                       <option value="">Select pay structure</option>
                       <option value="hourly">Hourly</option>
-                      <option value="salary">Salary</option>
+                      <option value="yearly">Yearly</option>
                       <option value="commission">Commission</option>
                       <option value="base_plus_commission">
                         Base + Commission

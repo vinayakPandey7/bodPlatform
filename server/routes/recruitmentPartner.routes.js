@@ -37,11 +37,18 @@ router.post(
   auth,
   authorizeRoles("recruitment_partner"),
   (req, res, next) => {
-    uploadToCloudinary.single("resume")(req, res, (err) => {
+    uploadToCloudinary.fields([
+      { name: "resume", maxCount: 1 },
+      { name: "attachment_0", maxCount: 1 },
+      { name: "attachment_1", maxCount: 1 },
+      { name: "attachment_2", maxCount: 1 },
+      { name: "attachment_3", maxCount: 1 },
+      { name: "attachment_4", maxCount: 1 },
+    ])(req, res, (err) => {
       if (err) {
         console.error("Cloudinary upload error:", err);
         return res.status(400).json({
-          message: "Resume upload failed",
+          message: "File upload failed",
           error: err.message,
         });
       }
@@ -73,11 +80,18 @@ router.post(
   auth,
   authorizeRoles("recruitment_partner"),
   (req, res, next) => {
-    uploadToCloudinary.single("resume")(req, res, (err) => {
+    uploadToCloudinary.fields([
+      { name: "resume", maxCount: 1 },
+      { name: "attachment_0", maxCount: 1 },
+      { name: "attachment_1", maxCount: 1 },
+      { name: "attachment_2", maxCount: 1 },
+      { name: "attachment_3", maxCount: 1 },
+      { name: "attachment_4", maxCount: 1 },
+    ])(req, res, (err) => {
       if (err) {
         console.error("Cloudinary upload error:", err);
         return res.status(400).json({
-          message: "Resume upload failed",
+          message: "File upload failed",
           error: err.message,
         });
       }

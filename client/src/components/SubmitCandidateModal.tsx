@@ -84,6 +84,7 @@ interface CandidateSubmissionData {
   education: string;
   skills: string[];
   expectedSalary: string;
+  salaryType: string;
   zipcode: string;
   address: string;
   city: string;
@@ -91,6 +92,7 @@ interface CandidateSubmissionData {
   linkedIn: string;
   portfolio: string;
   resume: File | null;
+  attachments: File[];
   coverLetter: string;
   availability: string;
   noticePeriod: string;
@@ -191,6 +193,7 @@ export default function SubmitCandidateModal({
   >([]);
   const [candidatesLoading, setCandidatesLoading] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState("");
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
 
   // Fetch existing candidates when modal opens
   useEffect(() => {
@@ -234,6 +237,7 @@ export default function SubmitCandidateModal({
       education: "",
       skills: [],
       expectedSalary: "",
+      salaryType: "yearly",
       zipcode: "",
       address: "",
       city: "",
@@ -241,6 +245,7 @@ export default function SubmitCandidateModal({
       linkedIn: "",
       portfolio: "",
       resume: null,
+      attachments: [],
       coverLetter: "",
       availability: "",
       noticePeriod: "",
@@ -269,7 +274,21 @@ export default function SubmitCandidateModal({
       );
       setFieldValue("skills", skillsArray);
     }
-    if (candidate.experience) setFieldValue("experience", candidate.experience);
+    
+    // Extract experience description from objects
+    let experienceText = "";
+    if (candidate.experience) {
+      if (typeof candidate.experience === "string") {
+        experienceText = candidate.experience;
+      } else if (Array.isArray(candidate.experience) && (candidate.experience as any[]).length > 0) {
+        // Get description from first experience entry
+        const firstExp = (candidate.experience as any[])[0];
+        experienceText = firstExp?.description || "";
+      } else if (typeof candidate.experience === "object" && (candidate.experience as any).description) {
+        experienceText = (candidate.experience as any).description;
+      }
+    }
+    setFieldValue("experience", experienceText);
 
     toast.success(`Selected ${candidate.name} for submission`);
   };
@@ -342,6 +361,28 @@ export default function SubmitCandidateModal({
     }
   };
 
+  // Handle attachment upload
+  const handleAttachmentUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const newAttachments = [...attachmentFiles, ...files].slice(0, 5); // Limit to 5 files
+      setAttachmentFiles(newAttachments);
+      setFieldValue("attachments", newAttachments);
+    }
+  };
+
+  const removeAttachment = (
+    index: number,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
+    const newAttachments = attachmentFiles.filter((_, i) => i !== index);
+    setAttachmentFiles(newAttachments);
+    setFieldValue("attachments", newAttachments);
+  };
+
   const handleSubmit = async (
     values: CandidateSubmissionData,
     { setSubmitting, resetForm }: any
@@ -361,10 +402,18 @@ export default function SubmitCandidateModal({
         Object.keys(values).forEach((key) => {
           if (key === "resume" && values.resume) {
             formData.append("resume", values.resume);
+          } else if (key === "attachments") {
+            // Handle multiple attachments
+            if (Array.isArray(values.attachments)) {
+              values.attachments.forEach((file, index) => {
+                formData.append(`attachment_${index}`, file);
+              });
+            }
           } else if (key === "skills") {
             formData.append("skills", JSON.stringify(values.skills));
           } else if (
             key !== "resume" &&
+            key !== "attachments" &&
             key !== "submissionMode" &&
             key !== "selectedCandidateId"
           ) {
@@ -671,7 +720,7 @@ export default function SubmitCandidateModal({
                                                   label={
                                                     typeof skill === "string"
                                                       ? skill
-                                                      : skill.name || skill
+                                                      : skill.name || String(skill)
                                                   }
                                                   size="small"
                                                   variant="outlined"
@@ -955,37 +1004,76 @@ export default function SubmitCandidateModal({
                         }}
                       />
 
-                      <Field
-                        as={TextField}
-                        name="expectedSalary"
-                        label="Expected Salary"
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        error={
-                          touched.expectedSalary &&
-                          Boolean(errors.expectedSalary)
-                        }
-                        helperText={
-                          touched.expectedSalary && errors.expectedSalary
-                        }
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="e.g., $80,000"
-                        InputProps={{
-                          startAdornment: (
-                            <MoneyIcon sx={{ mr: 1, color: "#9ca3af" }} />
-                          ),
-                        }}
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Salary Type</InputLabel>
+                        <Field
+                          as={Select}
+                          name="salaryType"
+                          value={values.salaryType}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          label="Salary Type"
+                          sx={{
                             borderRadius: "8px",
                             backgroundColor: "white",
                             fontSize: "16px",
-                          },
-                        }}
-                      />
+                          }}
+                        >
+                          <MenuItem value="yearly">Yearly</MenuItem>
+                          <MenuItem value="hourly">Hourly</MenuItem>
+                        </Field>
+                      </FormControl>
                     </Box>
+
+                    <Field
+                      as={TextField}
+                      name="expectedSalary"
+                      label="Expected Salary"
+                      type="text"
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      error={
+                        touched.expectedSalary &&
+                        Boolean(errors.expectedSalary)
+                      }
+                      helperText={
+                        touched.expectedSalary && errors.expectedSalary
+                      }
+                      onChange={(e: any) => {
+                        const value = e.target.value;
+                        const numericValue = value.replace(/[^0-9.]/g, '');
+                        handleChange({
+                          target: {
+                            name: 'expectedSalary',
+                            value: numericValue
+                          }
+                        });
+                      }}
+                      onBlur={handleBlur}
+                      placeholder={values.salaryType === "hourly" ? "e.g., 25" : "e.g., 80000"}
+                      inputProps={{
+                        inputMode: "numeric",
+                        pattern: "[0-9]*",
+                      }}
+                      InputProps={{
+                        startAdornment: (
+                          <MoneyIcon sx={{ mr: 1, color: "#9ca3af" }} />
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            {values.salaryType === "hourly" ? "/hour" : "/year"}
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "8px",
+                          backgroundColor: "white",
+                          fontSize: "16px",
+                        },
+                      }}
+                    />
 
                     <Field
                       as={TextField}
@@ -1214,6 +1302,63 @@ export default function SubmitCandidateModal({
                             {errors.resume}
                           </Typography>
                         )}
+                      </Box>
+                    )}
+
+                    {/* Additional Attachments for New Candidates */}
+                    {values.submissionMode === "new" && (
+                      <Box
+                        sx={{
+                          p: 2,
+                          bgcolor: "#f8fafc",
+                          borderRadius: 2,
+                          border: "1px solid #e2e8f0",
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ mb: 2, fontWeight: 600, color: "#374151" }}
+                        >
+                          Additional Attachments (Cover Letter, Certificates, etc.)
+                        </Typography>
+                        <input
+                          type="file"
+                          id="attachments-upload"
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          multiple
+                          onChange={(e) => handleAttachmentUpload(e, setFieldValue)}
+                          style={{ display: "none" }}
+                        />
+                        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                          <Button
+                            component="label"
+                            htmlFor="attachments-upload"
+                            variant="outlined"
+                            size="small"
+                            startIcon={<UploadIcon />}
+                            disabled={attachmentFiles.length >= 5}
+                            sx={{ minWidth: "auto", px: 2 }}
+                          >
+                            {attachmentFiles.length >= 5 
+                              ? "Maximum 5 attachments" 
+                              : `Upload Attachments (${attachmentFiles.length}/5)`
+                            }
+                          </Button>
+                          {attachmentFiles.length > 0 && (
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                              {attachmentFiles.map((file, index) => (
+                                <Chip
+                                  key={index}
+                                  label={file.name}
+                                  onDelete={() => removeAttachment(index, setFieldValue)}
+                                  size="small"
+                                  color="secondary"
+                                  variant="outlined"
+                                />
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
                       </Box>
                     )}
                   </Box>

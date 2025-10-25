@@ -18,6 +18,7 @@ import {
   Typography,
   IconButton,
   Chip,
+  InputAdornment,
 } from "@mui/material";
 import {
   Upload as UploadIcon,
@@ -38,6 +39,7 @@ interface CandidateFormData {
   city: string;
   state: string;
   expectedSalary: string;
+  salaryType: string;
   currentCompany: string;
   currentPosition: string;
   noticePeriod: string;
@@ -45,6 +47,7 @@ interface CandidateFormData {
   portfolio: string;
   notes: string;
   resume: File | null;
+  attachments: File[];
 }
 
 interface LocationData {
@@ -66,6 +69,7 @@ export default function AddCandidatePage() {
     city: "",
     state: "",
     expectedSalary: "",
+    salaryType: "yearly",
     currentCompany: "",
     currentPosition: "",
     noticePeriod: "",
@@ -73,12 +77,13 @@ export default function AddCandidatePage() {
     portfolio: "",
     notes: "",
     resume: null,
+    attachments: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
-  const [resumeFileName, setResumeFileName] = useState("");
   const [linkedInLoading, setLinkedInLoading] = useState(false);
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const router = useRouter();
 
   const handleInputChange = (
@@ -113,6 +118,18 @@ export default function AddCandidatePage() {
         }));
       }
     }
+  };
+
+  const handleNumberInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    // Allow only numbers and decimal point for salary
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    setFormData((prev) => ({
+      ...prev,
+      [name]: numericValue,
+    }));
   };
 
   const handleSelectChange = (e: any) => {
@@ -171,14 +188,27 @@ export default function AddCandidatePage() {
   };
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const newAttachments = [...attachmentFiles, ...files].slice(0, 5); // Limit to 5 files
+      setAttachmentFiles(newAttachments);
       setFormData((prev) => ({
         ...prev,
-        resume: file,
+        attachments: newAttachments,
+        resume: newAttachments[0] || null, // Set first file as resume for backward compatibility
       }));
-      setResumeFileName(file.name);
     }
+  };
+
+
+  const removeAttachment = (index: number) => {
+    const newAttachments = attachmentFiles.filter((_, i) => i !== index);
+    setAttachmentFiles(newAttachments);
+    setFormData((prev) => ({
+      ...prev,
+      attachments: newAttachments,
+      resume: newAttachments[0] || null, // Update resume to first file or null
+    }));
   };
 
   const handleLinkedInImport = async () => {
@@ -276,6 +306,13 @@ export default function AddCandidatePage() {
           formDataToSend.append(key, JSON.stringify(value));
         } else if (key === "resume" && value) {
           formDataToSend.append(key, value);
+        } else if (key === "attachments") {
+          // Handle multiple attachments
+          if (Array.isArray(value)) {
+            value.forEach((file, index) => {
+              formDataToSend.append(`attachment_${index}`, file);
+            });
+          }
         } else if (value !== null && value !== undefined) {
           formDataToSend.append(key, value.toString());
         }
@@ -444,17 +481,18 @@ export default function AddCandidatePage() {
                 required
               />
 
-              {/* Resume Upload */}
+              {/* Resume and Documents Upload */}
               <Box className="flex flex-col gap-2">
                 <Typography
                   variant="body2"
                   className="text-gray-700 font-medium"
                 >
-                  Resume Upload *
+                  Resume and Documents Upload * (Up to 5 files)
                 </Typography>
                 <input
                   type="file"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  multiple
                   onChange={handleResumeUpload}
                   className="hidden"
                   id="resume-upload"
@@ -465,6 +503,7 @@ export default function AddCandidatePage() {
                     variant="outlined"
                     startIcon={<UploadIcon />}
                     fullWidth
+                    disabled={attachmentFiles.length >= 5}
                     sx={{
                       borderColor: "#e2e8f0",
                       color: "#64748b",
@@ -474,22 +513,28 @@ export default function AddCandidatePage() {
                       },
                     }}
                   >
-                    {resumeFileName || "Upload Resume"}
+                    {attachmentFiles.length >= 5 
+                      ? "Maximum 5 files uploaded" 
+                      : `Upload Files (${attachmentFiles.length}/5)`
+                    }
                   </Button>
                 </label>
-                {resumeFileName && (
-                  <Chip
-                    label={resumeFileName}
-                    onDelete={() => {
-                      setFormData((prev) => ({ ...prev, resume: null }));
-                      setResumeFileName("");
-                    }}
-                    color="primary"
-                    variant="outlined"
-                    size="small"
-                  />
+                {attachmentFiles.length > 0 && (
+                  <Box className="flex flex-wrap gap-1 mt-2">
+                    {attachmentFiles.map((file, index) => (
+                      <Chip
+                        key={index}
+                        label={file.name}
+                        onDelete={() => removeAttachment(index)}
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                      />
+                    ))}
+                  </Box>
                 )}
               </Box>
+
 
               {/* Zipcode with auto-lookup */}
               <TextField
@@ -670,15 +715,56 @@ export default function AddCandidatePage() {
                 </Select>
               </FormControl>
 
+              <FormControl fullWidth size="medium">
+                <InputLabel
+                  sx={{ fontSize: "16px", fontWeight: 500, color: "#64748b" }}
+                >
+                  Salary Type
+                </InputLabel>
+                <Select
+                  name="salaryType"
+                  value={formData.salaryType}
+                  onChange={handleSelectChange}
+                  label="Salary Type"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#e2e8f0",
+                    },
+                  }}
+                >
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                  <MenuItem value="hourly">Hourly</MenuItem>
+                </Select>
+              </FormControl>
+
               <TextField
                 label="Expected Salary"
                 name="expectedSalary"
+                type="text"
                 value={formData.expectedSalary}
-                onChange={handleInputChange}
+                onChange={handleNumberInputChange}
                 fullWidth
                 variant="outlined"
                 size="medium"
-                placeholder="e.g., $50,000 - $70,000"
+                placeholder={formData.salaryType === "hourly" ? "e.g., 25" : "e.g., 50000"}
+                inputProps={{
+                  inputMode: "numeric",
+                  pattern: "[0-9]*",
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {formData.salaryType === "hourly" ? "/hour" : "/year"}
+                    </InputAdornment>
+                  ),
+                }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "8px",

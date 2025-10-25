@@ -921,7 +921,7 @@ export default function CreateJobPageRecruitmentPartner() {
                 label="Pay Structure"
               >
                 <MenuItem value="hourly">Hourly</MenuItem>
-                <MenuItem value="salary">Salary</MenuItem>
+                <MenuItem value="yearly">Yearly</MenuItem>
                 <MenuItem value="commission">Commission</MenuItem>
                 <MenuItem value="base_plus_commission">
                   Base + Commission

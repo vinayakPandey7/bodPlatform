@@ -94,14 +94,50 @@ export default function CandidateModal({
     if (open) {
       if (candidate) {
         // Edit mode - populate with existing data
+        // Extract skills from objects if they are objects
+        let skillsArray = [];
+        if (candidate.skills && Array.isArray(candidate.skills)) {
+          skillsArray = candidate.skills.map((skill:any) => {
+            if (typeof skill === "string") return skill;
+            if (typeof skill === "object" && skill.name) return skill.name;
+            return String(skill);
+          });
+        }
+
+        // Extract experience description from objects
+        let experienceText = "";
+        if (candidate.experience) {
+          if (typeof candidate.experience === "string") {
+            experienceText = candidate.experience;
+          } else if (Array.isArray(candidate.experience) && candidate.experience.length > 0) {
+            // Get description from first experience entry
+            experienceText = candidate.experience[0].description || "";
+          } else if (typeof candidate.experience === "object" && candidate.experience.description) {
+            experienceText = candidate.experience.description;
+          }
+        }
+
+        // Extract education degree from objects
+        let educationText = "";
+        if (candidate.education) {
+          if (typeof candidate.education === "string") {
+            educationText = candidate.education;
+          } else if (Array.isArray(candidate.education) && candidate.education.length > 0) {
+            // Get degree from first education entry
+            educationText = candidate.education[0].degree || "";
+          } else if (typeof candidate.education === "object" && candidate.education.degree) {
+            educationText = candidate.education.degree;
+          }
+        }
+
         setFormData({
           name: candidate.name || "",
           email: candidate.email || "",
           phone: candidate.phone || "",
-          skills: candidate.skills || [],
-          experience: candidate.experience || "",
-          education: candidate.education || "",
-          zipcode: candidate.zipcode || "",
+          skills: skillsArray,
+          experience: experienceText,
+          education: educationText,
+          zipcode: candidate.zipCode || candidate.zipcode || "",
           address: candidate.address || "",
           city: candidate.city || "",
           state: candidate.state || "",

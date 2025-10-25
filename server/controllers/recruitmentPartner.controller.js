@@ -153,6 +153,27 @@ exports.addCandidate = async (req, res) => {
       };
     }
 
+    // Handle additional attachments
+    const attachments = [];
+    let attachmentIndex = 0;
+    while (req.files && req.files[`attachment_${attachmentIndex}`]) {
+      const file = req.files[`attachment_${attachmentIndex}`];
+      attachments.push({
+        fileName: file.filename,
+        originalName: file.originalname,
+        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        uploadDate: new Date(),
+        cloudinaryPublicId: file.filename,
+        cloudinaryUrl: file.path,
+        storageType: "cloudinary",
+      });
+      attachmentIndex++;
+    }
+    
+    if (attachments.length > 0) {
+      candidateUser.attachments = attachments;
+    }
+
     await candidateUser.save();
 
     res.status(201).json({
@@ -1015,6 +1036,27 @@ exports.submitCandidate = async (req, res) => {
           cloudinaryUrl: req.file.path,
           storageType: "cloudinary",
         };
+      }
+
+      // Handle additional attachments
+      const attachments = [];
+      let attachmentIndex = 0;
+      while (req.files && req.files[`attachment_${attachmentIndex}`]) {
+        const file = req.files[`attachment_${attachmentIndex}`];
+        attachments.push({
+          fileName: file.filename,
+          originalName: file.originalname,
+          fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+          uploadDate: new Date(),
+          cloudinaryPublicId: file.filename,
+          cloudinaryUrl: file.path,
+          storageType: "cloudinary",
+        });
+        attachmentIndex++;
+      }
+      
+      if (attachments.length > 0) {
+        candidateUser.attachments = attachments;
       }
 
       await candidateUser.save();
