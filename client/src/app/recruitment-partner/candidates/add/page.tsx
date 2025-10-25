@@ -487,7 +487,13 @@ export default function AddCandidatePage() {
                   variant="body2"
                   className="text-gray-700 font-medium"
                 >
-                  Resume and Documents Upload * (Up to 5 files)
+                  Resume and Documents Upload * (Select multiple files - up to 5)
+                </Typography>
+                <Typography
+                  variant="caption"
+                  className="text-gray-500"
+                >
+                  You can select multiple files at once (resume, cover letter, certificates, etc.)
                 </Typography>
                 <input
                   type="file"
@@ -515,7 +521,9 @@ export default function AddCandidatePage() {
                   >
                     {attachmentFiles.length >= 5 
                       ? "Maximum 5 files uploaded" 
-                      : `Upload Files (${attachmentFiles.length}/5)`
+                      : attachmentFiles.length === 0 
+                        ? "Upload Resume & Documents (Up to 5 files)"
+                        : `Upload More Files (${attachmentFiles.length}/5)`
                     }
                   </Button>
                 </label>
