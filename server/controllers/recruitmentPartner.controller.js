@@ -140,38 +140,42 @@ exports.addCandidate = async (req, res) => {
       },
     });
 
-    // Handle resume upload if present
-    if (req.file) {
-      candidateUser.resume = {
-        fileName: req.file.filename, // Cloudinary public_id
-        originalName: req.file.originalname,
-        fileSize: `${(req.file.size / 1024 / 1024).toFixed(2)} MB`,
-        uploadDate: new Date(),
-        cloudinaryPublicId: req.file.filename,
-        cloudinaryUrl: req.file.path, // Cloudinary URL
-        storageType: "cloudinary",
-      };
-    }
+    // Handle file uploads - now using req.files array since we use .any()
+    if (req.files && req.files.length > 0) {
+      // Find the resume file (first file or file with 'resume' fieldname)
+      const resumeFile = req.files.find(file => file.fieldname === 'resume') || req.files[0];
+      
+      if (resumeFile) {
+        candidateUser.resume = {
+          fileName: resumeFile.filename, // Cloudinary public_id
+          originalName: resumeFile.originalname,
+          fileSize: `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB`,
+          uploadDate: new Date(),
+          cloudinaryPublicId: resumeFile.filename,
+          cloudinaryUrl: resumeFile.path, // Cloudinary URL
+          storageType: "cloudinary",
+        };
+      }
 
-    // Handle additional attachments
-    const attachments = [];
-    let attachmentIndex = 0;
-    while (req.files && req.files[`attachment_${attachmentIndex}`]) {
-      const file = req.files[`attachment_${attachmentIndex}`];
-      attachments.push({
-        fileName: file.filename,
-        originalName: file.originalname,
-        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-        uploadDate: new Date(),
-        cloudinaryPublicId: file.filename,
-        cloudinaryUrl: file.path,
-        storageType: "cloudinary",
+      // Handle additional attachments (files with fieldname starting with 'attachment_')
+      const attachments = [];
+      req.files.forEach(file => {
+        if (file.fieldname.startsWith('attachment_')) {
+          attachments.push({
+            fileName: file.filename,
+            originalName: file.originalname,
+            fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+            uploadDate: new Date(),
+            cloudinaryPublicId: file.filename,
+            cloudinaryUrl: file.path,
+            storageType: "cloudinary",
+          });
+        }
       });
-      attachmentIndex++;
-    }
-    
-    if (attachments.length > 0) {
-      candidateUser.attachments = attachments;
+      
+      if (attachments.length > 0) {
+        candidateUser.attachments = attachments;
+      }
     }
 
     await candidateUser.save();
@@ -1025,38 +1029,42 @@ exports.submitCandidate = async (req, res) => {
         ],
       });
 
-      // Handle resume upload if present
-      if (req.file) {
-        candidateUser.resume = {
-          fileName: req.file.filename,
-          originalName: req.file.originalname,
-          fileSize: `${(req.file.size / 1024 / 1024).toFixed(2)} MB`,
-          uploadDate: new Date(),
-          cloudinaryPublicId: req.file.filename,
-          cloudinaryUrl: req.file.path,
-          storageType: "cloudinary",
-        };
-      }
+      // Handle file uploads - now using req.files array since we use .any()
+      if (req.files && req.files.length > 0) {
+        // Find the resume file (first file or file with 'resume' fieldname)
+        const resumeFile = req.files.find(file => file.fieldname === 'resume') || req.files[0];
+        
+        if (resumeFile) {
+          candidateUser.resume = {
+            fileName: resumeFile.filename,
+            originalName: resumeFile.originalname,
+            fileSize: `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB`,
+            uploadDate: new Date(),
+            cloudinaryPublicId: resumeFile.filename,
+            cloudinaryUrl: resumeFile.path,
+            storageType: "cloudinary",
+          };
+        }
 
-      // Handle additional attachments
-      const attachments = [];
-      let attachmentIndex = 0;
-      while (req.files && req.files[`attachment_${attachmentIndex}`]) {
-        const file = req.files[`attachment_${attachmentIndex}`];
-        attachments.push({
-          fileName: file.filename,
-          originalName: file.originalname,
-          fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-          uploadDate: new Date(),
-          cloudinaryPublicId: file.filename,
-          cloudinaryUrl: file.path,
-          storageType: "cloudinary",
+        // Handle additional attachments (files with fieldname starting with 'attachment_')
+        const attachments = [];
+        req.files.forEach(file => {
+          if (file.fieldname.startsWith('attachment_')) {
+            attachments.push({
+              fileName: file.filename,
+              originalName: file.originalname,
+              fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+              uploadDate: new Date(),
+              cloudinaryPublicId: file.filename,
+              cloudinaryUrl: file.path,
+              storageType: "cloudinary",
+            });
+          }
         });
-        attachmentIndex++;
-      }
-      
-      if (attachments.length > 0) {
-        candidateUser.attachments = attachments;
+        
+        if (attachments.length > 0) {
+          candidateUser.attachments = attachments;
+        }
       }
 
       await candidateUser.save();

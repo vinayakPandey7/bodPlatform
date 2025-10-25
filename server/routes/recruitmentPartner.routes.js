@@ -37,14 +37,8 @@ router.post(
   auth,
   authorizeRoles("recruitment_partner"),
   (req, res, next) => {
-    uploadToCloudinary.fields([
-      { name: "resume", maxCount: 1 },
-      { name: "attachment_0", maxCount: 1 },
-      { name: "attachment_1", maxCount: 1 },
-      { name: "attachment_2", maxCount: 1 },
-      { name: "attachment_3", maxCount: 1 },
-      { name: "attachment_4", maxCount: 1 },
-    ])(req, res, (err) => {
+    // Use any() to accept any field names, preventing "Unexpected field" errors
+    uploadToCloudinary.any()(req, res, (err) => {
       if (err) {
         console.error("Cloudinary upload error:", err);
         return res.status(400).json({
@@ -80,14 +74,8 @@ router.post(
   auth,
   authorizeRoles("recruitment_partner"),
   (req, res, next) => {
-    uploadToCloudinary.fields([
-      { name: "resume", maxCount: 1 },
-      { name: "attachment_0", maxCount: 1 },
-      { name: "attachment_1", maxCount: 1 },
-      { name: "attachment_2", maxCount: 1 },
-      { name: "attachment_3", maxCount: 1 },
-      { name: "attachment_4", maxCount: 1 },
-    ])(req, res, (err) => {
+    // Use any() to accept any field names, preventing "Unexpected field" errors
+    uploadToCloudinary.any()(req, res, (err) => {
       if (err) {
         console.error("Cloudinary upload error:", err);
         return res.status(400).json({
