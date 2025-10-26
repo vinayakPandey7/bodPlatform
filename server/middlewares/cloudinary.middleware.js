@@ -47,4 +47,30 @@ const uploadToCloudinary = multer({
   },
 });
 
-module.exports = { uploadToCloudinary, cloudinary };
+// Configure flexible Cloudinary storage for any file types
+const flexibleStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "documents", // Different folder for flexible uploads
+    resource_type: "raw", // For non-image files
+    public_id: (req, file) => {
+      // Generate unique filename
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      return `doc-${req.user.id}-${uniqueSuffix}`;
+    },
+  },
+});
+
+// Create flexible multer upload instance for any file types
+const uploadToCloudinaryFlexible = multer({
+  storage: flexibleStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for flexible uploads
+  },
+  fileFilter: (req, file, cb) => {
+    // Allow all file types for flexible uploads
+    cb(null, true);
+  },
+});
+
+module.exports = { uploadToCloudinary, uploadToCloudinaryFlexible, cloudinary };
