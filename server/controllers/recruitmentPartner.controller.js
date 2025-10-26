@@ -4,12 +4,12 @@ const Job = require("../models/job.model");
 const Candidate = require("../models/candidate.model");
 const Client = require("../models/client.model");
 const mongoose = require("mongoose");
+const { uploadFileToCloudinary } = require("../middlewares/cloudinary.middleware");
 
 // Add new candidate
 exports.addCandidate = async (req, res) => {
   try {
-    console.log("Add candidate request body:", req.body);
-    console.log("Add candidate request file:", req.file);
+
 
     const recruitmentPartner = await RecruitmentPartner.findOne({
       user: req.user.id,
@@ -141,41 +141,86 @@ exports.addCandidate = async (req, res) => {
     });
 
     // Handle file uploads - now using req.files array since we use .any()
+    console.log("Processing files:", req.files);
     if (req.files && req.files.length > 0) {
+      console.log("Found", req.files.length, "files to process");
       // Find the resume file (first file or file with 'resume' fieldname)
       const resumeFile = req.files.find(file => file.fieldname === 'resume') || req.files[0];
+      console.log("Resume file found:", resumeFile ? resumeFile.originalname : "None");
       
       if (resumeFile) {
-        candidateUser.resume = {
-          fileName: resumeFile.filename, // Cloudinary public_id
-          originalName: resumeFile.originalname,
-          fileSize: `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB`,
-          uploadDate: new Date(),
-          cloudinaryPublicId: resumeFile.filename,
-          cloudinaryUrl: resumeFile.path, // Cloudinary URL
-          storageType: "cloudinary",
-        };
-      }
 
-      // Handle additional attachments (files with fieldname starting with 'attachment_')
-      const attachments = [];
-      req.files.forEach(file => {
-        if (file.fieldname.startsWith('attachment_')) {
-          attachments.push({
-            fileName: file.filename,
-            originalName: file.originalname,
-            fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-            uploadDate: new Date(),
-            cloudinaryPublicId: file.filename,
-            cloudinaryUrl: file.path,
-            storageType: "cloudinary",
-          });
+        
+        if (resumeFile.size === 0) {
+          console.log("Skipping empty resume file");
+        } else {
+          try {
+            // Upload resume to Cloudinary
+            const cloudinaryResult = await uploadFileToCloudinary(resumeFile, req.user.id);
+            candidateUser.resume = {
+              fileName: cloudinaryResult.public_id,
+              originalName: resumeFile.originalname,
+              fileSize: `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB`,
+              uploadDate: new Date(),
+              cloudinaryPublicId: cloudinaryResult.public_id,
+              cloudinaryUrl: cloudinaryResult.secure_url,
+              storageType: "cloudinary",
+            };
+            console.log("Resume uploaded to Cloudinary:", cloudinaryResult.public_id);
+          } catch (error) {
+            console.error("Error uploading resume to Cloudinary:", error);
+            // Continue without resume if upload fails
+          }
         }
-      });
-      
-      if (attachments.length > 0) {
-        candidateUser.attachments = attachments;
       }
+    }
+
+    // Handle additional attachments (all files except resume)
+    const attachments = [];
+
+    if (req.files) {
+
+      
+      for (const file of req.files) {
+
+        
+        // Process all files except resume as attachments
+        if (file.fieldname !== 'resume') {
+
+          
+          try {
+       
+            const cloudinaryResult = await uploadFileToCloudinary(file, req.user.id);
+          
+            
+            attachments.push({
+              fileName: cloudinaryResult.public_id,
+              originalName: file.originalname,
+              fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+              uploadDate: new Date(),
+              cloudinaryPublicId: cloudinaryResult.public_id,
+              cloudinaryUrl: cloudinaryResult.secure_url,
+              storageType: "cloudinary",
+            });
+            console.log("Attachment added to array:", attachments.length);
+          } catch (error) {
+            console.error("Error uploading attachment to Cloudinary:", error);
+            console.error("Error details:", error.message);
+            // Continue without this attachment if upload fails
+          }
+        } else {
+          console.log("This is the resume file, skipping...");
+        }
+      }
+    } else {
+      console.log("No files received in req.files");
+    }
+  
+    
+    if (attachments.length > 0) {
+      candidateUser.attachments = attachments;
+    } else {
+      console.log("No attachments to save");
     }
 
     await candidateUser.save();
@@ -204,6 +249,244 @@ exports.addCandidate = async (req, res) => {
     console.error("Add candidate error:", error);
     res.status(500).json({
       message: "Server error while adding candidate",
+      error: error.message,
+    });
+  }
+};
+
+// Update candidate
+exports.updateCandidate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      email,
+      phone,
+      skills,
+      experience,
+      education,
+      zipcode,
+      address,
+      city,
+      state,
+      expectedSalary,
+      currentCompany,
+      currentPosition,
+      noticePeriod,
+      linkedIn,
+      portfolio,
+      notes,
+    } = req.body;
+
+    // Find the candidate
+    const candidateUser = await User.findById(id);
+    if (!candidateUser) {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    // Check if email is being changed and if it already exists
+    if (email && email !== candidateUser.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: "A candidate with this email already exists" });
+      }
+    }
+
+    // Parse skills if it's a string
+    let parsedSkills = [];
+    if (skills) {
+      try {
+        parsedSkills = typeof skills === "string" ? JSON.parse(skills) : skills;
+      } catch (e) {
+        parsedSkills = [];
+      }
+    }
+
+    // Update basic information
+    candidateUser.firstName = name ? name.split(" ")[0] : candidateUser.firstName;
+    candidateUser.lastName = name ? name.split(" ").slice(1).join(" ") : candidateUser.lastName;
+    candidateUser.email = email || candidateUser.email;
+    candidateUser.phoneNumber = phone || candidateUser.phoneNumber;
+    candidateUser.zipCode = zipcode || candidateUser.zipCode;
+    candidateUser.address = address || candidateUser.address;
+    candidateUser.city = city || candidateUser.city;
+    candidateUser.state = state || candidateUser.state;
+    candidateUser.expectedSalary = expectedSalary || candidateUser.expectedSalary;
+    candidateUser.noticePeriod = noticePeriod || candidateUser.noticePeriod;
+    candidateUser.linkedIn = linkedIn || candidateUser.linkedIn;
+    candidateUser.portfolio = portfolio || candidateUser.portfolio;
+    candidateUser.notes = notes || candidateUser.notes;
+
+    // Update personal info
+    if (!candidateUser.personalInfo) {
+      candidateUser.personalInfo = {};
+    }
+    candidateUser.personalInfo.currentCompany = currentCompany || candidateUser.personalInfo.currentCompany || "";
+    candidateUser.personalInfo.currentPosition = currentPosition || candidateUser.personalInfo.currentPosition || "";
+
+    // Update experience
+    candidateUser.experience = experience
+      ? [
+          {
+            company: "",
+            position: "",
+            startDate: "",
+            endDate: "",
+            description: experience,
+          },
+        ]
+      : candidateUser.experience || [];
+
+    // Update education
+    candidateUser.education = education
+      ? [
+          {
+            institution: "",
+            degree: education,
+            fieldOfStudy: "",
+            startDate: "",
+            endDate: "",
+            gpa: "",
+            description: "",
+          },
+        ]
+      : candidateUser.education || [];
+
+    // Update skills
+    candidateUser.skills = parsedSkills.map((skill, index) => ({
+      id: (Date.now() + index).toString(),
+      name: skill,
+      level: "intermediate",
+      years: 1,
+    }));
+
+    // Update social links
+    if (!candidateUser.socialLinks) {
+      candidateUser.socialLinks = {};
+    }
+    candidateUser.socialLinks.linkedin = linkedIn || candidateUser.socialLinks.linkedin || "";
+    candidateUser.socialLinks.portfolio = portfolio || candidateUser.socialLinks.portfolio || "";
+
+    // Update preferences
+    if (!candidateUser.preferences) {
+      candidateUser.preferences = {};
+    }
+    candidateUser.preferences.salaryRange = {
+      min: expectedSalary ? parseInt(expectedSalary) * 1000 : candidateUser.preferences.salaryRange?.min || 0,
+      max: expectedSalary ? parseInt(expectedSalary) * 1000 * 1.5 : candidateUser.preferences.salaryRange?.max || 0,
+    };
+    candidateUser.preferences.availableStartDate = noticePeriod ? `${noticePeriod} weeks` : candidateUser.preferences.availableStartDate || "";
+
+    // Handle file uploads - now using req.files array since we use .any()
+
+    if (req.files && req.files.length > 0) {
+      console.log("Found", req.files.length, "files to process for update");
+      
+      // Handle resume update
+      const resumeFile = req.files.find(file => file.fieldname === 'resume');
+      if (resumeFile) {
+        console.log("Processing resume file update:", {
+          originalname: resumeFile.originalname,
+          size: resumeFile.size,
+          mimetype: resumeFile.mimetype,
+          bufferLength: resumeFile.buffer ? resumeFile.buffer.length : 0
+        });
+        
+        if (resumeFile.size > 0) {
+          try {
+            // Upload resume to Cloudinary
+            const cloudinaryResult = await uploadFileToCloudinary(resumeFile, req.user.id);
+            candidateUser.resume = {
+              fileName: cloudinaryResult.public_id,
+              originalName: resumeFile.originalname,
+              fileSize: `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB`,
+              uploadDate: new Date(),
+              cloudinaryPublicId: cloudinaryResult.public_id,
+              cloudinaryUrl: cloudinaryResult.secure_url,
+              storageType: "cloudinary",
+            };
+            console.log("Resume updated in Cloudinary:", cloudinaryResult.public_id);
+          } catch (error) {
+            console.error("Error uploading resume to Cloudinary:", error);
+            // Continue without resume update if upload fails
+          }
+        }
+      }
+
+      // Handle additional attachments (all files except resume)
+      const attachments = candidateUser.attachments || [];
+
+      
+      if (req.files) {
+        console.log("Files:", req.files.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, size: f.size })));
+        
+        for (const file of req.files) {
+
+          
+          // Process all files except resume as attachments
+          if (file.fieldname !== 'resume') {
+
+            
+            try {
+          
+              const cloudinaryResult = await uploadFileToCloudinary(file, req.user.id);
+
+              
+              attachments.push({
+                fileName: cloudinaryResult.public_id,
+                originalName: file.originalname,
+                fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                uploadDate: new Date(),
+                cloudinaryPublicId: cloudinaryResult.public_id,
+                cloudinaryUrl: cloudinaryResult.secure_url,
+                storageType: "cloudinary",
+              });
+
+            } catch (error) {
+              console.error("Error uploading attachment to Cloudinary:", error);
+              console.error("Error details:", error.message);
+              // Continue without this attachment if upload fails
+            }
+          } else {
+            console.log("This is the resume file, skipping...");
+          }
+        }
+      } else {
+        console.log("No files received in req.files");
+      }
+      
+     
+      
+      candidateUser.attachments = attachments;
+    }
+
+    await candidateUser.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Candidate updated successfully",
+      candidate: {
+        id: candidateUser._id,
+        name: `${candidateUser.firstName || ""} ${candidateUser.lastName || ""}`.trim() || candidateUser.email.split("@")[0],
+        email: candidateUser.email,
+        phone: candidateUser.phoneNumber || candidateUser.personalInfo?.phone || "N/A",
+        skills: candidateUser.skills || [],
+        experience: candidateUser.experience || [],
+        education: candidateUser.education || [],
+        zipcode,
+        city,
+        state,
+        currentCompany,
+        currentPosition,
+        recruitmentPartner: candidateUser.recruitmentPartner,
+        resume: candidateUser.resume,
+        attachments: candidateUser.attachments || [],
+      },
+    });
+  } catch (error) {
+    console.error("Update candidate error:", error);
+    res.status(500).json({
+      message: "Server error while updating candidate",
       error: error.message,
     });
   }
@@ -734,6 +1017,7 @@ exports.getCandidates = async (req, res) => {
         resume: candidate.resume?.fileName || null, // Keep for backward compatibility
         resumeUrl: resumeUrl,
         resumeData: candidate.resume || null, // Include full resume object for frontend
+        attachments: candidate.attachments || [], // Include attachments for frontend
         job: {
           _id: "general",
           title: "General Application",
@@ -1035,32 +1319,45 @@ exports.submitCandidate = async (req, res) => {
         const resumeFile = req.files.find(file => file.fieldname === 'resume') || req.files[0];
         
         if (resumeFile) {
-          candidateUser.resume = {
-            fileName: resumeFile.filename,
-            originalName: resumeFile.originalname,
-            fileSize: `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB`,
-            uploadDate: new Date(),
-            cloudinaryPublicId: resumeFile.filename,
-            cloudinaryUrl: resumeFile.path,
-            storageType: "cloudinary",
-          };
+          try {
+            // Upload resume to Cloudinary
+            const cloudinaryResult = await uploadFileToCloudinary(resumeFile, req.user.id);
+            candidateUser.resume = {
+              fileName: cloudinaryResult.public_id,
+              originalName: resumeFile.originalname,
+              fileSize: `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB`,
+              uploadDate: new Date(),
+              cloudinaryPublicId: cloudinaryResult.public_id,
+              cloudinaryUrl: cloudinaryResult.secure_url,
+              storageType: "cloudinary",
+            };
+          } catch (error) {
+            console.error("Error uploading resume to Cloudinary:", error);
+            // Continue without resume if upload fails
+          }
         }
 
         // Handle additional attachments (files with fieldname starting with 'attachment_')
         const attachments = [];
-        req.files.forEach(file => {
+        for (const file of req.files) {
           if (file.fieldname.startsWith('attachment_')) {
-            attachments.push({
-              fileName: file.filename,
-              originalName: file.originalname,
-              fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-              uploadDate: new Date(),
-              cloudinaryPublicId: file.filename,
-              cloudinaryUrl: file.path,
-              storageType: "cloudinary",
-            });
+            try {
+              const cloudinaryResult = await uploadFileToCloudinary(file, req.user.id);
+              attachments.push({
+                fileName: cloudinaryResult.public_id,
+                originalName: file.originalname,
+                fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                uploadDate: new Date(),
+                cloudinaryPublicId: cloudinaryResult.public_id,
+                cloudinaryUrl: cloudinaryResult.secure_url,
+                storageType: "cloudinary",
+              });
+            } catch (error) {
+              console.error("Error uploading attachment to Cloudinary:", error);
+              // Continue without this attachment if upload fails
+            }
           }
-        });
+        }
         
         if (attachments.length > 0) {
           candidateUser.attachments = attachments;

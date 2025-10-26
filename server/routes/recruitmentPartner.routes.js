@@ -3,7 +3,7 @@ const router = express.Router();
 const recruitmentPartnerController = require("../controllers/recruitmentPartner.controller");
 const { auth, authorizeRoles } = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/upload.middleware");
-const { uploadToCloudinary } = require("../middlewares/cloudinary.middleware");
+const { uploadToCloudinary, uploadToCloudinaryFlexible } = require("../middlewares/cloudinary.middleware");
 
 // Recruitment partner routes
 router.get(
@@ -37,15 +37,15 @@ router.post(
   auth,
   authorizeRoles("recruitment_partner"),
   (req, res, next) => {
-    // Use any() to accept any field names, preventing "Unexpected field" errors
-    uploadToCloudinary.any()(req, res, (err) => {
+    // Use .any() to accept any field names
+    uploadToCloudinaryFlexible.any()(req, res, (err) => {
       if (err) {
-        console.error("Cloudinary upload error:", err);
         return res.status(400).json({
           message: "File upload failed",
           error: err.message,
         });
       }
+      
       next();
     });
   },
@@ -58,6 +58,27 @@ router.get(
   auth,
   authorizeRoles("recruitment_partner"),
   recruitmentPartnerController.getCandidates
+);
+
+// Update candidate route
+router.put(
+  "/candidates/:id",
+  auth,
+  authorizeRoles("recruitment_partner"),
+  (req, res, next) => {
+    // Use .any() to accept any field names
+    uploadToCloudinaryFlexible.any()(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({
+          message: "File upload failed",
+          error: err.message,
+        });
+      }
+      
+      next();
+    });
+  },
+  recruitmentPartnerController.updateCandidate
 );
 
 // Get applications route
@@ -74,10 +95,8 @@ router.post(
   auth,
   authorizeRoles("recruitment_partner"),
   (req, res, next) => {
-    // Use any() to accept any field names, preventing "Unexpected field" errors
-    uploadToCloudinary.any()(req, res, (err) => {
+    uploadToCloudinaryFlexible.any()(req, res, (err) => {
       if (err) {
-        console.error("Cloudinary upload error:", err);
         return res.status(400).json({
           message: "File upload failed",
           error: err.message,

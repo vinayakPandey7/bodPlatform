@@ -48,7 +48,6 @@ interface CandidateFormData {
   portfolio: string;
   notes: string;
   resume: File | null;
-  attachments: File[];
 }
 
 interface CandidateModalProps {
@@ -83,14 +82,13 @@ export default function CandidateModal({
     portfolio: "",
     notes: "",
     resume: null,
-    attachments: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [resumeFileName, setResumeFileName] = useState("");
   const [linkedInLoading, setLinkedInLoading] = useState(false);
-  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const [existingResume, setExistingResume] = useState<any>(null);
 
   // Reset form when modal opens/closes or candidate changes
   useEffect(() => {
@@ -151,11 +149,10 @@ export default function CandidateModal({
           linkedIn: candidate.linkedIn || "",
           portfolio: candidate.portfolio || "",
           notes: candidate.notes || "",
-          resume: null,
-          attachments: [],
+          resume: null, // Will be handled separately for existing resume
         });
-        setResumeFileName(candidate.resume ? "Existing resume" : "");
-        setAttachmentFiles([]);
+        setResumeFileName(candidate.resumeData?.originalName || candidate.resume?.fileName || "Existing resume");
+        setExistingResume(candidate.resumeData || candidate.resume || null);
       } else {
         // Add mode - reset form
         setFormData({
@@ -177,10 +174,9 @@ export default function CandidateModal({
           portfolio: "",
           notes: "",
           resume: null,
-          attachments: [],
         });
         setResumeFileName("");
-        setAttachmentFiles([]);
+        setExistingResume(null);
       }
       setError("");
     }
@@ -273,25 +269,32 @@ export default function CandidateModal({
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    console.log("=== FILE UPLOAD DEBUG ===");
+    console.log("Files selected:", files.length);
+    
     if (files.length > 0) {
-      const newAttachments = [...attachmentFiles, ...files].slice(0, 5); // Limit to 5 files
-      setAttachmentFiles(newAttachments);
+      // Set the first file as resume
+      const resumeFile = files[0];
+      console.log("Setting resume file:", resumeFile.name, resumeFile.size);
       setFormData((prev) => ({
         ...prev,
-        attachments: newAttachments,
-        resume: newAttachments[0] || null, // Set first file as resume for backward compatibility
+        resume: resumeFile,
       }));
+      setResumeFileName(resumeFile.name);
     }
   };
 
-  const removeAttachment = (index: number) => {
-    const newAttachments = attachmentFiles.filter((_, i) => i !== index);
-    setAttachmentFiles(newAttachments);
+  const removeResume = () => {
     setFormData((prev) => ({
       ...prev,
-      attachments: newAttachments,
-      resume: newAttachments[0] || null, // Update resume to first file or null
+      resume: null,
     }));
+    setResumeFileName("");
+  };
+
+  const removeExistingResume = () => {
+    setExistingResume(null);
+    setResumeFileName("");
   };
 
   const handleLinkedInImport = async () => {
@@ -384,23 +387,31 @@ export default function CandidateModal({
     try {
       const formDataToSend = new FormData();
 
+      console.log("=== FORM DATA DEBUG ===");
+      console.log("Form data:", formData);
+      console.log("Resume file:", formData.resume);
+
       // Append all form fields
       Object.keys(formData).forEach((key) => {
         if (key === "resume" && formData.resume) {
+          console.log("Adding resume file:", formData.resume.name, formData.resume.size);
           formDataToSend.append("resume", formData.resume);
-        } else if (key === "attachments") {
-          // Handle multiple attachments
-          if (Array.isArray(formData.attachments)) {
-            formData.attachments.forEach((file, index) => {
-              formDataToSend.append(`attachment_${index}`, file);
-            });
-          }
         } else if (key === "skills") {
           formDataToSend.append("skills", JSON.stringify(formData.skills));
         } else if (key !== "resume" && key !== "attachments") {
           formDataToSend.append(key, (formData as any)[key]);
         }
       });
+
+      // Debug FormData contents
+      console.log("=== FORM DATA CONTENTS ===");
+      for (let [key, value] of formDataToSend.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}:`, value.name, value.size, value.type);
+        } else {
+          console.log(`${key}:`, value);
+        }
+      }
 
       if (candidate) {
         // Edit existing candidate
@@ -620,19 +631,18 @@ export default function CandidateModal({
                 variant="subtitle2"
                 sx={{ mb: 2, fontWeight: 600, color: "#374151" }}
               >
-                Resume and Documents Upload * (Select multiple files - up to 5)
+                Resume Upload *
               </Typography>
               <Typography
                 variant="caption"
                 sx={{ mb: 2, color: "#6b7280", display: "block" }}
               >
-                You can select multiple files at once (resume, cover letter, certificates, etc.)
+                Select a single resume file (PDF, DOC, DOCX)
               </Typography>
               <input
                 type="file"
                 id="resume-upload"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                multiple
+                accept=".pdf,.doc,.docx"
                 onChange={handleResumeUpload}
                 style={{ display: "none" }}
               />
@@ -643,29 +653,46 @@ export default function CandidateModal({
                   variant="outlined"
                   size="small"
                   startIcon={<UploadIcon />}
-                  disabled={attachmentFiles.length >= 5}
+                  disabled={formData.resume || existingResume}
                   sx={{ minWidth: "auto", px: 2 }}
                 >
-                  {attachmentFiles.length >= 5 
-                    ? "Maximum 5 files uploaded" 
-                    : attachmentFiles.length === 0 
-                      ? "Upload Resume & Documents (Up to 5 files)"
-                      : `Upload More Files (${attachmentFiles.length}/5)`
-                  }
+                  {formData.resume || existingResume 
+                    ? "Resume Uploaded" 
+                    : "Upload Resume"}
                 </Button>
               </Box>
-              {attachmentFiles.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
-                  {attachmentFiles.map((file, index) => (
-                    <Chip
-                      key={index}
-                      label={file.name}
-                      onDelete={() => removeAttachment(index)}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  ))}
+              
+              {/* Show uploaded files */}
+              {(formData.resume || existingResume) && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: "#374151" }}>
+                    Uploaded Resume:
+                  </Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {/* Show new resume file */}
+                    {formData.resume && (
+                      <Chip
+                        label={`📄 Resume: ${formData.resume.name} (${(formData.resume.size / 1024 / 1024).toFixed(2)} MB)`}
+                        onDelete={removeResume}
+                        size="small"
+                        color="primary"
+                        variant="filled"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    )}
+                    
+                    {/* Show existing resume */}
+                    {existingResume && (
+                      <Chip
+                        label={`📄 Resume: ${existingResume.originalName || existingResume.fileName} (${existingResume.fileSize || "Unknown size"})`}
+                        onDelete={removeExistingResume}
+                        size="small"
+                        color="info"
+                        variant="filled"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    )}
+                  </Box>
                 </Box>
               )}
             </Box>
