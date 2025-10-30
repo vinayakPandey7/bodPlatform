@@ -1,3 +1,4 @@
+const path = require('path')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
@@ -33,6 +34,13 @@ const nextConfig = {
   },
   images: {
     domains: ['res.cloudinary.com', 'localhost'], // Add your image domains
+  },
+  webpack: (config) => {
+    // Ensure '@' alias always resolves to './src' during build on server
+    config.resolve = config.resolve || {}
+    config.resolve.alias = config.resolve.alias || {}
+    config.resolve.alias['@'] = path.resolve(__dirname, 'src')
+    return config
   },
 }
 
