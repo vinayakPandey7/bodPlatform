@@ -414,6 +414,9 @@ export default function CandidateModal({
       }
 
       if (candidate) {
+        if (!candidate._id) {
+          throw new Error("Invalid candidate id. Please reload and try again.");
+        }
         // Edit existing candidate
         await api.put(
           `/recruitment-partner/candidates/${candidate._id}`,

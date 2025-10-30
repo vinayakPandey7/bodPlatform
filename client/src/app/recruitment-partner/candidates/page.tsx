@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CandidateModal from "@/components/CandidateModal";
@@ -37,6 +37,12 @@ export default function RecruitmentPartnerCandidatesPage() {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
     null
@@ -46,18 +52,47 @@ export default function RecruitmentPartnerCandidatesPage() {
   const [currentCandidateName, setCurrentCandidateName] = useState("");
 
   useEffect(() => {
-    fetchCandidates();
+    // Initial load
+    resetAndLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchCandidates = async () => {
+  const fetchCandidates = async (currentPage = 1, currentLimit = 20, append = false) => {
     try {
-      const response = await api.get("/recruitment-partner/candidates");
-      setCandidates(response.data.candidates || []);
+      const response = await api.get("/recruitment-partner/candidates", {
+        params: { page: currentPage, limit: currentLimit },
+      });
+      const list = response.data.candidates || [];
+      setTotal(response.data.total || 0);
+      setHasMore(currentPage * currentLimit < (response.data.total || 0));
+      if (append) {
+        // De-duplicate by _id when appending
+        setCandidates((prev) => {
+          const combined = [...prev, ...list];
+          const map = new Map<string, any>();
+          combined.forEach((item: any) => {
+            if (item && item._id) {
+              map.set(item._id, item);
+            }
+          });
+          return Array.from(map.values());
+        });
+      } else {
+        setCandidates(list);
+      }
     } catch (error: any) {
       setError("Failed to fetch candidates");
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetAndLoad = async () => {
+    setLoading(true);
+    setError("");
+    setPage(1);
+    setHasMore(true);
+    await fetchCandidates(1, limit, false);
   };
 
   const handleAddCandidate = () => {
@@ -76,8 +111,33 @@ export default function RecruitmentPartnerCandidatesPage() {
   };
 
   const handleModalSuccess = () => {
-    fetchCandidates(); // Refresh the candidates list
+    // Reset and load first page to include newly added/updated entries at top
+    resetAndLoad();
   };
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const el = sentinelRef.current;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && !loading && !loadingMore && hasMore) {
+          setLoadingMore(true);
+          const nextPage = page + 1;
+          fetchCandidates(nextPage, limit, true).finally(() => {
+            setPage(nextPage);
+            setLoadingMore(false);
+          });
+        }
+      },
+      { root: null, rootMargin: "200px", threshold: 0.25 }
+    );
+
+    observer.observe(el);
+    return () => observer.unobserve(el);
+  }, [page, limit, loading, loadingMore, hasMore]);
 
   const previewResume = (candidate: Candidate) => {
     console.log("previewResume called with candidate:", candidate);
@@ -160,7 +220,7 @@ export default function RecruitmentPartnerCandidatesPage() {
     );
   }
 
-  console.log("cbcvb", candidates[0]?.resumeData);
+  
 
   return (
     <ProtectedRoute allowedRoles={["recruitment_partner"]}>
@@ -182,6 +242,11 @@ export default function RecruitmentPartnerCandidatesPage() {
               Add New Candidate
             </button>
           </div>
+
+          {/* Total count */}
+          <div className="text-sm text-gray-600">Total: {total}</div>
+
+          
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -220,6 +285,7 @@ export default function RecruitmentPartnerCandidatesPage() {
               </button>
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {candidates.map((candidate) => (
                 <div
@@ -365,6 +431,12 @@ export default function RecruitmentPartnerCandidatesPage() {
                 </div>
               ))}
             </div>
+            {/* Infinite scroll sentinel and loader (bottom) */}
+            {hasMore && <div ref={sentinelRef} className="h-1" />}
+            {loadingMore && (
+              <div className="py-4 text-center text-gray-500">Loading more…</div>
+            )}
+            </>
           )}
         </div>
 

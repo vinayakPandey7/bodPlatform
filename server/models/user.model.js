@@ -350,5 +350,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // Create geospatial index for location-based queries (for candidates)
 userSchema.index({ location: "2dsphere" }, { sparse: true });
+// Speed up candidate lookups for a recruitment partner
+userSchema.index({ role: 1, addedByRecruitmentPartner: 1, createdAt: -1 });
 
 module.exports = mongoose.model("User", userSchema);

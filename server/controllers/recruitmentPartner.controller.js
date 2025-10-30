@@ -258,6 +258,10 @@ exports.addCandidate = async (req, res) => {
 exports.updateCandidate = async (req, res) => {
   try {
     const { id } = req.params;
+    // Validate id
+    if (!id || !mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid candidate id" });
+    }
     const {
       name,
       email,
@@ -952,7 +956,7 @@ exports.getAppliedJobs = async (req, res) => {
   }
 };
 
-// Get candidates added by recruitment partner
+// Get candidates added by recruitment partner (paginated)
 exports.getCandidates = async (req, res) => {
   try {
     const recruitmentPartner = await RecruitmentPartner.findOne({
@@ -965,31 +969,37 @@ exports.getCandidates = async (req, res) => {
         .json({ message: "Recruitment partner profile not found" });
     }
 
-    console.log(
-      "Looking for candidates with recruitment partner ID:",
-      recruitmentPartner._id
-    );
+    // Pagination and optional basic search
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
+    const skip = (page - 1) * limit;
+    const search = (req.query.search || "").toString().trim();
 
-    // Find candidates created by this recruitment partner
-    // Also include the specific candidate with email itm.vinayak@gmail.com for debugging
-    const candidates = await User.find({
+    const query = {
       role: "candidate",
-      $or: [
-        { addedByRecruitmentPartner: recruitmentPartner._id },
-        { email: "itm.vinayak@gmail.com" }, // Temporary: include specific candidate for debugging
-      ],
-    })
-      .select("-password")
-      .sort({ createdAt: -1 });
+      addedByRecruitmentPartner: recruitmentPartner._id,
+    };
 
-    console.log("Found candidates:", candidates.length);
-    console.log(
-      "Candidate emails:",
-      candidates.map((c) => c.email)
-    );
+    if (search) {
+      // Basic text-like search on name/email/phone
+      query.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phoneNumber: { $regex: search, $options: "i" } },
+      ];
+    }
 
-    // For now, let's return all candidates and later we'll add proper filtering
-    // based on the recruitment partner who added them
+    const [total, candidates] = await Promise.all([
+      User.countDocuments(query),
+      User.find(query)
+        .select("-password")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
     const formattedCandidates = candidates.map((candidate) => {
       // Handle both local and Cloudinary resume storage
       let resumeUrl = null;
@@ -1041,7 +1051,10 @@ exports.getCandidates = async (req, res) => {
 
     res.json({
       candidates: formattedCandidates,
-      total: formattedCandidates.length,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     console.error("Get candidates error:", error);
